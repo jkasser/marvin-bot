@@ -1,12 +1,13 @@
 import yaml
 import random
+from riot.riot_api import Riot
 from discord.ext import commands
 
 file = open('config.yaml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
-token = cfg["prod"]["token"]
+token = cfg["disc"]["token"]
 
-bot = commands.Bot(command_prefix=cfg["prod"]["prefix"])
+bot = commands.Bot(command_prefix=cfg["disc"]["prefix"])
 
 
 @bot.event
@@ -19,6 +20,12 @@ async def on_message(message):  # event that happens per any message.
     # each message has a bunch of attributes. Here are a few.
     # check out more by print(dir(message)) for example.
     print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
+
+    message_text = message.content.strip().lower()
+    if 'hi marvin' in message_text:
+        channel = message.channel
+        await channel.send(f'Why bother, {message.author.name}...')
+
     await bot.process_commands(message)
 
 
@@ -57,6 +64,12 @@ async def marvin_lullaby(ctx):
 async def marvin_coin_flip(ctx):
     coin_choices = ['Heads', 'Tails']
     await ctx.send(f'Results are in!\nThe coin landed on: {random.choice(coin_choices)}')
+
+
+@bot.command(name='clash', help='Get current and upcoming clash tournament schedule.')
+async def get_clash(ctx):
+    schedule = Riot().get_clash_schedule()
+    await ctx.send(str(schedule))
 
 
 async def on_error(event, *args, **kwargs):
