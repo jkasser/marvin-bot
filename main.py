@@ -19,6 +19,12 @@ async def on_message(message):  # event that happens per any message.
     # each message has a bunch of attributes. Here are a few.
     # check out more by print(dir(message)) for example.
     print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
+
+    message_text = message.content.strip().lower()
+    if 'hi marvin' in message_text:
+        channel = message.channel
+        await channel.send(f'Why bother, {message.author.name}...')
+
     await bot.process_commands(message)
 
 
