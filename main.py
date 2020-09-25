@@ -53,6 +53,12 @@ async def marvin_lullaby(ctx):
     await ctx.send(marvin_lullaby)
 
 
+@bot.command(name='flipcoin', help='Having trouble making a decision? Let Marvin flip a coin for you!')
+async def marvin_coin_flip(ctx):
+    coin_choices = ['Heads', 'Tails']
+    await ctx.send(f'Results are in!\nThe coin landed on: {random.choice(coin_choices)}')
+
+
 async def on_error(event, *args, **kwargs):
     with open('err.log', 'a') as f:
         if event == 'on_message':
