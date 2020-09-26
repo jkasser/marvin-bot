@@ -27,12 +27,13 @@ async def on_message(message):  # event that happens per any message.
 
     message_text = message.content.strip().lower()
     channel = message.channel
-    if 'hi marvin' in message_text:
-        await channel.send(f'Why bother, {message.author.name}...')
-    elif 'towel' in message_text:
-        await channel.send(towel_quote)
-    elif 'life' in message_text:
-        await channel.send(the_answer_to_life)
+    if message.author != bot.user:
+        if 'hi marvin' in message_text:
+            await channel.send(f'Why bother, {message.author.name}...')
+        elif 'towel' in message_text:
+            await channel.send(towel_quote)
+        elif 'life' in message_text:
+            await channel.send(the_answer_to_life)
     await bot.process_commands(message)
 
 
