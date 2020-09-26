@@ -80,7 +80,7 @@ async def get_vibe(ctx, user: discord.Member=None):
                 await ctx.send('You ain\'t listening to shit!')
     else:
         if len(user.activities) ==1 and isinstance(user.activities[0], Spotify):
-            await ctx.send(f'{user} is listening to {user.activity.title} by {user.activity.artist} on {user.activity.album}')
+            await ctx.send(f'{user.display_name} is listening to {user.activity.title} by {user.activity.artist} on {user.activity.album}')
         else:
             await ctx.send('You ain\'t listening to shit!')
 
