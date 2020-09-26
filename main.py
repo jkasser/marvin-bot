@@ -90,6 +90,12 @@ async def get_vibe(ctx, user: discord.Member=None):
         else:
             await ctx.send('You ain\'t listening to shit!')
 
+
+@bot.command(name='roll', help='Type !roll <max number> to get a random number between 0 and the max!')
+async def roll_dice(ctx, max):
+    await ctx.send(f'You rolled {random.randint(0, int(max))}')
+
+
 async def on_error(event, *args, **kwargs):
     with open('err.log', 'a') as f:
         if event == 'on_message':
