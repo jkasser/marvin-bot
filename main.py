@@ -1,7 +1,9 @@
 import yaml
 import random
 from riot.riot_api import Riot
+import discord
 from discord.ext import commands
+from discord import Spotify
 
 file = open('config.yaml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -71,6 +73,22 @@ async def get_clash(ctx):
     schedule = Riot().get_clash_schedule()
     await ctx.send(str(schedule))
 
+
+@bot.command(name='whatsmyvibe', help='What you vibing too right now lil gangsta?')
+async def get_vibe(ctx, user: discord.Member=None):
+    user = user or ctx.author
+    if len(user.activities) > 1:
+        for activity in user.activities:
+            if isinstance(activity, Spotify):
+                await ctx.send(f'{user} is listening to {activity.title} by {activity.artist} on {activity.album}')
+                break
+            elif user.activities.index(activity) == len(user.activities) - 1 and not isinstance(activity, Spotify):
+                await ctx.send('You ain\'t listening to shit!')
+    else:
+        if isinstance(user.activities[0], Spotify):
+            await ctx.send(f'{user} is listening to {user.activity.title} by {user.activity.artist} on {user.activity.album}')
+        else:
+            await ctx.send('You ain\'t listening to shit!')
 
 async def on_error(event, *args, **kwargs):
     with open('err.log', 'a') as f:
