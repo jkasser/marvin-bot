@@ -90,6 +90,4 @@ class ReminderBot:
         return results
 
     def close_conn(self):
-if __name__ == '__main__':
-    results = ReminderBot().check_reminders()
-    print(results)
+        self.conn.close()
