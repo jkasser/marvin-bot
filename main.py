@@ -1,9 +1,11 @@
 import yaml
 import random
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import Spotify
-from riot.riot_api import Riot
+from utils.riot_api import Riot
+from utils.reminder import ReminderBot
+import datetime
 from data.quotes import *
 
 
@@ -12,11 +14,12 @@ cfg = yaml.load(file, Loader=yaml.FullLoader)
 token = cfg["disc"]["token"]
 
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"])
-
+reminder = ReminderBot()
 
 @bot.event
 async def on_ready():  # method expected by client. This runs once when connected
     print(f'We have logged in as {bot.user}')  # notification of login.
+    check_reminders.start()
 
 
 @bot.event
@@ -90,6 +93,38 @@ async def roll_dice(ctx, max):
     await ctx.send(f'You rolled {random.randint(0, int(max))}')
 
 
+@bot.command(name='remind', help='Let me remind you of something! Just type \"!remind <who> in <when> to <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
+async def create_reminder(ctx, *text, user: discord.Member=None):
+    text = f'!remind {" ".join(text)}'
+    now = datetime.datetime.utcnow()
+    user = user or ctx.author
+    channel_id = ctx.message.channel.id
+    try:
+        # parse the string into 3 fields to insert into the databse
+        name, when, what = reminder.parse_reminder_text(text)
+        if name.lower() == 'me':
+            name = '@' + user.display_name
+        # get the date as a datetime object
+        when_datetime = reminder.get_when_remind_date(when, start_time=now)
+        # now insert it into the db
+        reminder.insert_reminder((name, when_datetime, what, channel_id))
+        await ctx.send(f'I will remind {name} to {what} at {when_datetime}')
+    except ValueError:
+        await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to <what>')
+
+@tasks.loop(seconds=10)
+async def check_reminders():
+    results = reminder.check_reminders()
+    if len(results):
+        # results are a tuple of index, name, when, what, channel_id, and sent
+        for result in results:
+            # check the when date to see if its => now
+            if datetime.datetime.utcnow() >= result[2]:
+                channel = bot.get_channel(result[4])
+                await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
+                # set it as sent
+                reminder.update_reminder(result[0])
+
 async def on_error(event, *args, **kwargs):
     with open('err.log', 'a') as f:
         if event == 'on_message':
@@ -98,4 +133,7 @@ async def on_error(event, *args, **kwargs):
             raise
 
 if __name__ == '__main__':
-    bot.run(token)  # recall my token was saved!
+    try:
+        bot.run(token)  # recall my token was saved!
+    except Exception:
+        reminder.close_conn()

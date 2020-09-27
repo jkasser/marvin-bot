@@ -10,6 +10,7 @@ discord = "*"
 pyyaml = "*"
 requests = "*"
 pytz = "*"
+python-dateutil = "*"
 
 [requires]
 python_version = "3.7"
