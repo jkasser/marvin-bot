@@ -105,6 +105,25 @@ async def hangover(ctx):
     await ctx.send(random.choice(hangover_cures))
 
 
+@bot.command(name='addrole', pass_context=True)
+@commands.has_role("Normies")
+async def add_role_to_user(ctx, user: discord.Member, role: discord.Role):
+    await user.add_roles(role)
+    await ctx.send(f'{ctx.author.name} has bestowed the role of {role.name} on {user.display_name}')
+
+
+@bot.command(name='removerole', pass_context=True)
+@commands.has_role("Normies")
+async def remove_role_from_user(ctx, user: discord.Member, role: discord.Role):
+    await user.remove_roles(role)
+    await ctx.send(f'{ctx.author.name} has removed the role of {role.name} from {user.display_name}')
+
+
+@bot.command(name='getroles')
+async def get_all_roles_in_channel(ctx):
+    await ctx.send(", ".join([str(r.name) for r in ctx.guild.roles]))
+
+
 @bot.command(name='remind', help='Let me remind you of something! Just type \"!remind <who> in <when> to <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
 async def create_reminder(ctx, *text, user: discord.Member=None):
     text = f'!remind {" ".join(text)}'
