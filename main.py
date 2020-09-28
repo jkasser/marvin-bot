@@ -147,32 +147,35 @@ async def create_reminder(ctx, *text, user: discord.Member=None):
 
 @bot.command(name='makeprivate', help="Make a private channel for you and x members")
 async def make_private_channel(ctx, * members:discord.Member):
-    guild = ctx.guild
-    creator = ctx.author
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-    }
-    channel_name = f'{creator.name}s-private-channel'
-    potential_channel = discord.utils.get(guild.text_channels, name=channel_name)
+    try:
+        guild = ctx.guild
+        creator = ctx.author
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+        }
+        channel_name = f'{creator.name}s-private-channel'
+        potential_channel = discord.utils.get(guild.text_channels, name=channel_name)
 
-    if potential_channel is None:
-        channel = await guild.create_text_channel(channel_name, category=discord.utils.get(ctx.guild.categories, name='private'), overwrites=overwrites)
-        # add permissions to the other members
-        for member in members:
-            perms = channel.overwrites_for(member)
-            perms.send_messages = True
-            perms.read_messages = True
-            await channel.set_permissions(member, overwrite=perms)
+        if potential_channel is None:
+            channel = await guild.create_text_channel(channel_name, category=discord.utils.get(ctx.guild.categories, name='private'), overwrites=overwrites)
+            # add permissions to the other members
+            for member in members:
+                perms = channel.overwrites_for(member)
+                perms.send_messages = True
+                perms.read_messages = True
+                await channel.set_permissions(member, overwrite=perms)
 
-        await ctx.send(f'Channel: {channel} has been created for you and {", ".join([member.name for member in members])}')
-    elif potential_channel:
-        for member in members:
-            perms = potential_channel.overwrites_for(member)
-            perms.send_messages = True
-            perms.read_messages = True
-            await potential_channel.set_permissions(member, overwrite=perms)
-        await ctx.send(f'Channel: {channel_name} already exists! Adding {", ".join([member.name for member in members])}')
+            await ctx.send(f'Channel: {channel} has been created for you and {", ".join([member.name for member in members])}')
+        elif potential_channel:
+            for member in members:
+                perms = potential_channel.overwrites_for(member)
+                perms.send_messages = True
+                perms.read_messages = True
+                await potential_channel.set_permissions(member, overwrite=perms)
+            await ctx.send(f'Channel: {channel_name} already exists! Adding {", ".join([member.name for member in members])}')
+    except Exception as e:
+        await ctx.send(f'I have encountered the following error: {e}')
 
 @tasks.loop(seconds=10)
 async def check_reminders():
