@@ -38,7 +38,7 @@ async def on_message(message):  # event that happens per any message.
         elif 'life' in message_text:
             await channel.send(the_answer_to_life)
         elif 'thumb' in message_text:
-            await channel.send(thumb)
+            await channel.send(thumb_quote)
     await bot.process_commands(message)
 
 
