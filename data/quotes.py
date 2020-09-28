@@ -21,4 +21,4 @@ the_answer_to_life = '42'
 
 thumb_quote = "Connor: The rule of thumb here is... \nRosengurtie: Wait, rule of thumb? In the early 1900s it was legal for men to beat their wives, as long as they used a stick no wider than their thumb. \nConnor: Cant do much damage with that then, can we? Perhaps it should have been a rule of wrist?"
 
-hangover_cures = ["B12", "Pedialyte", "Take a nap (then fire ze missiles)", "More coffee damnit!", "You only get hungover when you STOP drinking, that's your problem right there.", "RALLY BEER!", "...Banana?", "Greasy food is supposed to help... but what do I know, I can't eat", "Ingest more oil... I mean water", "Advil"]
+hangover_cures = ["B12", "Pedialyte", "Take a nap (then fire ze missiles)", "More coffee damnit!", "You only get hungover when you STOP drinking, that's your problem right there.", "Rally beer, to numb the pain", "...Banana?", "Greasy food is supposed to help... but what do I know, I can't eat", "Water... the secret to life. I wish it never existed", "Advil, might as well take the whole bottle"]
