@@ -16,6 +16,7 @@ token = cfg["disc"]["token"]
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"])
 reminder = ReminderBot()
 
+
 @bot.event
 async def on_ready():  # method expected by client. This runs once when connected
     print(f'We have logged in as {bot.user}')  # notification of login.
@@ -143,6 +144,25 @@ async def create_reminder(ctx, *text, user: discord.Member=None):
     except ValueError:
         await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to <what>')
 
+
+@bot.command(name='makeprivate', help="Make a private channel for you and x members")
+async def make_private_channel(ctx, * members:discord.Member):
+    guild = ctx.guild
+    creator = ctx.author
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True),
+    }
+    for member in members:
+        overwrites[member]: discord.PermissionOverwrite(read_messages=True)
+    channel_name = f'{creator.name}s-private-channel'
+    potential_channel = discord.utils.get(guild.text_channels, name=channel_name)
+    if potential_channel is None:
+        channel = await guild.create_text_channel(channel_name, overwrites=overwrites)
+        await ctx.send(f'Channel: {channel} has been created for you and {", ".join([member.name for member in members])}')
+    elif potential_channel:
+        await ctx.send(f'Channel: {channel_name} already exists! Modify it yourself and stop bothering me.')
+
 @tasks.loop(seconds=10)
 async def check_reminders():
     results = reminder.check_reminders()
@@ -156,10 +176,13 @@ async def check_reminders():
                 # set it as sent
                 reminder.update_reminder(result[0])
 
-async def on_error(event, *args, **kwargs):
+
+async def on_error(ctx, event, *args, **kwargs):
     with open('err.log', 'a') as f:
         if event == 'on_message':
-            f.write(f'Unhandled message: {args[0]}\n')
+            error_msg = f'Unhandled message: {args[0]}\n'
+            f.write(error_msg)
+            await ctx.send(error_msg)
         else:
             raise
 
