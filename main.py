@@ -101,7 +101,7 @@ async def decide(ctx):
 
 
 @bot.command(name='hangover', help='Get some medical advice from someone completely unqualified!')
-async def hangover_cures(ctx):
+async def hangover(ctx):
     await ctx.send(random.choice(hangover_cures))
 
 
