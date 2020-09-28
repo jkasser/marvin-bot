@@ -151,14 +151,20 @@ async def make_private_channel(ctx, * members:discord.Member):
     creator = ctx.author
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        guild.me: discord.PermissionOverwrite(read_messages=True),
+        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
     }
-    for member in members:
-        overwrites[member]: discord.PermissionOverwrite(read_messages=True)
     channel_name = f'{creator.name}s-private-channel'
     potential_channel = discord.utils.get(guild.text_channels, name=channel_name)
+
     if potential_channel is None:
-        channel = await guild.create_text_channel(channel_name, overwrites=overwrites)
+        channel = await guild.create_text_channel(channel_name, category=discord.utils.get(ctx.guild.categories, name='private'), overwrites=overwrites)
+        # add permissions to the other members
+        for member in members:
+            perms = channel.overwrites_for(member)
+            perms.send_messages = True
+            perms.read_messages = True
+            await channel.set_permissions(member, overwrite=perms)
+
         await ctx.send(f'Channel: {channel} has been created for you and {", ".join([member.name for member in members])}')
     elif potential_channel:
         await ctx.send(f'Channel: {channel_name} already exists! Modify it yourself and stop bothering me.')
