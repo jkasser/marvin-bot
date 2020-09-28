@@ -167,7 +167,12 @@ async def make_private_channel(ctx, * members:discord.Member):
 
         await ctx.send(f'Channel: {channel} has been created for you and {", ".join([member.name for member in members])}')
     elif potential_channel:
-        await ctx.send(f'Channel: {channel_name} already exists! Modify it yourself and stop bothering me.')
+        for member in members:
+            perms = potential_channel.overwrites_for(member)
+            perms.send_messages = True
+            perms.read_messages = True
+            await potential_channel.set_permissions(member, overwrite=perms)
+        await ctx.send(f'Channel: {channel_name} already exists! Adding {", ".join([member.name for member in members])}')
 
 @tasks.loop(seconds=10)
 async def check_reminders():
