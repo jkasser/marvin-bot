@@ -106,14 +106,14 @@ async def hangover(ctx):
 
 
 @bot.command(name='addrole', pass_context=True)
-@commands.has_role("Normies")
+@commands.has_any_role("Admins", "TheOGs")
 async def add_role_to_user(ctx, user: discord.Member, role: discord.Role):
     await user.add_roles(role)
     await ctx.send(f'{ctx.author.name} has bestowed the role of {role.name} on {user.display_name}')
 
 
 @bot.command(name='removerole', pass_context=True)
-@commands.has_role("Normies")
+@commands.has_any_role("Admins", "TheOGs")
 async def remove_role_from_user(ctx, user: discord.Member, role: discord.Role):
     await user.remove_roles(role)
     await ctx.send(f'{ctx.author.name} has removed the role of {role.name} from {user.display_name}')
