@@ -95,6 +95,16 @@ async def roll_dice(ctx, max):
     await ctx.send(f'You rolled {random.randint(0, int(max))}')
 
 
+@bot.command(name='decide', help='Let marvin make a decision for you!')
+async def decide(ctx):
+    await ctx.send(f'{random.choice(["Yes.", "No."])}')
+
+
+@bot.command(name='hangover', help='Get some medical advice from someone completely unqualified!')
+async def hangover_cures(ctx):
+    await ctx.send(random.choice(hangover_cures))
+
+
 @bot.command(name='remind', help='Let me remind you of something! Just type \"!remind <who> in <when> to <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
 async def create_reminder(ctx, *text, user: discord.Member=None):
     text = f'!remind {" ".join(text)}'
