@@ -19,4 +19,4 @@ towel_quote = "Ah! A towel is about the most massively useful thing an interstel
 
 the_answer_to_life = '42'
 
-thumb = '-Connor: The rule of thumb here is... \n - Rosengurtie: Wait, rule of thumb? In the early 1900s it was legal for men to beat their wives, as long as they used a stick no wider than their thumb. \n- Connor: Cant do much damage with that then, can we? Perhaps it should have been a rule of wrist?”'
+thumb_quote = '-Connor: The rule of thumb here is... \n - Rosengurtie: Wait, rule of thumb? In the early 1900s it was legal for men to beat their wives, as long as they used a stick no wider than their thumb. \n- Connor: Cant do much damage with that then, can we? Perhaps it should have been a rule of wrist?”'
