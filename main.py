@@ -12,9 +12,10 @@ from data.quotes import *
 file = open('config.yaml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 token = cfg["disc"]["token"]
-
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"])
 reminder = ReminderBot()
+
+user_queue = []
 
 
 @bot.event
@@ -140,7 +141,7 @@ async def create_reminder(ctx, *text, user: discord.Member=None):
         when_datetime = reminder.get_when_remind_date(when, start_time=now)
         # now insert it into the db
         reminder.insert_reminder((name, when_datetime, what, channel_id))
-        await ctx.send(f'I will remind {name} to {what} at {when_datetime}')
+        await ctx.send(f'I will remind {name} - "{what}" at {when_datetime}')
     except ValueError:
         await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to <what>')
 
@@ -176,6 +177,36 @@ async def make_private_channel(ctx, * members:discord.Member):
             await ctx.send(f'Channel: {channel_name} already exists! Adding {", ".join([member.name for member in members])}')
     except Exception as e:
         await ctx.send(f'I have encountered the following error: {e}')
+
+
+@bot.command(name='qadd', help="Adds you to the current queue")
+async def add_user_to_queue(ctx):
+    username = ctx.message.author.mention
+    user_queue.append(username)
+    await ctx.send(f'{username} has been added to the queue at position {user_queue.index(username)}')
+
+
+@bot.command(name='qlist', help="See the current queue list")
+async def get_queue_list(ctx):
+    if len(user_queue) >= 1:
+        await ctx.send(f'{", ".join(user for user in user_queue)}')
+    else:
+        await ctx.send(f'The queue is currently empty.')
+
+
+@bot.command(name='qclear', help="Clear the current queue")
+async def clear_queue(ctx):
+    user_queue.clear()
+    await ctx.send('The queue has been cleared!')
+
+@bot.command(name='qnext', help="Call the next person in the queue")
+async def get_next_user_in_queue(ctx):
+    if len(user_queue) >= 1:
+        user = user_queue.pop(0)
+        await ctx.send(f'{user}, you have been summoned!')
+    else:
+        await ctx.send(f'The queue is empty! There is no one else to call')
+
 
 @tasks.loop(seconds=10)
 async def check_reminders():
