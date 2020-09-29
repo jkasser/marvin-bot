@@ -15,8 +15,7 @@ token = cfg["disc"]["token"]
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"])
 reminder = ReminderBot()
 
-user_queue = []
-
+named_queues = {"General": []}
 
 @bot.event
 async def on_ready():  # method expected by client. This runs once when connected
@@ -179,33 +178,80 @@ async def make_private_channel(ctx, * members:discord.Member):
         await ctx.send(f'I have encountered the following error: {e}')
 
 
+@bot.command(name='qcreate', help="Create a named queue in memory")
+async def create_named_queue(ctx, name):
+    if name not in named_queues.keys():
+        named_queues[name] = []
+        await ctx.send(f'Queue: {name}, created!')
+    else:
+        await ctx.send(f'Queue: {name}, already exists!')
+
+
 @bot.command(name='qadd', help="Adds you to the current queue")
-async def add_user_to_queue(ctx):
+async def add_user_to_queue(ctx, name=None):
     username = ctx.message.author.mention
-    user_queue.append(username)
-    await ctx.send(f'{username} has been added to the queue at position {user_queue.index(username)}')
+    if name is None:
+        queue = named_queues["General"]
+        name = 'General'
+    else:
+        if name in named_queues.keys():
+            queue = named_queues[name]
+        else:
+            await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+            return
+    queue.append(username)
+    await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username)+1}')
 
 
 @bot.command(name='qlist', help="See the current queue list")
-async def get_queue_list(ctx):
-    if len(user_queue) >= 1:
-        await ctx.send(f'{", ".join(user for user in user_queue)}')
+async def get_queue_list(ctx, name=None):
+    if name is None:
+        queue = named_queues["General"]
+        name = 'General'
     else:
-        await ctx.send(f'The queue is currently empty.')
+        if name in named_queues.keys():
+            queue = named_queues[name]
+        else:
+            await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+            return
+    if len(queue) >= 1:
+        await ctx.send(f'{", ".join(user for user in queue)}')
+    else:
+        await ctx.send(f'The {name} queue is currently empty.')
 
 
 @bot.command(name='qclear', help="Clear the current queue")
-async def clear_queue(ctx):
-    user_queue.clear()
-    await ctx.send('The queue has been cleared!')
+async def clear_queue(ctx, name=None):
+    if name is None:
+        queue = named_queues["General"]
+        name = 'General'
+    else:
+        if name in named_queues.keys():
+            queue = named_queues[name]
+        else:
+            await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+            return
+    queue.clear()
+    await ctx.send(f'The queue: {name} has been cleared!')
+
 
 @bot.command(name='qnext', help="Call the next person in the queue")
-async def get_next_user_in_queue(ctx):
-    if len(user_queue) >= 1:
-        user = user_queue.pop(0)
+async def get_next_user_in_queue(ctx, name=None):
+    if name is None:
+        queue = named_queues["General"]
+        name = 'General'
+    else:
+        if name in named_queues.keys():
+            queue = named_queues[name]
+        else:
+            await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+            return
+
+    if len(queue) >= 1:
+        user = queue.pop(0)
         await ctx.send(f'{user}, you have been summoned!')
     else:
-        await ctx.send(f'The queue is empty! There is no one else to call')
+        await ctx.send(f'The {name} queue is empty! There is no one else to call')
 
 
 @tasks.loop(seconds=10)
