@@ -178,8 +178,7 @@ async def make_private_channel(ctx, * members:discord.Member):
         await ctx.send(f'I have encountered the following error: {e}')
 
 
-@bot.command(name='qcreate', help="Create a named queue in memory")
-async def create_named_queue(ctx, name):
+@bot.command(name='qcreate', help="Create a single word named queue in memory, if left blank, will create the 'General' queue, which exists by default.\nEx. !qcreate myqueue")
     if name not in named_queues.keys():
         named_queues[name] = []
         await ctx.send(f'Queue: {name}, created!')
@@ -187,7 +186,7 @@ async def create_named_queue(ctx, name):
         await ctx.send(f'Queue: {name}, already exists!')
 
 
-@bot.command(name='qadd', help="Adds you to the current queue")
+@bot.command(name='qadd', help="Call !qadd <name> to be added to a specific queue, if name is not provided it adds you to the general queue.\nEx. !qadd myqueue")
 async def add_user_to_queue(ctx, name=None):
     username = ctx.message.author.mention
     if name is None:
@@ -203,7 +202,7 @@ async def add_user_to_queue(ctx, name=None):
     await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username)+1}')
 
 
-@bot.command(name='qlist', help="See the current queue list")
+@bot.command(name='qlist', help="See the current queue list of the queue name provided. If no name is provided then it will provide the list of the General queue.\nEx. !qlist myqueue")
 async def get_queue_list(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
@@ -220,7 +219,7 @@ async def get_queue_list(ctx, name=None):
         await ctx.send(f'The {name} queue is currently empty.')
 
 
-@bot.command(name='qclear', help="Clear the current queue")
+@bot.command(name='qclear', help="Clears the provided queue name. If no queue name is provided it will clear the General queue.\nEx. !qclear myqueue")
 async def clear_queue(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
@@ -235,7 +234,7 @@ async def clear_queue(ctx, name=None):
     await ctx.send(f'The queue: {name} has been cleared!')
 
 
-@bot.command(name='qnext', help="Call the next person in the queue")
+@bot.command(name='qnext', help="Call the next person in the provided queue. If no queue name is provided, it will call the next person from the General queue.\nEx. !qnext myqueue")
 async def get_next_user_in_queue(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
