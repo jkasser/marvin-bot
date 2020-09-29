@@ -33,8 +33,8 @@ class ReminderBot:
 
     def parse_reminder_text(self, string):
         name_pattern = re.compile(r'(?<=^\!remind\s)[\S]{1,}')
-        when_pattern = re.compile(r'(?<=in\s|on\s).+?(?=\sto|$)')
-        what_pattern = re.compile(r'(?<=to\s).+?(?=\sin|$)')
+        when_pattern = re.compile(r'(?<=in\s|on\s).*(?=\sto|\sthat)|(?<=in\s)\d{1,}.+$|(?<=on\s).+')
+        what_pattern = re.compile(r'(?<=that\s|..to\s).*(?=\son)|(?<=that\s|..to\s).*(?=\sin\s\d)|(?<=that\s|..to\s).*')
 
         name = name_pattern.search(string).group()
         when = when_pattern.search(string).group()
