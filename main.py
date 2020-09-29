@@ -179,6 +179,7 @@ async def make_private_channel(ctx, * members:discord.Member):
 
 
 @bot.command(name='qcreate', help="Create a single word named queue in memory, if left blank, will create the 'General' queue, which exists by default.\nEx. !qcreate myqueue")
+async def create_named_queue(ctx, name='General'):
     if name not in named_queues.keys():
         named_queues[name] = []
         await ctx.send(f'Queue: {name}, created!')
