@@ -35,7 +35,7 @@ holy_grail_quotes = [
         "Help help, I'm being oppressed! Come and see the violence inherent in the system.",
         "Listen. Strange women lying in ponds distributing swords is no basis for a system of government. Supreme executive power derives from a mandate from the masses, not from some farcical aquatic ceremony.",
         "We're an anarcho-syndicalist commune.",
-        "You don't frighten us, English pig dogs. Go and boil your bottoms, you sons of a silly person. I blow my nose at you, so-called 'Arthur King', you and all your silly English K-nig-hts."
+        "You don't frighten us, English pig dogs. Go and boil your bottoms, you sons of a silly person. I blow my nose at you, so-called 'Arthur King', you and all your silly English K-nig-hts.",
         "On second thought lets NOT go to Camelot, tis a silly place.",
         "You think your king just because some hag threw a sword at you?"
 ]
