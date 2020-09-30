@@ -1,7 +1,9 @@
 disc:
-  token: 
+  token:
   guild:
   prefix:
+  dev: # store the test token here
+  prod: # store marvin bots token here
 
 riot:
   key:
