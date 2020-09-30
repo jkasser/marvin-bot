@@ -5,6 +5,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil import parser
 
+
 class ReminderBot:
 
     REMINDERS_TABLE = """CREATE TABLE IF NOT EXISTS reminders (
