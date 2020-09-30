@@ -96,19 +96,17 @@ async def get_clash(ctx):
 
 @bot.command(name='whatsmyvibe', help='What you vibing too right now lil gangsta?')
 async def get_vibe(ctx, user: discord.Member=None):
-    user = user or ctx.author
-    if len(user.activities) > 1:
-        for activity in user.activities:
-            if isinstance(activity, Spotify):
-                await ctx.send(f'{user} is listening to {activity.title} by {activity.artist} on {activity.album}')
-                break
-            elif user.activities.index(activity) == len(user.activities) - 1 and not isinstance(activity, Spotify):
-                await ctx.send('You ain\'t listening to shit!')
-    else:
-        if len(user.activities) ==1 and isinstance(user.activities[0], Spotify):
-            await ctx.send(f'{user.display_name} is listening to {user.activity.title} by {user.activity.artist} on {user.activity.album}')
-        else:
-            await ctx.send('You ain\'t listening to shit!')
+    user = user or ctx.author  # default to the caller
+    spot = next((activity for activity in user.activities if isinstance(activity, discord.Spotify)), None)
+    if spot is None:
+        await ctx.send(f"{user.name.capitalize()} is not listening to Spotify.")
+        return
+    embedspotify = discord.Embed(title=f"{user.name}'s Spotify", color=0x1eba10)
+    embedspotify.add_field(name="Song", value=spot.title, inline=False)
+    embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
+    embedspotify.add_field(name="Album", value=spot.album)
+    embedspotify.set_thumbnail(url=spot.album_cover_url)
+    await ctx.send(embed=embedspotify)
 
 
 @bot.command(name='roll', help='Type !roll <max number> to get a random number between 0 and the max!')
