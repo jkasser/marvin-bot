@@ -180,6 +180,7 @@ async def add_user_to_channel(ctx, * members:discord.Member):
 
 
 @bot.command(name='makeprivate', help="Make a private channel for you and x members")
+@commands.has_any_role("Admins", "TheOGs")
 async def make_private_channel(ctx, * members:discord.Member):
     try:
         guild = ctx.guild
@@ -198,6 +199,16 @@ async def make_private_channel(ctx, * members:discord.Member):
                 perms = channel.overwrites_for(member)
                 perms.send_messages = True
                 perms.read_messages = True
+                perms.attach_files = True
+                perms.embed_links = True
+                perms.read_message_history = True
+                perms.mention_everyone = True
+                perms.use_external_emojis = True
+                perms.attach_files = True
+                perms.speak = True
+                perms.connect = True
+                perms.change_nickname = True
+                perms.stream = True
                 await channel.set_permissions(member, overwrite=perms)
 
             await ctx.send(f'Channel: {channel} has been created for you and {", ".join([member.name for member in members])}')
@@ -206,6 +217,16 @@ async def make_private_channel(ctx, * members:discord.Member):
                 perms = potential_channel.overwrites_for(member)
                 perms.send_messages = True
                 perms.read_messages = True
+                perms.attach_files = True
+                perms.embed_links = True
+                perms.read_message_history = True
+                perms.mention_everyone = True
+                perms.use_external_emojis = True
+                perms.attach_files = True
+                perms.speak = True
+                perms.connect = True
+                perms.change_nickname = True
+                perms.stream = True
                 await potential_channel.set_permissions(member, overwrite=perms)
             await ctx.send(f'Channel: {channel_name} already exists! Adding {", ".join([member.name for member in members])}')
     except Exception as e:
