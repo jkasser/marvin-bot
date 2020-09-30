@@ -55,5 +55,6 @@ class MarvinReddit(MarvinDB):
                     continue
                 else:
                     self.add_post_id_to_db(submission.id)
-                    post_list.append(f'{submission.title}\n{submission.selftext[:100]}...\n{submission.url}')
+                    print(submission.permalink)
+                    post_list.append((submission.title, submission.selftext[:100], f'https://old.reddit.com{submission.permalink}', submission.thumbnail))
         return post_list

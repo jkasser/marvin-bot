@@ -350,7 +350,9 @@ async def check_reddit_stream():
     post_list = reddit_feed.get_travel_stream(limit=10)
     if len(post_list) >= 1:
         for post in post_list:
-            await travel_channel.send(post)
+            embedded_link = discord.Embed(title=post[0], description=post[1],  url=post[2], color=0x00ff00)
+            embedded_link.set_thumbnail(url=post[3])
+            await travel_channel.send(embed=embedded_link)
             await travel_channel.send('---------------------------------------------------------------')
 
 
