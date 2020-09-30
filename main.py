@@ -345,7 +345,7 @@ async def check_reminders():
 async def check_reddit_stream():
     print('Checking reddit stream!')
     travel_channel = bot.get_channel(758126844708651041)
-    post_list = reddit_feed.get_travel_stream(limit=5)
+    post_list = reddit_feed.get_travel_stream(limit=10)
     if len(post_list) >= 1:
         for post in post_list:
             await travel_channel.send(post)
