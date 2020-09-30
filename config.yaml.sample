@@ -1,8 +1,12 @@
 disc:
-  token:
+  token: 
   guild:
-  prefix: ''
+  prefix:
 
 riot:
   key:
   region:
+
+reddit:
+  client_id:
+  client_secret:
