@@ -68,7 +68,7 @@ async def marvin_quote(ctx):
 
 
 @bot.command(name='lullaby', help='Let Marvin read you a lullaby!')
-async def marvin_lullaby(ctx):
+async def post_marvin_lullaby(ctx):
     await ctx.send(marvin_lullaby)
 
 
