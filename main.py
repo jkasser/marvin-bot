@@ -304,7 +304,7 @@ async def check_reminders():
                 channel = bot.get_channel(result[4])
                 await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
                 # set it as sent
-                reminder.update_reminder(result[0])
+                reminder.mark_reminder_sent(result[0])
 
 
 @tasks.loop(seconds=300)
@@ -315,7 +315,7 @@ async def check_reddit_stream():
     if len(post_list) >= 1:
         for post in post_list:
             await travel_channel.send(post)
-            await travel_channel.send('------------------------------------------------')
+            await travel_channel.send('---------------------------------------------------------------')
 
 
 @bot.event
