@@ -293,6 +293,12 @@ async def get_my_user_id(ctx):
     await ctx.send(f'Your user ID is: {ctx.message.author.id}')
 
 
+@bot.command(pass_context=True, help="Delete all the messages from this channel")
+@commands.has_any_role("Admins")
+async def purge(ctx):
+    await ctx.channel.purge()
+
+
 @tasks.loop(seconds=10)
 async def check_reminders():
     results = reminder.check_reminders()
