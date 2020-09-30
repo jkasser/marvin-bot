@@ -1,14 +1,15 @@
-import sqlite3
 from sqlite3 import Error
 import re
 import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil import parser
+from utils.db import MarvinDB
 
 
-class ReminderBot:
+class ReminderBot(MarvinDB):
 
-    REMINDERS_TABLE = """CREATE TABLE IF NOT EXISTS reminders (
+    TABLE_NAME = 'reminders'
+    REMINDERS_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
         id integer PRIMARY KEY,
         name text NOT NULL,
         when_remind timestamp NOT NULL,
@@ -17,20 +18,32 @@ class ReminderBot:
         sent integer NOT NULL
     );"""
 
-    INSERT_REMINDER = """INSERT INTO reminders(name,when_remind,what,channel_id,sent) VALUES(?,?,?,?,0)"""
+    INSERT_REMINDER = f"""INSERT INTO {TABLE_NAME}(name,when_remind,what,channel_id,sent) VALUES(?,?,?,?,0)"""
 
-    MARK_REMINDER_SENT = """UPDATE reminders SET sent = 1 WHERE id = ?"""
+    MARK_REMINDER_SENT = f"""UPDATE {TABLE_NAME} SET sent = 1 WHERE id = ?"""
 
-    FIND_PENDING_REMINDERS = """SELECT * FROM reminders WHERE sent=0"""
+    FIND_PENDING_REMINDERS = f"""SELECT * FROM {TABLE_NAME} WHERE sent=0"""
 
     def __init__(self):
         # if not os.path.exists('./marvin.db'):
-        self.conn = None
+        super().__init__()
         try:
-            self.conn = sqlite3.connect('marvin.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
             self.create_table(self.conn, self.REMINDERS_TABLE)
         except Error as e:
             print(e)
+
+    def insert_reminder(self, values):
+        return self.insert_query(self.INSERT_REMINDER, values)
+
+    def mark_reminder_sent(self, reminder_id):
+        self.update_query(self.MARK_REMINDER_SENT, (reminder_id,))
+
+    def check_reminders(self):
+        cur = self.conn.cursor()
+        results = cur.execute(self.FIND_PENDING_REMINDERS)
+        results = results.fetchall()
+        self.conn.commit()
+        return results
 
     def parse_reminder_text(self, string):
         name_pattern = re.compile(r'(?<=^\!remind\s)[\S]{1,}')
@@ -64,31 +77,3 @@ class ReminderBot:
         else:
             when_remind = parser.parse(date_string)
         return when_remind
-
-    def create_table(self, conn, create_table_sql):
-        try:
-            c = conn.cursor()
-            c.execute(create_table_sql)
-        except Error as e:
-            print(e)
-
-    def insert_reminder(self, reminder):
-        cur = self.conn.cursor()
-        cur.execute(self.INSERT_REMINDER, reminder)
-        self.conn.commit()
-        return cur.lastrowid
-
-    def update_reminder(self, reminder_id):
-        cur = self.conn.cursor()
-        cur.execute(self.MARK_REMINDER_SENT, (reminder_id,))
-        self.conn.commit()
-
-    def check_reminders(self):
-        cur = self.conn.cursor()
-        results = cur.execute(self.FIND_PENDING_REMINDERS)
-        results = results.fetchall()
-        self.conn.commit()
-        return results
-
-    def close_conn(self):
-        self.conn.close()
