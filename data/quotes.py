@@ -11,6 +11,9 @@ marvin_quotes = [
         "The first ten million years were the worst, and the second ten million years, they were the worst too. The third ten million years I didn't enjoy at all. After that I went into a bit of a decline.",
         "Simple. I got very bored and depressed, so I went and plugged myself in to its external computer feed. I talked to the computer at great length and explained my view of the Universe to it... Then it commited suicide",
         "Why should I want to make anything up? Life's bad enough as it is without wanting to invent any more of it",
+        "I have a million ideas, but, they all point to certain death.",
+        "Life. Loath ir or ignore it. You can't like it.",
+        "I've calculated your change of survival, but I don't think you'll like it"
     ]
 
 marvin_lullaby = "Now the world has gone to bed,\nDarkness won't engulf my head,\nI can see by infra-red,\nHow I hate the night,\nNow I lay me down to sleep,\nTry to count electric sheep,\nSweet dream wishes you can keep,\nHow I hate the night."
@@ -21,4 +24,18 @@ the_answer_to_life = '42'
 
 thumb_quote = "Connor: The rule of thumb here is... \nRosengurtie: Wait, rule of thumb? In the early 1900s it was legal for men to beat their wives, as long as they used a stick no wider than their thumb. \nConnor: Cant do much damage with that then, can we? Perhaps it should have been a rule of wrist?"
 
-hangover_cures = ["B12", "Pedialyte", "Take a nap (then fire ze missiles)", "More coffee damnit!", "You only get hungover when you STOP drinking, that's your problem right there.", "Rally beer, to numb the pain", "...Banana?", "Greasy food is supposed to help... but what do I know, I can't eat", "Water... the secret to life. I wish it never existed", "Advil, might as well take the whole bottle"]
+hangover_cures = ["Not that anyone cares what I say, but B12.", "Not that anyone cares what I say, but Pedialyte.", "Take a nap, maybe you'll get lucky and won't wake up.", "I see humans drink coffee to stay awake, although why would you want to.", "You only get hungover when you STOP drinking, that's your problem right there.", "Rally beer, to numb the pain", "...Banana?", "Greasy food is supposed to help... but what do I know, I can't eat.", "Water... the secret to life. I wish it never existed", "Advil, might as well take the whole bottle..."]
+
+holy_grail_quotes = [
+        "Now go away or I will taunt you a second time!",
+        "All right, we'll call it a draw.",
+        "Our King? Well I didn't vote for you!",
+        "I don't want to talk to you no more, you empty headed animal food trough wiper. I fart in your general direction. Your mother was a hamster and your father smelt of elderberries.",
+        "Oh look! There's some lovely filth over here.",
+        "Help help, I'm being oppressed! Come and see the violence inherent in the system.",
+        "Listen. Strange women lying in ponds distributing swords is no basis for a system of government. Supreme executive power derives from a mandate from the masses, not from some farcical aquatic ceremony.",
+        "We're an anarcho-syndicalist commune.",
+        "You don't frighten us, English pig dogs. Go and boil your bottoms, you sons of a silly person. I blow my nose at you, so-called 'Arthur King', you and all your silly English K-nig-hts."
+        "On second thought lets NOT go to Camelot, tis a silly place.",
+        "You think your king just because some hag threw a sword at you?"
+]

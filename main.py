@@ -71,6 +71,12 @@ async def marvin_quote(ctx):
     await ctx.send(response)
 
 
+@bot.command(name='grail', help='Tis a silly command')
+async def get_monty_python_quotes(ctx):
+    response = random.choice(holy_grail_quotes)
+    await ctx.send(response)
+
+
 @bot.command(name='lullaby', help='Let Marvin read you a lullaby!')
 async def post_marvin_lullaby(ctx):
     await ctx.send(marvin_lullaby)
@@ -347,7 +353,6 @@ async def check_reminders():
 
 @tasks.loop(seconds=300)
 async def check_reddit_stream():
-    print('Checking reddit stream!')
     travel_channel = bot.get_channel(758126844708651041)
     post_list = reddit_feed.get_travel_stream(limit=10)
     if len(post_list) >= 1:
