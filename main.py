@@ -51,7 +51,7 @@ async def on_message(message):  # event that happens per any message.
         elif 'thumb' in message_text:
             await channel.send(thumb_quote)
         elif 'shut up' in message_text or 'be quiet' in message_text or 'stfu' in message_text:
-            await channel.send(file=discord.File('.media/shut_up.gif'))
+            await channel.send(file=discord.File('./media/shut_up.gif'))
     await bot.process_commands(message)
 
 
