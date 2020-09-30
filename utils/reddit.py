@@ -39,8 +39,8 @@ class MarvinReddit(MarvinDB):
         else:
             return True
 
-    def get_travel_stream(self, limit=1):
-       submissions = [submission for submission in self.reddit.multireddit("OneBagOneWorld", "OneBagOneWorld").rising(limit=limit)]
+    def get_travel_stream(self, limit=10):
+       submissions = [submission for submission in self.reddit.multireddit("OneBagOneWorld", "OneBagOneWorld").top(limit=limit)]
        if submissions is not None:
             post_list = self.parse_stream(submissions)
             return post_list
