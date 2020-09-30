@@ -155,6 +155,30 @@ async def create_reminder(ctx, *text, user: discord.Member=None):
         await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to <what>')
 
 
+@bot.command(name='adduser', help="Add a user to this channel. You must be a member of TheOGs to use this command.")
+@commands.has_any_role("Admins", "TheOGs")
+async def add_user_to_channel(ctx, * members:discord.Member):
+    try:
+        for member in members:
+            perms = ctx.message.channel.overwrites_for(member)
+            perms.send_messages = True
+            perms.read_messages = True
+            perms.attach_files = True
+            perms.embed_links = True
+            perms.read_message_history = True
+            perms.mention_everyone = True
+            perms.use_external_emojis = True
+            perms.attach_files = True
+            perms.speak = True
+            perms.connect = True
+            perms.change_nickname = True
+            perms.stream = True
+            await ctx.message.channel.set_permissions(member, overwrite=perms)
+        await ctx.send(f'I have added the following members: {", ".join([member.name for member in members])}')
+    except Exception as e:
+        await ctx.send(f'I have encountered the following error: {e}')
+
+
 @bot.command(name='makeprivate', help="Make a private channel for you and x members")
 async def make_private_channel(ctx, * members:discord.Member):
     try:
