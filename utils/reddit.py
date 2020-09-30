@@ -55,5 +55,5 @@ class MarvinReddit(MarvinDB):
                     continue
                 else:
                     self.add_post_id_to_db(submission.id)
-                    post_list.append(f'{submission.title}\n{submission.selftext}\n{submission.url}')
+                    post_list.append(f'{submission.title}\n{submission.selftext[:100]}...\n{submission.url}')
         return post_list
