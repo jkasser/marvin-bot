@@ -5,22 +5,32 @@ from discord.ext import commands, tasks
 from discord import Spotify
 from utils.riot_api import Riot
 from utils.reminder import ReminderBot
+from utils.reddit import MarvinReddit
 import datetime
 from data.quotes import *
 
 
 file = open('config.yaml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
+# discord config
 token = cfg["disc"]["token"]
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"])
-reminder = ReminderBot()
-
+# reddit config
+r_client_id = cfg["reddit"]["client_id"]
+r_client_secret = cfg["reddit"]["client_secret"]
+# Variables in memory
 named_queues = {"General": []}
+
+# Instantiate Objects here
+reminder = ReminderBot()
+reddit_feed = MarvinReddit(r_client_id, r_client_secret)
+
 
 @bot.event
 async def on_ready():  # method expected by client. This runs once when connected
     print(f'We have logged in as {bot.user}')  # notification of login.
     check_reminders.start()
+    check_reddit_stream.start()
 
 
 @bot.event
@@ -254,6 +264,11 @@ async def get_next_user_in_queue(ctx, name=None):
         await ctx.send(f'The {name} queue is empty! There is no one else to call')
 
 
+@bot.command(name='getmyid', help="Return your discord user ID, helpful for debugging.")
+async def get_my_user_id(ctx):
+    await ctx.send(f'Your user ID is: {ctx.message.author.id}')
+
+
 @tasks.loop(seconds=10)
 async def check_reminders():
     results = reminder.check_reminders()
@@ -266,6 +281,17 @@ async def check_reminders():
                 await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
                 # set it as sent
                 reminder.update_reminder(result[0])
+
+
+@tasks.loop(seconds=300)
+async def check_reddit_stream():
+    print('Checking reddit stream!')
+    travel_channel = bot.get_channel(758126844708651041)
+    post_list = reddit_feed.get_travel_stream(pause_after=1)
+    if len(post_list) >= 1:
+        for post in post_list:
+            await travel_channel.send(post)
+            await travel_channel.send('------------------------------------------------')
 
 
 async def on_error(ctx, event, *args, **kwargs):
