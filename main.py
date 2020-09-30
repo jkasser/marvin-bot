@@ -318,14 +318,9 @@ async def check_reddit_stream():
             await travel_channel.send('------------------------------------------------')
 
 
-async def on_error(ctx, event, *args, **kwargs):
-    with open('err.log', 'a') as f:
-        if event == 'on_message':
-            error_msg = f'Unhandled message: {args[0]}\n'
-            f.write(error_msg)
-            await ctx.send(error_msg)
-        else:
-            raise
+@bot.event
+async def on_command_error(ctx, error):
+    await ctx.send(error)
 
 if __name__ == '__main__':
     try:
