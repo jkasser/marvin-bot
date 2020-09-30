@@ -213,6 +213,7 @@ async def make_private_channel(ctx, * members:discord.Member):
 
 
 @bot.command(name='qcreate', help="Create a single word named queue in memory, if left blank, will create the 'General' queue, which exists by default.\nEx. !qcreate myqueue")
+@commands.has_any_role("Admins", "TheOGs")
 async def create_named_queue(ctx, name='General'):
     if name not in named_queues.keys():
         named_queues[name] = []
@@ -255,6 +256,7 @@ async def get_queue_list(ctx, name=None):
 
 
 @bot.command(name='qclear', help="Clears the provided queue name. If no queue name is provided it will clear the General queue.\nEx. !qclear myqueue")
+@commands.has_any_role("Admins", "TheOGs")
 async def clear_queue(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
@@ -270,6 +272,7 @@ async def clear_queue(ctx, name=None):
 
 
 @bot.command(name='qnext', help="Call the next person in the provided queue. If no queue name is provided, it will call the next person from the General queue.\nEx. !qnext myqueue")
+@commands.has_any_role("Admins", "TheOGs")
 async def get_next_user_in_queue(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
