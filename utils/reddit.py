@@ -55,7 +55,7 @@ class MarvinReddit(MarvinDB):
 
     def get_lol_stream(self, limit=10):
         submissions = [submission for submission in
-                       self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit)]
+                       self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit, time_filter="day")]
         if submissions is not None:
             post_list = self.parse_stream(submissions)
             return post_list
