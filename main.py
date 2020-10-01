@@ -373,7 +373,7 @@ async def check_reminders():
 @tasks.loop(seconds=300)
 async def check_reddit_stream():
     travel_channel = bot.get_channel(758126844708651041)
-    post_list = reddit_feed.get_travel_stream(limit=10)
+    post_list = reddit_feed.get_travel_stream(limit=50)
     if len(post_list) >= 1:
         for post in post_list:
             embedded_link = discord.Embed(title=post[0], description=post[1],  url=post[2], color=0x00ff00)
