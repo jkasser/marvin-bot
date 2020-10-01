@@ -376,7 +376,7 @@ async def check_reddit_travel_stream():
 
 @tasks.loop(seconds=300)
 async def check_reddit_lol_stream():
-    travel_channel = bot.get_channel(761291587044376598)
+    lol_channel = bot.get_channel(761291587044376598)
     post_list = reddit_feed.get_lol_stream(limit=50)
     if len(post_list) >= 1:
         for post in post_list:
@@ -388,8 +388,8 @@ async def check_reddit_lol_stream():
                     embedded_link.add_field(name="subreddit", value=post[5])
                     if post[4] != 'default' and post[4] != 'self':
                         embedded_link.set_thumbnail(url=post[4])
-                    await travel_channel.send(embed=embedded_link)
-                    await travel_channel.send('---------------------------------------------------------------')
+                    await lol_channel.send(embed=embedded_link)
+                    await lol_channel.send('---------------------------------------------------------------')
                     # finally add it to the DB once it has been sent
                     reddit_feed.add_post_id_to_db(post[0])
                 except Exception:
