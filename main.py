@@ -202,45 +202,29 @@ async def make_private_channel(ctx, * members:discord.Member):
             guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
         }
         channel_name = f'{creator.name}s-private-channel'
-        potential_channel = discord.utils.get(guild.text_channels, name=channel_name)
+        channel = discord.utils.get(guild.text_channels, name=channel_name)
 
-        if potential_channel is None:
+        if channel is None:
             channel = await guild.create_text_channel(channel_name, category=discord.utils.get(ctx.guild.categories, name='private'), overwrites=overwrites)
-            # add permissions to the other members
-            for member in members:
-                perms = channel.overwrites_for(member)
-                perms.send_messages = True
-                perms.read_messages = True
-                perms.attach_files = True
-                perms.embed_links = True
-                perms.read_message_history = True
-                perms.mention_everyone = True
-                perms.use_external_emojis = True
-                perms.attach_files = True
-                perms.speak = True
-                perms.connect = True
-                perms.change_nickname = True
-                perms.stream = True
-                await channel.set_permissions(member, overwrite=perms)
-
-            await ctx.send(f'Channel: {channel} has been created for you and {", ".join([member.name for member in members])}')
-        elif potential_channel:
-            for member in members:
-                perms = potential_channel.overwrites_for(member)
-                perms.send_messages = True
-                perms.read_messages = True
-                perms.attach_files = True
-                perms.embed_links = True
-                perms.read_message_history = True
-                perms.mention_everyone = True
-                perms.use_external_emojis = True
-                perms.attach_files = True
-                perms.speak = True
-                perms.connect = True
-                perms.change_nickname = True
-                perms.stream = True
-                await potential_channel.set_permissions(member, overwrite=perms)
-            await ctx.send(f'Channel: {channel_name} already exists! Adding {", ".join([member.name for member in members])}')
+            await ctx.send(f'Channel: {channel} has been created!')
+        elif channel:
+            await ctx.send(f'Channel: {channel_name} already exists!')
+        for member in members:
+            perms = channel.overwrites_for(member)
+            perms.send_messages = True
+            perms.read_messages = True
+            perms.attach_files = True
+            perms.embed_links = True
+            perms.read_message_history = True
+            perms.mention_everyone = True
+            perms.use_external_emojis = True
+            perms.attach_files = True
+            perms.speak = True
+            perms.connect = True
+            perms.change_nickname = True
+            perms.stream = True
+            await channel.set_permissions(member, overwrite=perms)
+        await ctx.send(f'I have added: {", ".join([member.name for member in members])} to channel')
     except Exception as e:
         await ctx.send(f'I have encountered the following error: {e}')
 
@@ -255,7 +239,7 @@ async def create_named_queue(ctx, name='General'):
         await ctx.send(f'Queue: {name}, already exists!')
 
 
-@bot.command(name='qaddme', help="Call !qadd <name> to be added to a specific queue, if name is not provided it adds you to the general queue.\nEx. !qadd myqueue")
+@bot.command(name='qaddme', help="Call !qaddme <name> to be added to a specific queue, if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue")
 async def add_me_to_queue(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
