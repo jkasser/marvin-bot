@@ -52,3 +52,10 @@ class MarvinReddit(MarvinDB):
                 post_id = submission.id
                 post_list.append((post_id, submission.title, submission.selftext[:100], f'https://old.reddit.com{submission.permalink}', submission.thumbnail, submission.subreddit))
         return post_list
+
+    def get_lol_stream(self, limit=10):
+        submissions = [submission for submission in
+                       self.reddit.subreddit("summonerschool+leagueoflegends").hot(limit=limit)]
+        if submissions is not None:
+            post_list = self.parse_stream(submissions)
+            return post_list
