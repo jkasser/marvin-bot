@@ -50,7 +50,7 @@ class MarvinReddit(MarvinDB):
         for submission in stream:
             if not submission.stickied:
                 post_id = submission.id
-                post_list.append((post_id, submission.title, submission.selftext[:100], f'https://old.reddit.com{submission.permalink}', submission.thumbnail, submission.subreddit))
+                post_list.append((post_id, submission.title[:250], submission.selftext[:100], f'https://old.reddit.com{submission.permalink}', submission.thumbnail, submission.subreddit))
         return post_list
 
     def get_lol_stream(self, limit=10):
