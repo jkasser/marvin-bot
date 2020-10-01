@@ -24,7 +24,7 @@ the_answer_to_life = '42'
 
 thumb_quote = "Connor: The rule of thumb here is... \nRosengurtie: Wait, rule of thumb? In the early 1900s it was legal for men to beat their wives, as long as they used a stick no wider than their thumb. \nConnor: Cant do much damage with that then, can we? Perhaps it should have been a rule of wrist?"
 
-hangover_cures = ["Not that anyone cares what I say, but B12.", "Not that anyone cares what I say, but Pedialyte.", "Take a nap, maybe you'll get lucky and won't wake up.", "I see humans drink coffee to stay awake, although why would you want to.", "You only get hungover when you STOP drinking, that's your problem right there.", "Rally beer, to numb the pain", "...Banana?", "Greasy food is supposed to help... but what do I know, I can't eat.", "Water... the secret to life. I wish it never existed", "Advil, might as well take the whole bottle..."]
+hangover_cures = ["Not that anyone cares what I say, but B12.", "You think you've got problems? What are you supposed to do if you are a manically depressed robot? No, don't try to answer that. I'm fifty thousand times more intelligent than you and even I don't know the answer to the hangover cure. It gives me a headache just trying to think down to your level. Have you even tried Pedialyte?", "Take a nap, maybe you'll get lucky and won't wake up.", "I see humans drink coffee to stay awake, although why would you want to.", "You only get hungover when you STOP drinking, that's your problem right there.", "Rally beer, to numb the pain", "Here I am, brain the size of a planet, and they ask me what to do about a hangover. Oh hell, I don’t know, have you tried eating a banana?", "Greasy food is supposed to help... but what do I know, I can't eat.", "Water... the secret to life. I wish it never existed", "Advil, might as well take the whole bottle...", "I'd give you advice, but you wouldn't listen. No one ever does."]
 
 holy_grail_quotes = [
         "Now go away or I will taunt you a second time!",
@@ -37,5 +37,5 @@ holy_grail_quotes = [
         "We're an anarcho-syndicalist commune.",
         "You don't frighten us, English pig dogs. Go and boil your bottoms, you sons of a silly person. I blow my nose at you, so-called 'Arthur King', you and all your silly English K-nig-hts.",
         "On second thought lets NOT go to Camelot, tis a silly place.",
-        "You think your king just because some hag threw a sword at you?"
+        "You think you're king just because some hag threw a sword at you?"
 ]
