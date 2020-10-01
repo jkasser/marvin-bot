@@ -50,11 +50,5 @@ class MarvinReddit(MarvinDB):
         for submission in stream:
             if not submission.stickied:
                 post_id = submission.id
-                if self.check_if_post_exists(post_id):
-                    # if we already have the post, just skip it
-                    continue
-                else:
-                    self.add_post_id_to_db(submission.id)
-                    # print(submission.permalink)
-                    post_list.append((submission.title, submission.selftext[:100], f'https://old.reddit.com{submission.permalink}', submission.thumbnail))
+                post_list.append((post_id, submission.title, submission.selftext[:100], f'https://old.reddit.com{submission.permalink}', submission.thumbnail))
         return post_list
