@@ -2,7 +2,6 @@ import yaml
 import random
 import discord
 from discord.ext import commands, tasks
-from discord import Spotify
 from utils.riot_api import Riot
 from utils.reminder import ReminderBot
 from utils.reddit import MarvinReddit
@@ -14,7 +13,9 @@ file = open('config.yaml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 # discord config
 token = cfg["disc"]["token"]
-bot = commands.Bot(command_prefix=cfg["disc"]["prefix"])
+intents = discord.Intents().all()
+bot = commands.Bot(command_prefix=cfg["disc"]["prefix"], intents=intents)
+
 # reddit config
 r_client_id = cfg["reddit"]["client_id"]
 r_client_secret = cfg["reddit"]["client_secret"]
