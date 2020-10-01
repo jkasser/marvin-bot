@@ -255,9 +255,8 @@ async def create_named_queue(ctx, name='General'):
         await ctx.send(f'Queue: {name}, already exists!')
 
 
-@bot.command(name='qadd', help="Call !qadd <name> to be added to a specific queue, if name is not provided it adds you to the general queue.\nEx. !qadd myqueue")
-async def add_user_to_queue(ctx, name=None):
-    username = ctx.message.author.mention
+@bot.command(name='qaddme', help="Call !qadd <name> to be added to a specific queue, if name is not provided it adds you to the general queue.\nEx. !qadd myqueue")
+async def add_me_to_queue(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
         name = 'General'
@@ -267,8 +266,30 @@ async def add_user_to_queue(ctx, name=None):
         else:
             await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
             return
+    username = ctx.author
     queue.append(username)
     await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username)+1}')
+
+
+@bot.command(name='qadduser', help="This only works to add a user to the general queue, pass in the user\'s username.\nEx. !adduser marvin")
+@commands.has_any_role("Admins", "TheOGs")
+async def add_user_to_queue(ctx, user):
+    queue = named_queues["General"]
+    if user is None:
+        username = ctx.message.author.mention
+        queue.append(username)
+        await ctx.send(f'{username} has been added to the General queue at position: {queue.index(username) + 1}')
+    else:
+        members = await ctx.guild.fetch_members(limit=150).flatten()
+        for member in members:
+            if user in member.name:
+                username = member.mention
+                queue.append(username)
+                await ctx.send(
+                    f'{username} has been added to the General queue at position: {queue.index(username) + 1}')
+                break
+            elif members.index(member) + 1 == len(members) and user not in member.name:
+                await ctx.send(f'No member found for {user}')
 
 
 @bot.command(name='qlist', help="See the current queue list of the queue name provided. If no name is provided then it will provide the list of the General queue.\nEx. !qlist myqueue")
