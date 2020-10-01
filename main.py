@@ -384,7 +384,7 @@ async def check_reddit_lol_stream():
                 continue
             else:
                 try:
-                    embedded_link = discord.Embed(title=post[1], description=post[2],  url=post[3], color=0x00ff00)
+                    embedded_link = discord.Embed(title=post[1], description=post[2],  url=post[3], color=0x07f9DA)
                     embedded_link.add_field(name="subreddit", value=post[5])
                     if post[4] != 'default' and post[4] != 'self':
                         embedded_link.set_thumbnail(url=post[4])
