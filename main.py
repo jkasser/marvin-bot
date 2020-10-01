@@ -376,10 +376,16 @@ async def check_reddit_stream():
     post_list = reddit_feed.get_travel_stream(limit=50)
     if len(post_list) >= 1:
         for post in post_list:
-            embedded_link = discord.Embed(title=post[0], description=post[1],  url=post[2], color=0x00ff00)
-            embedded_link.set_thumbnail(url=post[3])
-            await travel_channel.send(embed=embedded_link)
-            await travel_channel.send('---------------------------------------------------------------')
+            if reddit_feed.check_if_post_exists(post[0]):
+                continue
+            else:
+                embedded_link = discord.Embed(title=post[1], description=post[2],  url=post[3], color=0x00ff00)
+                if post[4] != 'default' and post[4] != 'self':
+                    embedded_link.set_thumbnail(url=post[4])
+                await travel_channel.send(embed=embedded_link)
+                await travel_channel.send('---------------------------------------------------------------')
+                # finally add it to the DB once it has been sent
+                reddit_feed.add_post_id_to_db(post[0])
 
 
 @bot.event
