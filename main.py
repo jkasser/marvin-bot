@@ -454,7 +454,7 @@ async def check_the_news():
                 except Exception:
                     continue
     else:
-        await news_channel.send(f'I wasn\'t able to find any news!}!')
+        await news_channel.send('I wasn\'t able to find any news!')
 
 
 @bot.event
