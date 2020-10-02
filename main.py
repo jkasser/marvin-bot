@@ -252,7 +252,7 @@ async def add_me_to_queue(ctx, name=None):
         else:
             await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
             return
-    username = ctx.author
+    username = ctx.author.mention
     queue.append(username)
     await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username)+1}')
 
