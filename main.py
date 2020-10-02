@@ -37,6 +37,7 @@ async def on_ready():  # method expected by client. This runs once when connecte
     check_reminders.start()
     check_reddit_lol_stream.start()
     check_reddit_travel_stream.start()
+    check_the_news.start()
 
 
 @bot.event
