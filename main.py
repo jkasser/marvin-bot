@@ -24,9 +24,11 @@ r_client_secret = cfg["reddit"]["client_secret"]
 named_queues = {"General": []}
 
 # Instantiate Objects here
+
 reminder = ReminderBot()
 reddit_feed = MarvinReddit(r_client_id, r_client_secret)
 news_bot = MarvinNews(cfg["news"]["key"])
+
 
 
 @bot.event
@@ -344,29 +346,29 @@ async def purge(ctx):
     await ctx.channel.purge()
 
 
+@bot.command(name='getnewssources', help="See where I pull my news from!")
+async def get_news_sources(ctx):
+    await ctx.send(f'I get my news from the following sources: {", ".join(cfg["news"]["sources"]).replace("-", " ").capitalize()}')
+
+
 @bot.command(name='getnews', help="Get the top 3 articles for your keyword! Please wrap multiple words in quotes.")
 async def get_news_for_keyword(ctx, query):
     news_list = news_bot.get_news(q=query)
     if isinstance(news_list, list):
-        for post in news_list:
-            # parse the article
-            article = news_bot.get_article_data(post)
-            # check if the news has already been posted
-            if news_bot.check_if_article_exists(news_bot.get_article_slug(article["article_slug"])):
+        for article in news_list:
+            try:
+                embedded_link = discord.Embed(title=article["title"], description=article["description"],
+                                              url=article["url"])
+                embedded_link.add_field(name="Source", value=article["source"], inline=True)
+                embedded_link.add_field(name="Author", value=article["author"], inline=True)
+                embedded_link.add_field(name="Published", value=article["published"], inline=True)
+                if article["thumb"] is not "" and article["thumb"] is not None:
+                    embedded_link.set_thumbnail(url=article["thumb"])
+                await ctx.send(embed=embedded_link)
+                await ctx.send('---------------------------------------------------------------')
+                news_bot.add_article_to_db(article["article_slug"])
+            except Exception:
                 continue
-            else:
-                try:
-                    embedded_link = discord.Embed(title=article["title"], description=article["description"],
-                                                  url=article["url"])
-                    embedded_link.add_field(name="Source", value=article["source"], inline=True)
-                    embedded_link.add_field(name="Author", value=article["author"], inline=True)
-                    embedded_link.add_field(name="Published", value=article["published"], inline=True)
-                    if article["thumb"] is not "" and article["thumb"] is not None:
-                        embedded_link.set_thumbnail(url=article["thumb"])
-                    await ctx.send(embed=embedded_link)
-                    await ctx.send('---------------------------------------------------------------')
-                except Exception:
-                    continue
     else:
         await ctx.send(f'I wasn\'t able to find anything for: {query}!')
 
@@ -429,7 +431,8 @@ async def check_reddit_lol_stream():
 @tasks.loop(hours=1)
 async def check_the_news():
     news_channel = bot.get_channel(761691682383069214)
-    news_list = news_bot.get_top_headlines(page_size=3)
+    sources = ",".join(cfg["news"]["sources"])
+    news_list = news_bot.news.get_top_headlines(page_size=20, sources=sources)["articles"]
     if isinstance(news_list, list):
         for post in news_list:
             # parse the article
@@ -450,12 +453,14 @@ async def check_the_news():
                     news_bot.add_article_to_db(article["article_slug"])
                 except Exception:
                     continue
-
+    else:
+        await news_channel.send(f'I wasn\'t able to find any news!}!')
 
 
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send(error)
+
 
 if __name__ == '__main__':
     try:
