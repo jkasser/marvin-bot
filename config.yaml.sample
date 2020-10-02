@@ -12,3 +12,6 @@ riot:
 reddit:
   client_id:
   client_secret:
+
+news:
+  key:

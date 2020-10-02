@@ -6,6 +6,7 @@ from utils.db import MarvinDB
 class MarvinReddit(MarvinDB):
 
     TABLE_NAME = 'reddit'
+
     REDDIT_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
         id integer PRIMARY KEY,
         post_id integer NOT NULL
