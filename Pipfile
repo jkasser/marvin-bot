@@ -12,6 +12,7 @@ requests = "*"
 pytz = "*"
 python-dateutil = "*"
 praw = "*"
+newsapi-python = "*"
 
 [requires]
 python_version = "3.7"
