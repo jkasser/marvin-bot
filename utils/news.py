@@ -1,11 +1,10 @@
 from newsapi import NewsApiClient
 import calendar
-import praw
 from sqlite3 import Error
 from utils.db import MarvinDB
 
 
-class MarvinNews(NewsApiClient, MarvinDB):
+class MarvinNews(MarvinDB):
 
     TABLE_NAME = 'news'
 
@@ -18,10 +17,10 @@ class MarvinNews(NewsApiClient, MarvinDB):
 
     CHECK_IF_EXISTS = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE article_slug=? LIMIT 1)"""
 
-
-    def __init__(self):
+    def __init__(self, key):
         super().__init__()
         try:
+            self.news = NewsApiClient(api_key=key)
             self.create_table(self.conn, self.NEWS_TABLE)
         except Error as e:
             print(e)
@@ -38,27 +37,37 @@ class MarvinNews(NewsApiClient, MarvinDB):
         else:
             return True
 
-    def get_news(self, q):
+    def get_news(self, q, page_size=3, page=1):
         article_list = []
-        response = self.get_everything(q=str(q), page_size=3)
+        response = self.news.get_everything(q=str(q), page_size=page_size, page=page)
         if response["status"] == 'ok':
-            articles = response["articles"]
-            if len(articles) >= 1:
-                for article in articles:
-                    article_list.append(self.get_article_data(article))
-            return article_list
+            if len(response["articles"]) >= 1:
+                for article in response["articles"]:
+                    if self.check_if_article_exists(self.get_article_slug(article["url"])):
+                        continue
+                    else:
+                        article_list.append(self.get_article_data(article))
+                if len(article_list) == 0:
+                    page = page + 1
+                    return self.get_news(q=q, page_size=page_size, page=page)
+                else:
+                    return article_list
         else:
-            return f'We have encountered the following error: {response["code"]}\n{response["message"]}'
+            return f'I have encountered the following error: {response["code"]}\n{response["message"]}'
 
     def get_article_slug(self, url):
-        return f'{url.strip("/").split("/")}'
+        return f'{url.strip("/").split("/")[-1]}'
 
     def get_article_data(self, article: dict) -> dict:
         date_str = article["publishedAt"]
+        if isinstance(article["author"], list):
+            author = article["author"][0]["name"]
+        else:
+            author = article["author"]
         article_data = {
             "title": article["title"],
             "source": article["source"]["name"],
-            "author": article["author"],
+            "author": author,
             "description": article["description"],
             "url": article["url"],
             "thumb": article["urlToImage"],
