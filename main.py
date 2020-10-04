@@ -390,21 +390,24 @@ async def check_reminders():
 
 @tasks.loop(seconds=300)
 async def check_reddit_travel_stream():
-    travel_channel = bot.get_channel(758126844708651041)
-    post_list = reddit_feed.get_travel_stream(limit=50)
-    if len(post_list) >= 1:
-        for post in post_list:
-            if reddit_feed.check_if_post_exists(post[0]):
-                continue
-            else:
-                embedded_link = discord.Embed(title=post[1], description=post[2],  url=post[3], color=0x00ff00)
-                embedded_link.add_field(name="subreddit", value=post[5])
-                if post[4] != 'default' and post[4] != 'self':
-                    embedded_link.set_thumbnail(url=post[4])
-                await travel_channel.send(embed=embedded_link)
-                await travel_channel.send('---------------------------------------------------------------')
-                # finally add it to the DB once it has been sent
-                reddit_feed.add_post_id_to_db(post[0])
+    try:
+        travel_channel = bot.get_channel(758126844708651041)
+        post_list = reddit_feed.get_travel_stream(limit=50)
+        if len(post_list) >= 1:
+            for post in post_list:
+                if reddit_feed.check_if_post_exists(post[0]):
+                    continue
+                else:
+                    embedded_link = discord.Embed(title=post[1], description=post[2],  url=post[3], color=0x00ff00)
+                    embedded_link.add_field(name="subreddit", value=post[5])
+                    if post[4] != 'default' and post[4] != 'self':
+                        embedded_link.set_thumbnail(url=post[4])
+                    await travel_channel.send(embed=embedded_link)
+                    await travel_channel.send('---------------------------------------------------------------')
+                    # finally add it to the DB once it has been sent
+                    reddit_feed.add_post_id_to_db(post[0])
+    except discord.errors.HTTPException:
+        pass
 
 
 @tasks.loop(seconds=300)
