@@ -10,8 +10,8 @@ class Riot:
     def __init__(self):
         file = open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r')
         cfg = yaml.load(file, Loader=yaml.FullLoader)
-        region = cfg["utils"]["region"]
-        self.key = cfg["utils"]["key"]
+        region = cfg["riot"]["region"]
+        self.key = cfg["riot"]["key"]
         self.base_url = f'https://{region}.api.riotgames.com/lol/'
 
     def get_clash_schedule(self):
