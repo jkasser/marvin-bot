@@ -407,6 +407,18 @@ async def get_summoner(ctx, summoner_name):
     await ctx.send(file=file, embed=embedded_link)
 
 
+@bot.command(name='updatesummoner', help="Pass in a summoner name to update them in the databse")
+async def update_summoner(ctx, summoner_name):
+    summoner_name = summoner_name.lower()
+    name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+    embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
+    # Get the summoner icon
+    file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+    embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
+    await ctx.send(file=file, embed=embedded_link)
+
+
+
 #### Task Loops start here ####
 
 @tasks.loop(seconds=300)
