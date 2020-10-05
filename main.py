@@ -160,14 +160,14 @@ async def create_reminder(ctx, *text, user: discord.Member=None):
         # parse the string into 3 fields to insert into the databse
         name, when, what = reminder.parse_reminder_text(text)
         if name.lower() == 'me':
-            name = '@' + user.display_name
+            name = '@' + user.mention
         # get the date as a datetime object
         when_datetime = reminder.get_when_remind_date(when, start_time=now)
         # now insert it into the db
         reminder.insert_reminder((name, when_datetime, what, channel_id))
         await ctx.send(f'I will remind {name} - "{what}" at {when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M:%S, %Z")}')
     except ValueError:
-        await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to <what>')
+        await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to|that <what>.\nDo not spell out numbers. Years and Months must be whole numbers.\nWho must come first, when/what can come in either order.')
 
 
 @bot.command(name='adduser', help="Add a user to the channel. You must be a member of TheOGs to use this command.")
