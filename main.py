@@ -2,7 +2,7 @@ import yaml
 import random
 import discord
 from discord.ext import commands, tasks
-from utils.riot_api import Riot
+from utils.riot import Riot
 from utils.reminder import ReminderBot
 from utils.reddit import MarvinReddit
 from utils.news import MarvinNews
@@ -24,11 +24,10 @@ r_client_secret = cfg["reddit"]["client_secret"]
 named_queues = {"General": []}
 
 # Instantiate Objects here
-
+rito = Riot()
 reminder = ReminderBot()
 reddit_feed = MarvinReddit(r_client_id, r_client_secret)
 news_bot = MarvinNews(cfg["news"]["key"])
-
 
 
 @bot.event
@@ -58,9 +57,9 @@ async def on_message(message):  # event that happens per any message.
         elif 'thumb' in message_text:
             await channel.send(thumb_quote)
         elif 'shut up' in message_text or 'be quiet' in message_text or 'stfu' in message_text:
-            await channel.send(file=discord.File('./media/shut_up.gif'))
+            await channel.send(file=discord.File('.assets/media/shut_up.gif'))
         elif 'wtf' in message_text or 'what the fuck' in message_text or 'what the hell' in message_text:
-            await channel.send(file=discord.File('./media/wtf.gif'))
+            await channel.send(file=discord.File('.assets/media/wtf.gif'))
     await bot.process_commands(message)
 
 
@@ -97,7 +96,7 @@ async def marvin_coin_flip(ctx):
 
 @bot.command(name='clash', help='Get current and upcoming clash tournament schedule.')
 async def get_clash(ctx):
-    schedule = Riot().get_clash_schedule()
+    schedule = rito.get_clash_schedule()
     await ctx.send(str(schedule))
 
 
@@ -387,6 +386,18 @@ async def check_reminders():
                 # set it as sent
                 reminder.mark_reminder_sent(result[0])
 
+
+@bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
+async def get_summoner(ctx, summmoner_name):
+    name, level, icon_id = rito.get_summoner_by_name('Giggleknot')
+    embedded_link = discord.Embed(title=name, description=level, color=0x8b0000)
+    # Get the summoner icon
+    file = discord.File(rito.get_profile_img_for_id(icon_id), filename=f'{icon_id}'.png)
+    embedded_link.set_image(url=f'attachment://{icon_id}.png')
+    await ctx.send(file=file, embed=embedded_link)
+
+
+#### Task Loops start here ####
 
 @tasks.loop(seconds=300)
 async def check_reddit_travel_stream():
