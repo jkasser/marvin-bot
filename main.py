@@ -391,15 +391,20 @@ async def check_reminders():
 async def get_summoner(ctx, summoner_name):
     summoner_name = summoner_name.lower()
     results = rito.get_summoner_by_name(summoner_name)
-    one_week_ago = int(str(time.time()).replace('.', '')[:len(str(results[7]))]) - 604800
-    # if it's been more than a week, pull new data, otherwise grab what we need from the db
-    if results is None or results[7] <= one_week_ago:
-        name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
-    elif results is None:
-        await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
-        return
+    if results is None:
+        try:
+            name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+        # this will return None if no results are found which raises a type error
+        except TypeError:
+            await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
+            return
     else:
-        name, summoner_level, profile_icon_id = results[1], results[5], results[6]
+        one_day_ago = int(str(time.time()).replace('.', '')[:len(str(results[7]))]) - 86400
+        if results[7] <= one_day_ago:
+            # its been awhile, let's get new info
+            name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+        else:
+            name, summoner_level, profile_icon_id = results[1], results[5], results[6]
     embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
     # Get the summoner icon
     file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
@@ -410,7 +415,11 @@ async def get_summoner(ctx, summoner_name):
 @bot.command(name='updatesummoner', help="Pass in a summoner name to update them in the databse")
 async def update_summoner(ctx, summoner_name):
     summoner_name = summoner_name.lower()
-    name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+    try:
+        name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+    except TypeError:
+        await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
+        return
     embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
     # Get the summoner icon
     file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
