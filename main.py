@@ -6,7 +6,7 @@ from utils.riot import Riot
 from utils.reminder import ReminderBot
 from utils.reddit import MarvinReddit
 from utils.news import MarvinNews
-import datetime
+import datetime, time
 from data.quotes import *
 
 
@@ -388,12 +388,22 @@ async def check_reminders():
 
 
 @bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
-async def get_summoner(ctx, summmoner_name):
-    name, level, icon_id = rito.get_summoner_by_name('Giggleknot')
-    embedded_link = discord.Embed(title=name, description=level, color=0x8b0000)
+async def get_summoner(ctx, summoner_name):
+    summoner_name = summoner_name.lower()
+    results = rito.get_summoner_by_name(summoner_name)
+    one_week_ago = int(str(time.time()).replace('.', '')[:len(str(results[7]))]) - 604800
+    # if it's been more than a week, pull new data, otherwise grab what we need from the db
+    if results is None or results[7] <= one_week_ago:
+        name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+    elif results is None:
+        await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
+        return
+    else:
+        name, summoner_level, profile_icon_id = results[1], results[5], results[6]
+    embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
     # Get the summoner icon
-    file = discord.File(rito.get_profile_img_for_id(icon_id), filename=f'{icon_id}'.png)
-    embedded_link.set_image(url=f'attachment://{icon_id}.png')
+    file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+    embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
     await ctx.send(file=file, embed=embedded_link)
 
 
