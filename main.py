@@ -2,11 +2,11 @@ import yaml
 import random
 import discord
 from discord.ext import commands, tasks
-from utils.riot_api import Riot
+from utils.riot import Riot
 from utils.reminder import ReminderBot
 from utils.reddit import MarvinReddit
 from utils.news import MarvinNews
-import datetime
+import datetime, time
 from data.quotes import *
 
 
@@ -24,11 +24,10 @@ r_client_secret = cfg["reddit"]["client_secret"]
 named_queues = {"General": []}
 
 # Instantiate Objects here
-
+rito = Riot()
 reminder = ReminderBot()
 reddit_feed = MarvinReddit(r_client_id, r_client_secret)
 news_bot = MarvinNews(cfg["news"]["key"])
-
 
 
 @bot.event
@@ -58,9 +57,9 @@ async def on_message(message):  # event that happens per any message.
         elif 'thumb' in message_text:
             await channel.send(thumb_quote)
         elif 'shut up' in message_text or 'be quiet' in message_text or 'stfu' in message_text:
-            await channel.send(file=discord.File('./media/shut_up.gif'))
+            await channel.send(file=discord.File('.assets/media/shut_up.gif'))
         elif 'wtf' in message_text or 'what the fuck' in message_text or 'what the hell' in message_text:
-            await channel.send(file=discord.File('./media/wtf.gif'))
+            await channel.send(file=discord.File('.assets/media/wtf.gif'))
     await bot.process_commands(message)
 
 
@@ -97,7 +96,7 @@ async def marvin_coin_flip(ctx):
 
 @bot.command(name='clash', help='Get current and upcoming clash tournament schedule.')
 async def get_clash(ctx):
-    schedule = Riot().get_clash_schedule()
+    schedule = rito.get_clash_schedule()
     await ctx.send(str(schedule))
 
 
@@ -387,6 +386,49 @@ async def check_reminders():
                 # set it as sent
                 reminder.mark_reminder_sent(result[0])
 
+
+@bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
+async def get_summoner(ctx, summoner_name):
+    summoner_name = summoner_name.lower()
+    results = rito.get_summoner_by_name(summoner_name)
+    if results is None:
+        try:
+            name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+        # this will return None if no results are found which raises a type error
+        except TypeError:
+            await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
+            return
+    else:
+        one_day_ago = int(str(time.time()).replace('.', '')[:len(str(results[7]))]) - 86400
+        if results[7] <= one_day_ago:
+            # its been awhile, let's get new info
+            name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+        else:
+            name, summoner_level, profile_icon_id = results[1], results[5], results[6]
+    embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
+    # Get the summoner icon
+    file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+    embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
+    await ctx.send(file=file, embed=embedded_link)
+
+
+@bot.command(name='updatesummoner', help="Pass in a summoner name to update them in the databse")
+async def update_summoner(ctx, summoner_name):
+    summoner_name = summoner_name.lower()
+    try:
+        name, summoner_level, profile_icon_id = rito.get_and_update_summoner_from_riot_by_name(summoner_name)
+    except TypeError:
+        await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
+        return
+    embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
+    # Get the summoner icon
+    file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+    embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
+    await ctx.send(file=file, embed=embedded_link)
+
+
+
+#### Task Loops start here ####
 
 @tasks.loop(seconds=300)
 async def check_reddit_travel_stream():
