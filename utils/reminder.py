@@ -39,6 +39,7 @@ class ReminderBot(MarvinDB):
         self.update_query(self.MARK_REMINDER_SENT, (reminder_id,))
 
     def check_reminders(self):
+        """ Returns an array of id, name, reminder time, reminder text, channel_id, has sent """
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_PENDING_REMINDERS)
         results = results.fetchall()
