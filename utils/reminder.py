@@ -58,19 +58,19 @@ class ReminderBot(MarvinDB):
 
     def get_when_remind_date(self, date_string, start_time):
         if 'day' in date_string:
-            delta = int(date_string.split(' ')[0].strip())
+            delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(days=delta)
         elif 'month' in date_string:
             delta = int(date_string.split(' ')[0].strip())
             when_remind = start_time + relativedelta(months=+delta)
         elif 'minute' in date_string:
-            delta = int(date_string.split(' ')[0].strip())
+            delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(minutes=delta)
         elif 'second' in date_string:
-            delta = int(date_string.split(' ')[0].strip())
+            delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(seconds=delta)
         elif 'hour' in date_string:
-            delta = int(date_string.split(' ')[0].strip())
+            delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(hours=delta)
         elif 'year' in date_string:
             delta = int(date_string.split(' ')[0].strip())
@@ -78,3 +78,4 @@ class ReminderBot(MarvinDB):
         else:
             when_remind = parser.parse(date_string)
         return when_remind
+
