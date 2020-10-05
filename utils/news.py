@@ -2,6 +2,7 @@ from newsapi import NewsApiClient
 import calendar
 from sqlite3 import Error
 from utils.db import MarvinDB
+from datetime import timedelta, date
 
 
 class MarvinNews(MarvinDB):
@@ -39,7 +40,8 @@ class MarvinNews(MarvinDB):
 
     def get_news(self, q, page_size=3, page=1):
         article_list = []
-        response = self.news.get_everything(q=str(q), page_size=page_size, page=page)
+        start_date = date.today() - timedelta(days=1)
+        response = self.news.get_everything(q=str(q), page_size=page_size, page=page, from_param=str(start_date))
         if response["status"] == 'ok':
             if len(response["articles"]) >= 1:
                 for article in response["articles"]:
