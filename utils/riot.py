@@ -25,11 +25,13 @@ class Riot(MarvinDB):
 
     INSERT_SUMMONER = f"""INSERT INTO {TABLE_NAME}(summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date) VALUES(?,?,?,?,?,?,?)"""
 
-    UPDATE_SUMMONER = f"""UPDATE {TABLE_NAME} SET summoner_level = ?, profile_icon = ?, revision date = ? WHERE summoner_id = ?"""
+    UPDATE_SUMMONER = f"""UPDATE {TABLE_NAME} SET summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
 
-    FIND_SUMMONER = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_id = ?"""
+    FIND_SUMMONER_BY_ID = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_id = ?"""
+    FIND_SUMMONER_BY_NAME = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_name = ?"""
 
-    CHECK_IF_EXISTS = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_id=? LIMIT 1)"""
+    CHECK_IF_EXISTS_BY_ID = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_id=? LIMIT 1)"""
+    CHECK_IF_EXISTS_BY_NAME = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_name=? LIMIT 1)"""
 
     def __init__(self):
         super(Riot, self).__init__()
@@ -62,7 +64,8 @@ class Riot(MarvinDB):
             response = r.status_code, r.text
         return response
 
-    def get_summoner_by_name(self, summoner_name):
+
+    def get_and_update_summoner_from_riot_by_name(self, summoner_name):
         endpoint = self.base_url + f'summoner/v4/summoners/by-name/{summoner_name}?api_key={self.key}'
         r = requests.get(endpoint)
         if r.status_code == 200:
@@ -74,22 +77,36 @@ class Riot(MarvinDB):
             profile_icon_id = summoner_body["profileIconId"]
             summoner_level = summoner_body["summonerLevel"]
             revision_date = summoner_body["revisionDate"]
-            if not self.check_if_summoner_exists(summoner_id):
+            if not self.check_if_summoner_exists_by_id(summoner_id):
                 self.insert_summoner_into_db(
                     (summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon_id, revision_date)
                 )
             else:
-                if self.check_if_summoner_needs_update(summoner_id, revision_date):
-                    self.update_summoner((summoner_level, profile_icon_id, revision_date, summoner_id))
+                self.update_summoner((summoner_level, profile_icon_id, revision_date, summoner_id))
             return summoner_name, summoner_level, profile_icon_id
 
     def insert_summoner_into_db(self, values):
         """ Values: summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date in a tuple """
         return self.insert_query(self.INSERT_SUMMONER, values)
 
-    def check_if_summoner_exists(self, summoner_id):
+    def get_summoner_by_name(self, summoner_name):
         cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS, (summoner_id,))
+        results = cur.execute(self.FIND_SUMMONER_BY_NAME, (summoner_name,)).fetchone()
+        self.conn.commit()
+        return results
+
+    def check_if_summoner_exists_by_id(self, summoner_id):
+        cur = self.conn.cursor()
+        results = cur.execute(self.CHECK_IF_EXISTS_BY_ID, (summoner_id,))
+        results = results.fetchone()[0]
+        if results == 0:
+            return False
+        else:
+            return True
+
+    def check_if_summoner_exists_by_name(self, summoner_name):
+        cur = self.conn.cursor()
+        results = cur.execute(self.CHECK_IF_EXISTS_BY_NAME, (summoner_name,))
         results = results.fetchone()[0]
         if results == 0:
             return False
@@ -98,19 +115,18 @@ class Riot(MarvinDB):
 
     def check_if_summoner_needs_update(self, summoner_id, current_revision_date):
         cur = self.conn.cursor()
-        results = cur.execute(self.FIND_SUMMONER, (summoner_id,)).fetchone()
+        results = cur.execute(self.FIND_SUMMONER_BY_ID, (summoner_id,)).fetchone()
         if results[7] < current_revision_date:
             return True
         else:
             return False
 
     def update_summoner(self, values):
-        """summoner_level = ?, profile_icon = ?, revision date = ? WHERE summoner_id = ?"""
+        """summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
         cur = self.conn.cursor()
         cur.execute(self.UPDATE_SUMMONER, values)
         self.conn.commit()
 
     def get_profile_img_for_id(self, profile_icon_id):
         profile_icon = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'10.20.1/img/profileicon/{str(profile_icon_id)}.png'
-        print(profile_icon)
         return profile_icon
