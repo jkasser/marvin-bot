@@ -68,7 +68,7 @@ async def on_message(message):  # event that happens per any message.
 async def on_member_join(member):
     await member.create_dm()
     await member.dm_channel.send(
-        f'Hi {member.name}, welcome to my Discord server!'
+        f'Hi {member.name}, welcome to my Discord server! Type !help to see my command list!'
     )
 
 
@@ -153,7 +153,7 @@ async def get_all_roles_in_channel(ctx):
 @bot.command(name='remind', help='Let me remind you of something! Just type \"!remind <who> in <when> to <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
 async def create_reminder(ctx, *text, user: discord.Member=None):
     text = f'!remind {" ".join(text)}'
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now().astimezone()
     user = user or ctx.author
     channel_id = ctx.message.channel.id
     try:
@@ -165,7 +165,7 @@ async def create_reminder(ctx, *text, user: discord.Member=None):
         when_datetime = reminder.get_when_remind_date(when, start_time=now)
         # now insert it into the db
         reminder.insert_reminder((name, when_datetime, what, channel_id))
-        await ctx.send(f'I will remind {name} - "{what}" at {when_datetime}')
+        await ctx.send(f'I will remind {name} - "{what}" at {when_datetime.strftime("%a, %b %d, %Y %I:%M:%S, %Z")}')
     except ValueError:
         await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to <what>')
 
@@ -381,7 +381,7 @@ async def check_reminders():
         # results are a tuple of index, name, when, what, channel_id, and sent
         for result in results:
             # check the when date to see if its => now
-            if datetime.datetime.utcnow() >= result[2]:
+            if datetime.datetime.now().astimezone() >= result[2]:
                 channel = bot.get_channel(result[4])
                 await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
                 # set it as sent
