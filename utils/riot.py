@@ -4,15 +4,15 @@ from datetime import datetime
 from pytz import reference
 import os
 from utils.db import MarvinDB
-
+import urllib.request
+import tarfile
 
 class Riot(MarvinDB):
 
     ASSETS_BASE_DIR = '/assets/riot_games/'
 
     TABLE_NAME = 'riot_games'
-
-    RIOT_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+    SUMMONER_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
         id integer PRIMARY KEY,
         summoner_name text NOT NULL,
         summoner_id text not NULL,
@@ -22,21 +22,30 @@ class Riot(MarvinDB):
         profile_icon integer NOT NULL,
         revision_date integer NOT NULL
     );"""
-
     INSERT_SUMMONER = f"""INSERT INTO {TABLE_NAME}(summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date) VALUES(?,?,?,?,?,?,?)"""
-
     UPDATE_SUMMONER = f"""UPDATE {TABLE_NAME} SET summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
-
     FIND_SUMMONER_BY_ID = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_id = ?"""
     FIND_SUMMONER_BY_NAME = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_name = ?"""
+    CHECK_IF_SUMMONER_EXISTS_BY_ID = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_id=? LIMIT 1)"""
+    CHECK_IF_SUMMONER_EXISTS_BY_NAME = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_name=? LIMIT 1)"""
 
-    CHECK_IF_EXISTS_BY_ID = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_id=? LIMIT 1)"""
-    CHECK_IF_EXISTS_BY_NAME = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_name=? LIMIT 1)"""
+    # Data dragon assets table
+    ASSETS_TABLE_NAME = 'assets_ver'
+    ASSETS_VER_TABLE =  f"""CREATE TABLE IF NOT EXISTS {ASSETS_TABLE_NAME} (
+        id integer PRIMARY KEY,
+        current_version text NOT NULL
+    );
+    """
+    INSERT_LATEST_DATA_VERSION = F"""INSERT INTO {ASSETS_TABLE_NAME}(current_version) VALUES(?)"""
+    UPDATE_LATEST_DATA_VERSION = F"""UPDATE {ASSETS_TABLE_NAME} SET current_version = ?"""
+    CHECK_IF_CURRENT_VER_EXISTS = F"""SELECT EXISTS(SELECT * FROM {ASSETS_TABLE_NAME} LIMIT 1)"""
+    GET_ASSETS_LATEST_VERSION = f"""SELECT current_version FROM {ASSETS_TABLE_NAME}"""
 
     def __init__(self):
         super(Riot, self).__init__()
         # Create the database
-        self.riot_table = self.create_table(self.conn, self.RIOT_TABLE)
+        self.summoner_table = self.create_table(self.conn, self.SUMMONER_TABLE)
+        self.data_version_table = self.create_table(self.conn, self.ASSETS_VER_TABLE)
         # Riot API Stuff
         file = open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r')
         cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -64,7 +73,6 @@ class Riot(MarvinDB):
             response = r.status_code, r.text
         return response
 
-
     def get_and_update_summoner_from_riot_by_name(self, summoner_name):
         endpoint = self.base_url + f'summoner/v4/summoners/by-name/{summoner_name}?api_key={self.key}'
         r = requests.get(endpoint)
@@ -85,35 +93,35 @@ class Riot(MarvinDB):
                 self.update_summoner((summoner_level, profile_icon_id, revision_date, summoner_id))
             return summoner_name, summoner_level, profile_icon_id
 
-    def insert_summoner_into_db(self, values):
+    def insert_summoner_into_db(self, values: tuple):
         """ Values: summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date in a tuple """
         return self.insert_query(self.INSERT_SUMMONER, values)
 
-    def get_summoner_by_name(self, summoner_name):
+    def get_summoner_by_name(self, summoner_name: str):
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_SUMMONER_BY_NAME, (summoner_name,)).fetchone()
         self.conn.commit()
         return results
 
-    def check_if_summoner_exists_by_id(self, summoner_id):
+    def check_if_summoner_exists_by_id(self, summoner_id: id):
         cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS_BY_ID, (summoner_id,))
+        results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_ID, (summoner_id,))
         results = results.fetchone()[0]
         if results == 0:
             return False
         else:
             return True
 
-    def check_if_summoner_exists_by_name(self, summoner_name):
+    def check_if_summoner_exists_by_name(self, summoner_name: str):
         cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS_BY_NAME, (summoner_name,))
+        results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_NAME, (summoner_name,))
         results = results.fetchone()[0]
         if results == 0:
             return False
         else:
             return True
 
-    def check_if_summoner_needs_update(self, summoner_id, current_revision_date):
+    def check_if_summoner_needs_update(self, summoner_id: str, current_revision_date: int):
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_SUMMONER_BY_ID, (summoner_id,)).fetchone()
         if results[7] < current_revision_date:
@@ -121,12 +129,65 @@ class Riot(MarvinDB):
         else:
             return False
 
-    def update_summoner(self, values):
+    def update_summoner(self, values: tuple):
         """summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
         cur = self.conn.cursor()
         cur.execute(self.UPDATE_SUMMONER, values)
         self.conn.commit()
 
-    def get_profile_img_for_id(self, profile_icon_id):
+    def get_profile_img_for_id(self, profile_icon_id: int):
         profile_icon = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'10.20.1/img/profileicon/{str(profile_icon_id)}.png'
         return profile_icon
+
+    def get_latest_data_version(self):
+        url = 'https://ddragon.leagueoflegends.com/realms/na.json'
+        r = requests.get(url)
+        if r.status_code == 200:
+            current_version = r.json()["v"]
+            cdn = r.json()["cdn"]
+            assets_url = f'{cdn}/dragontail-{current_version}.tgz'
+            return current_version, assets_url
+        else:
+            return
+
+    def check_if_assets_current_version_exists(self):
+        cur = self.conn.cursor()
+        results = cur.execute(self.CHECK_IF_CURRENT_VER_EXISTS).fetchone()[0]
+        if results == 0:
+            return False
+        else:
+            return True
+
+    def get_current_assets_version_from_db(self):
+        cur = self.conn.cursor()
+        results = cur.execute(self.GET_ASSETS_LATEST_VERSION).fetchone()
+        self.conn.commit()
+        return results
+
+    def insert_assets_current_version(self, current_version: str):
+        """ Values: current_version"""
+        return self.insert_query(self.INSERT_LATEST_DATA_VERSION, (current_version,))
+
+    def update_assets_current_version(self, current_version: str):
+        """current_version=?"""
+        cur = self.conn.cursor()
+        cur.execute(self.UPDATE_LATEST_DATA_VERSION, (current_version,))
+        self.conn.commit()
+
+    def download_new_assets(self, url, version_name):
+        file_name = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'{version_name}.tgz'
+        assets = urllib.request.urlretrieve(url, file_name)
+        self.delete_existing_asset()
+        self.extract_assets(file_to_extract=file_name)
+
+    def delete_existing_asset(self):
+        for dir in os.listdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR):
+            if not dir.endswith('.tgz'):
+                print(f'Deleting {dir}')
+                os.remove(dir)
+
+    def extract_assets(self, file_to_extract):
+        tar = tarfile.open(file_to_extract, 'r:gz')
+        tar.extractall(path=os.path.dirname(file_to_extract))
+        tar.close()
+        os.remove(file_to_extract)
