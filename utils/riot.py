@@ -96,31 +96,31 @@ class Riot(MarvinDB):
         """ Values: summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date in a tuple """
         return self.insert_query(self.INSERT_SUMMONER, values)
 
-    def get_summoner_by_name(self, summoner_name):
+    def get_summoner_by_name(self, summoner_name: str):
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_SUMMONER_BY_NAME, (summoner_name,)).fetchone()
         self.conn.commit()
         return results
 
-    def check_if_summoner_exists_by_id(self, summoner_id):
+    def check_if_summoner_exists_by_id(self, summoner_id: id):
         cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS_BY_ID, (summoner_id,))
+        results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_ID, (summoner_id,))
         results = results.fetchone()[0]
         if results == 0:
             return False
         else:
             return True
 
-    def check_if_summoner_exists_by_name(self, summoner_name):
+    def check_if_summoner_exists_by_name(self, summoner_name: str):
         cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS_BY_NAME, (summoner_name,))
+        results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_NAME, (summoner_name,))
         results = results.fetchone()[0]
         if results == 0:
             return False
         else:
             return True
 
-    def check_if_summoner_needs_update(self, summoner_id, current_revision_date):
+    def check_if_summoner_needs_update(self, summoner_id: str, current_revision_date: int):
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_SUMMONER_BY_ID, (summoner_id,)).fetchone()
         if results[7] < current_revision_date:
@@ -128,12 +128,12 @@ class Riot(MarvinDB):
         else:
             return False
 
-    def update_summoner(self, values):
+    def update_summoner(self, values: tuple):
         """summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
         cur = self.conn.cursor()
         cur.execute(self.UPDATE_SUMMONER, values)
         self.conn.commit()
 
-    def get_profile_img_for_id(self, profile_icon_id):
+    def get_profile_img_for_id(self, profile_icon_id: int):
         profile_icon = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'10.20.1/img/profileicon/{str(profile_icon_id)}.png'
         return profile_icon
