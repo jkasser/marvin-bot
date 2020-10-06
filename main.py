@@ -542,7 +542,7 @@ async def get_rito_status():
             if rito.check_if_issue_hash_exists(x["hash"]):
                 continue
             else:
-                if x["serverity"] == "info":
+                if x["severity"] == "info":
                     color = 0xf8d568
                 else:
                     color = 0xff0000
