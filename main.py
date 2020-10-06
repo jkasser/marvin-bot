@@ -37,6 +37,7 @@ async def on_ready():  # method expected by client. This runs once when connecte
     check_reddit_lol_stream.start()
     check_reddit_travel_stream.start()
     check_the_news.start()
+    check_and_update_latest_assets_version.start()
 
 
 @bot.event
@@ -503,13 +504,34 @@ async def check_the_news():
         await news_channel.send('I wasn\'t able to find any news!')
 
 
+@tasks.loop(hours=24)
+async def check_and_update_latest_assets_version():
+    api_updates_channel = bot.get_channel(763088226860138576)
+    api_current_version, cdn = rito.get_latest_data_version()
+    if rito.check_if_assets_current_version_exists():
+        assets_db_version = rito.get_current_assets_version_from_db()[0]
+        if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
+            await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!\nDownloading latest version: {api_current_version}')
+            # Update our local assets
+            rito.download_new_assets(cdn, api_current_version)
+            # Now Update it in the DB
+            rito.update_assets_current_version(current_version=api_current_version)
+            await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
+        elif int(''.join(api_current_version.split('.'))) == int(''.join(assets_db_version.split('.'))):
+            await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
+            return
+    else:
+        rito.download_new_assets(cdn, api_current_version)
+        # update our local assets
+        # Add it to the DB
+        rito.insert_assets_current_version(api_current_version)
+        await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
+
+
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send(error)
 
 
 if __name__ == '__main__':
-    try:
-        bot.run(token)  # recall my token was saved!
-    except Exception:
-        reminder.close_conn()
+    bot.run(token)
