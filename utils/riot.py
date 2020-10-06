@@ -6,6 +6,7 @@ import os
 from utils.db import MarvinDB
 import urllib.request
 import tarfile
+import shutil
 
 class Riot(MarvinDB):
 
@@ -176,15 +177,19 @@ class Riot(MarvinDB):
 
     def download_new_assets(self, url, version_name):
         file_name = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'{version_name}.tgz'
-        assets = urllib.request.urlretrieve(url, file_name)
+        urllib.request.urlretrieve(url, file_name)
         self.delete_existing_asset()
         self.extract_assets(file_to_extract=file_name)
 
     def delete_existing_asset(self):
         for dir in os.listdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR):
             if not dir.endswith('.tgz'):
-                print(f'Deleting {dir}')
-                os.remove(dir)
+                try:
+                    # os.remove is for files
+                    os.remove(dir)
+                except IsADirectoryError:
+                    # recursively remove a dir and everything in it
+                    shutil.rmtree(dir)
 
     def extract_assets(self, file_to_extract):
         tar = tarfile.open(file_to_extract, 'r:gz')
