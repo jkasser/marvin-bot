@@ -4,7 +4,8 @@ from datetime import datetime
 from pytz import reference
 import os
 from utils.db import MarvinDB
-
+import urllib.request
+import tarfile
 
 class Riot(MarvinDB):
 
@@ -92,7 +93,7 @@ class Riot(MarvinDB):
                 self.update_summoner((summoner_level, profile_icon_id, revision_date, summoner_id))
             return summoner_name, summoner_level, profile_icon_id
 
-    def insert_summoner_into_db(self, values):
+    def insert_summoner_into_db(self, values: tuple):
         """ Values: summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date in a tuple """
         return self.insert_query(self.INSERT_SUMMONER, values)
 
