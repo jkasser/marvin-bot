@@ -7,6 +7,7 @@ from utils.db import MarvinDB
 import urllib.request
 import tarfile
 import shutil
+import calendar
 
 class Riot(MarvinDB):
 
@@ -42,21 +43,36 @@ class Riot(MarvinDB):
     CHECK_IF_CURRENT_VER_EXISTS = F"""SELECT EXISTS(SELECT * FROM {ASSETS_TABLE_NAME} LIMIT 1)"""
     GET_ASSETS_LATEST_VERSION = f"""SELECT current_version FROM {ASSETS_TABLE_NAME}"""
 
+    # Issue tracker
+    LOL_STATUS_TABLE_NAME = 'lol_status'
+    LOL_STATUS_TABLE =  f"""CREATE TABLE IF NOT EXISTS {LOL_STATUS_TABLE_NAME} (
+        id integer PRIMARY KEY,
+        issue_hash text NOT NULL
+    );
+    """
+    INSERT_ISSUE_HASH = F"""INSERT INTO {LOL_STATUS_TABLE_NAME} (issue_hash) VALUES(?)"""
+    CHECK_ISSUE_HASH = f"""SELECT EXISTS(SELECT * FROM {LOL_STATUS_TABLE_NAME} WHERE issue_hash=? LIMIT 1)"""
+
     def __init__(self):
         super(Riot, self).__init__()
         # Create the database
         self.summoner_table = self.create_table(self.conn, self.SUMMONER_TABLE)
         self.data_version_table = self.create_table(self.conn, self.ASSETS_VER_TABLE)
+        self.issue_table = self.create_table(self.conn, self.LOL_STATUS_TABLE)
         # Riot API Stuff
         file = open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r')
         cfg = yaml.load(file, Loader=yaml.FullLoader)
         region = cfg["riot"]["region"]
         self.key = cfg["riot"]["key"]
         self.base_url = f'https://{region}.api.riotgames.com/lol/'
+        self.headers = {
+            "Content-Type": "application/json",
+            "X-Riot-Token": self.key
+        }
 
     def get_clash_schedule(self):
-        endpoint = self.base_url + f'clash/v1/tournaments?api_key={self.key}'
-        r = requests.get(endpoint)
+        endpoint = self.base_url + f'clash/v1/tournaments'
+        r = requests.get(endpoint, headers=self.headers)
         if r.status_code == 200:
             schedule = [f'All timezones are in {reference.LocalTimezone().tzname(datetime.utcnow())}']
             for x in r.json():
@@ -75,8 +91,8 @@ class Riot(MarvinDB):
         return response
 
     def get_and_update_summoner_from_riot_by_name(self, summoner_name):
-        endpoint = self.base_url + f'summoner/v4/summoners/by-name/{summoner_name}?api_key={self.key}'
-        r = requests.get(endpoint)
+        endpoint = self.base_url + f'summoner/v4/summoners/by-name/{summoner_name}'
+        r = requests.get(endpoint, headers=self.headers)
         if r.status_code == 200:
             summoner_body = r.json()
             summoner_name = summoner_body["name"]
@@ -196,3 +212,40 @@ class Riot(MarvinDB):
         tar.extractall(path=os.path.dirname(file_to_extract))
         tar.close()
         os.remove(file_to_extract)
+
+    def get_and_parse_riot_status_issues(self):
+        new_status_url = 'https://lol.secure.dyn.riotcdn.net/channels/public/x/status/na1.json'
+        issues = []
+        r = requests.get(new_status_url)
+        if r.status_code == 200:
+            if len(r.json()["incidents"]) > 0:
+                for incident in r.json()["incidents"]:
+                    issue = {}
+                    issue["title"] = incident["titles"][0]["content"]
+                    issue["severity"] = incident["incident_severity"]
+                    issue["created"] = f'{calendar.month_name[int(incident["created_at"].split("-")[1])]} {incident["created_at"].split("-")[2].split("T")[0]}, {incident["created_at"].split("-")[0]}'
+                    if len(incident["updates"]) > 0:
+                        issue["updates"] = incident["updates"][0]["translations"][0]["content"]
+                    issue["hash"] = ''.join(issue["title"].split(' '))+''.join(issue["created"].replace(',', '').split(' '))
+                    issues.append(issue)
+        return issues
+
+    def check_if_issue_hash_exists(self, hash_id: str):
+        cur = self.conn.cursor()
+        results = cur.execute(self.CHECK_ISSUE_HASH, (hash_id,)).fetchone()[0]
+        if results == 0:
+            return False
+        else:
+            return True
+
+    def insert_issue_hash(self, issue_hash: str):
+        """ Values: issue_hash"""
+        return self.insert_query(self.INSERT_ISSUE_HASH, (issue_hash,))
+
+
+if __name__ == '__main__':
+    rito = Riot()
+    issues = rito.get_and_parse_riot_status_issues()
+    if len(issues) > 0:
+        for x in issues:
+            print(x)

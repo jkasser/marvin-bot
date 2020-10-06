@@ -532,6 +532,25 @@ async def check_and_update_latest_assets_version():
             await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
 
 
+@tasks.loop(minutes=5)
+async def get_rito_status():
+    status_channel = bot.get_channel(763153164798394378)
+    issues = rito.get_and_parse_riot_status_issues()
+    if len(issues) > 0:
+        for x in issues:
+            if rito.check_if_issue_hash_exists(x["hash"]):
+                continue
+            else:
+                if x["serverity"] == "info":
+                    color = 0xf8d568
+                else:
+                    color = 0xff0000
+                embedded_link = discord.Embed(title=x["title"], description=x["updates"], color=color)
+                embedded_link.add_field(name="created", value=x["created"])
+                await status_channel.send(embed=embedded_link)
+                rito.insert_issue_hash(x["hash"])
+
+
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send(error)
