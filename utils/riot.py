@@ -11,8 +11,7 @@ class Riot(MarvinDB):
     ASSETS_BASE_DIR = '/assets/riot_games/'
 
     TABLE_NAME = 'riot_games'
-
-    RIOT_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+    SUMMONER_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
         id integer PRIMARY KEY,
         summoner_name text NOT NULL,
         summoner_id text not NULL,
@@ -22,21 +21,30 @@ class Riot(MarvinDB):
         profile_icon integer NOT NULL,
         revision_date integer NOT NULL
     );"""
-
     INSERT_SUMMONER = f"""INSERT INTO {TABLE_NAME}(summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date) VALUES(?,?,?,?,?,?,?)"""
-
     UPDATE_SUMMONER = f"""UPDATE {TABLE_NAME} SET summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
-
     FIND_SUMMONER_BY_ID = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_id = ?"""
     FIND_SUMMONER_BY_NAME = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_name = ?"""
+    CHECK_IF_SUMMONER_EXISTS_BY_ID = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_id=? LIMIT 1)"""
+    CHECK_IF_SUMMONER_EXISTS_BY_NAME = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_name=? LIMIT 1)"""
 
-    CHECK_IF_EXISTS_BY_ID = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_id=? LIMIT 1)"""
-    CHECK_IF_EXISTS_BY_NAME = f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_name=? LIMIT 1)"""
+    # Data dragon assets table
+    ASSETS_TABLE_NAME = 'assets_ver'
+    ASSETS_VER_TABLE =  f"""CREATE TABLE IF NOT EXISTS {ASSETS_TABLE_NAME} (
+        id integer PRIMARY KEY,
+        current_version text NOT NULL
+    );
+    """
+    INSERT_LATEST_DATA_VERSION = F"""INSERT INTO {ASSETS_TABLE_NAME}(current_version) VALUES(?)"""
+    UPDATE_LATEST_DATA_VERSION = F"""UPDATE {ASSETS_TABLE_NAME} SET current_version = ?"""
+    CHECK_IF_CURRENT_VER_EXISTS = F"""SELECT EXISTS(SELECT * FROM {ASSETS_TABLE_NAME} LIMIT 1)"""
+    GET_ASSETS_LATEST_VERSION = f"""SELECT current_version FROM {ASSETS_TABLE_NAME}"""
 
     def __init__(self):
         super(Riot, self).__init__()
         # Create the database
-        self.riot_table = self.create_table(self.conn, self.RIOT_TABLE)
+        self.summoner_table = self.create_table(self.conn, self.SUMMONER_TABLE)
+        self.data_version_table = self.create_table(self.conn, self.ASSETS_VER_TABLE)
         # Riot API Stuff
         file = open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r')
         cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -63,7 +71,6 @@ class Riot(MarvinDB):
         else:
             response = r.status_code, r.text
         return response
-
 
     def get_and_update_summoner_from_riot_by_name(self, summoner_name):
         endpoint = self.base_url + f'summoner/v4/summoners/by-name/{summoner_name}?api_key={self.key}'
