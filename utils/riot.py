@@ -137,3 +137,56 @@ class Riot(MarvinDB):
     def get_profile_img_for_id(self, profile_icon_id: int):
         profile_icon = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'10.20.1/img/profileicon/{str(profile_icon_id)}.png'
         return profile_icon
+
+    def get_latest_data_version(self):
+        url = 'https://ddragon.leagueoflegends.com/realms/na.json'
+        r = requests.get(url)
+        if r.status_code == 200:
+            current_version = r.json()["v"]
+            cdn = r.json()["cdn"]
+            assets_url = f'{cdn}/dragontail-{current_version}.tgz'
+            return current_version, assets_url
+        else:
+            return
+
+    def check_if_assets_current_version_exists(self):
+        cur = self.conn.cursor()
+        results = cur.execute(self.CHECK_IF_CURRENT_VER_EXISTS).fetchone()[0]
+        if results == 0:
+            return False
+        else:
+            return True
+
+    def get_current_assets_version_from_db(self):
+        cur = self.conn.cursor()
+        results = cur.execute(self.GET_ASSETS_LATEST_VERSION).fetchone()
+        self.conn.commit()
+        return results
+
+    def insert_assets_current_version(self, current_version: str):
+        """ Values: current_version"""
+        return self.insert_query(self.INSERT_LATEST_DATA_VERSION, (current_version,))
+
+    def update_assets_current_version(self, current_version: str):
+        """current_version=?"""
+        cur = self.conn.cursor()
+        cur.execute(self.UPDATE_LATEST_DATA_VERSION, (current_version,))
+        self.conn.commit()
+
+    def download_new_assets(self, url, version_name):
+        file_name = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'{version_name}.tgz'
+        assets = urllib.request.urlretrieve(url, file_name)
+        self.delete_existing_asset()
+        self.extract_assets(file_to_extract=file_name)
+
+    def delete_existing_asset(self):
+        for dir in os.listdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR):
+            if not dir.endswith('.tgz'):
+                print(f'Deleting {dir}')
+                os.remove(dir)
+
+    def extract_assets(self, file_to_extract):
+        tar = tarfile.open(file_to_extract, 'r:gz')
+        tar.extractall(path=os.path.dirname(file_to_extract))
+        tar.close()
+        os.remove(file_to_extract)
