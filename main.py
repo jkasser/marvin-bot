@@ -8,6 +8,8 @@ from utils.reddit import MarvinReddit
 from utils.news import MarvinNews
 from utils.mapquest import Mapquest
 from utils.rapid_api import RapidWeatherAPI
+from utils.jeopardy import Jeopardy
+from utils.helper import compare_answers
 import datetime, time
 from data.quotes import *
 
@@ -29,6 +31,7 @@ named_queues = {"General": []}
 
 
 # Instantiate Objects here
+jep = Jeopardy()
 rito = Riot()
 reminder = ReminderBot()
 reddit_feed = MarvinReddit(r_client_id, r_client_secret)
@@ -379,6 +382,55 @@ async def get_news_for_keyword(ctx, query):
                 continue
     else:
         await ctx.send(f'I wasn\'t able to find anything for: {query}!')
+
+
+@bot.command(name='playjep', help="Play a round of jeopardy!")
+async def play_jeopardy(ctx):
+    player = ctx.author.name
+    await ctx.send('This is Marvinpardy!\nAnd here is your host... Me! A clinically depressed robot!')
+    standings = jep.get_leaderboard()
+    if jep.check_if_player_exists(player):
+        for standing in standings:
+            if player == standing[1]:
+                worth = standing[2]
+                await ctx.send(f'I see you are back for more {player}!\nYour current worth is: ${worth}')
+                break
+    else:
+        jep.insert_player(player)
+        new_line = "\n"
+        await ctx.send(f'Welcome new contestant! Here are the current standings!\n{f"{new_line}".join([f"{standing[1]}: {standing[2]}" for standing in standings])}')
+
+    id, category, question, worth, answer = jep.get_question()
+    await ctx.send(f'Category: **{category}**\nValue: **{worth}**\nQuestion: **{question}**')
+    await ctx.send('You have **30** seconds to answer starting now!')
+
+    def check(m):
+        return m.author.name == ctx.author.name
+    user_answer = await bot.wait_for("message", check=check)
+    correctness = compare_answers(answer, user_answer.content)
+    await ctx.send(f'The correct answer is: **{answer}**\nYou answered: **{user_answer.content}**')
+    await ctx.send(f'Your answer is: **{correctness * 100}%** correct.')
+    if correctness >= .50:
+        await ctx.send(f'We will consider that a valid answer, you have just earned {worth}')
+        jep.update_player_score(worth, player)
+        new_worth = jep.get_player_worth(player)[0]
+        await ctx.send(f'Your worth is now: ${new_worth}')
+    else:
+        await ctx.send(f'That was not correct!')
+        lost_worth = f'$-{worth.split("$")[1]}'
+        jep.update_player_score(lost_worth, player)
+        new_worth = jep.get_player_worth(player)[0]
+        await ctx.send(f'Your worth is now: ${new_worth}')
+
+
+@bot.command('jepstandings', help="See the current standings!")
+async def get_jep_standings(ctx):
+    standings = jep.get_leaderboard()
+    await ctx.send(f'Player: Worth')
+    for standing in standings:
+        player = standing[1]
+        worth = standing[2]
+        await ctx.send(f'**{player}**: **${worth}**')
 
 
 @tasks.loop(seconds=10)
