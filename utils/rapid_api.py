@@ -24,7 +24,7 @@ class RapidWeatherAPI:
             weather["min"] = f'{data["main"]["temp_min"]}'
             weather["max"] = f'{data["main"]["temp_max"]}'
             weather["humidity"] = f'{data["main"]["humidity"]}'
-            weather["wind"] = f'{data["wind"]["speed"]} mph'
+            weather["wind"] = f'{data["wind"]["speed"]}'
             weather["type"] = str(data["weather"][0]["description"]).capitalize()
             return weather
 
