@@ -1,13 +1,13 @@
 import yaml
 import requests
+import os, shutil
+import tarfile
+import urllib.request
 from datetime import datetime
 from pytz import reference
-import os
 from utils.db import MarvinDB
-import urllib.request
-import tarfile
-import shutil
-import calendar
+from utils.helper import get_user_friendly_date_from_string
+
 
 class Riot(MarvinDB):
 
@@ -223,7 +223,7 @@ class Riot(MarvinDB):
                     issue = {}
                     issue["title"] = incident["titles"][0]["content"]
                     issue["severity"] = incident["incident_severity"]
-                    issue["created"] = f'{calendar.month_name[int(incident["created_at"].split("-")[1])]} {incident["created_at"].split("-")[2].split("T")[0]}, {incident["created_at"].split("-")[0]}'
+                    issue["created"] = get_user_friendly_date_from_string(incident["created_at"])
                     if len(incident["updates"]) > 0:
                         issue["updates"] = incident["updates"][0]["translations"][0]["content"]
                     issue["hash"] = ''.join(issue["title"].split(' '))+''.join(issue["created"].replace(',', '').split(' '))
@@ -241,11 +241,3 @@ class Riot(MarvinDB):
     def insert_issue_hash(self, issue_hash: str):
         """ Values: issue_hash"""
         return self.insert_query(self.INSERT_ISSUE_HASH, (issue_hash,))
-
-
-if __name__ == '__main__':
-    rito = Riot()
-    issues = rito.get_and_parse_riot_status_issues()
-    if len(issues) > 0:
-        for x in issues:
-            print(x)

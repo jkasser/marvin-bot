@@ -1,7 +1,7 @@
 from newsapi import NewsApiClient
-import calendar
 from sqlite3 import Error
 from utils.db import MarvinDB
+from utils.helper import get_user_friendly_date_from_string, get_slug_from_url
 from datetime import timedelta, date
 
 
@@ -58,7 +58,7 @@ class MarvinNews(MarvinDB):
             return f'I have encountered the following error: {response["code"]}\n{response["message"]}'
 
     def get_article_slug(self, url):
-        return f'{url.strip("/").split("/")[-1]}'
+        return get_slug_from_url(url)
 
     def get_article_data(self, article: dict) -> dict:
         date_str = article["publishedAt"]
@@ -73,7 +73,7 @@ class MarvinNews(MarvinDB):
             "description": article["description"],
             "url": article["url"],
             "thumb": article["urlToImage"],
-            "published": f'{calendar.month_name[int(date_str.split("-")[1])]} {date_str.split("-")[2].split("T")[0]}, {date_str.split("-")[0]}',
+            "published": get_user_friendly_date_from_string(date_str),
             "article_slug": self.get_article_slug(str(article["url"]))
         }
         return article_data
