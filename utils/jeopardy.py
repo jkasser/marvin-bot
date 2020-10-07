@@ -1,0 +1,108 @@
+from sqlite3 import Error
+from utils.db import MarvinDB
+import json
+import os
+
+
+class Jeopardy(MarvinDB):
+
+    QUESTION_TABLE_NAME = "jeopardy"
+    QUESTION_TABLE = f"""CREATE TABLE IF NOT EXISTS {QUESTION_TABLE_NAME} (
+        id integer PRIMARY KEY,
+        category text NOT NULL,
+        question text NOT NULL,
+        worth text NOT NULL,
+        answer text NOT NULL
+    );"""
+    INSERT_QUESTION = f"""INSERT INTO {QUESTION_TABLE_NAME}(category,question,worth,answer) VALUES(?,?,?,?)"""
+    GET_RANDOM_QUESTION = f"""SELECT * FROM {QUESTION_TABLE_NAME} ORDER BY RANDOM() LIMIT 1;"""
+
+    LEADERBOARD_TABLE_NAME = 'leaderboard'
+    LEADERBOARD_TABLE = f"""CREATE TABLE IF NOT EXISTS {LEADERBOARD_TABLE_NAME} (
+        id integer PRIMARY KEY,
+        player text NOT NULL,
+        worth integer NOT NULL
+);"""
+
+    INSERT_PLAYER = f"""INSERT INTO {LEADERBOARD_TABLE_NAME}(player, worth) VALUES(?,0)"""
+    CHECK_IF_PLAYER_EXISTS = f"""SELECT EXISTS(SELECT * FROM {LEADERBOARD_TABLE_NAME} WHERE player=? LIMIT 1)"""
+    GET_CURRENT_STANDINGS = f"""SELECT * FROM {LEADERBOARD_TABLE_NAME}"""
+    UPDATE_PLAYER_SCORE = f"""UPDATE {LEADERBOARD_TABLE_NAME} SET worth = worth + ? WHERE player=?"""
+    GET_PLAYER_WORTH = f"""SELECT worth FROM {LEADERBOARD_TABLE_NAME} where player=?"""
+
+    def __init__(self):
+        super().__init__()
+        try:
+            self.create_table(self.conn, self.QUESTION_TABLE)
+            self.create_table(self.conn, self.LEADERBOARD_TABLE)
+        except Error as e:
+            print(e)
+
+    def insert_questions(self):
+        json_file = os.path.dirname(os.path.dirname(__file__)) + '/data/questions.json'
+        with open(json_file) as data:
+            questions = json.load(data)
+            cur = self.conn.cursor()
+            """ It goes category, question, value, answer"""
+            for question in questions:
+                if question["value"] is None:
+                    value = '$5000'
+                else:
+                    value = question["value"]
+
+                cur.execute(
+                    self.INSERT_QUESTION,
+                    (question["category"],
+                     question["question"],
+                     value,
+                     question["answer"])
+                )
+                self.conn.commit()
+
+    def get_question(self):
+        """  returns
+        id integer PRIMARY KEY,
+        category text NOT NULL,
+        question text NOT NULL,
+        worth text NOT NULL,
+        answer text NOT NULL """
+        cur = self.conn.cursor()
+        question = cur.execute(self.GET_RANDOM_QUESTION).fetchone()
+        self.conn.commit()
+        return question
+
+    def insert_player(self, player_name):
+        return self.insert_query(self.INSERT_PLAYER, (player_name,))
+
+    def check_if_player_exists(self, player_name):
+        cur = self.conn.cursor()
+        results = cur.execute(self.CHECK_IF_PLAYER_EXISTS, (player_name,))
+        results = results.fetchone()[0]
+        if results == 0:
+            return False
+        else:
+            return True
+
+    def update_player_score(self, value: str, player_name: str):
+        value = int(value.split('$')[1])
+        cur = self.conn.cursor()
+        cur.execute(self.UPDATE_PLAYER_SCORE, (value, player_name))
+        self.conn.commit()
+
+    def get_leaderboard(self):
+        cur = self.conn.cursor()
+        results = cur.execute(self.GET_CURRENT_STANDINGS)
+        return results
+
+    def get_player_worth(self, player_name):
+        cur = self.conn.cursor()
+        worth = cur.execute(self.GET_PLAYER_WORTH, (player_name,)).fetchone()
+        return worth
+
+
+if __name__ == '__main__':
+    """ Run this once to seed all the question data, this will take A LONG TIME"""
+    jep = Jeopardy()
+    jep.insert_questions()
+
+
