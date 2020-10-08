@@ -46,3 +46,28 @@ def compare_answers(correct, provided):
 
 def fuzz_compare_answers(correct, provided):
     return fuzz.token_set_ratio(correct, provided)
+
+
+def update_leaderboard(leaderboard:list, current_player, current_value):
+    """expects a list of dicts"""
+    for item in leaderboard:
+        for player, value in item.items():
+            if current_player == player:
+                addition = int(current_value.split('$')[1].replace(',', ''))
+                new_value = f"${int(value.split('$')[1]) + int(addition)}"
+                item[player] = new_value
+                return new_value
+
+
+def check_if_user_in_leaderboard(leaderboard: list, player_to_check):
+    """ expects a list of dicts """
+    if not any(standing[player_to_check] for standing in leaderboard):
+        return False
+    else:
+        return True
+
+def get_current_player_from_leaderboard(leaderboard:list, player_to_get):
+    for standing in leaderboard:
+        for player, worth in standing.items():
+            if player == player_to_get:
+                return worth
