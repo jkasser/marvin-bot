@@ -45,4 +45,4 @@ def compare_answers(correct, provided):
 
 
 def fuzz_compare_answers(correct, provided):
-    return fuzz.partial_ratio(correct, provided)
+    return fuzz.token_set_ratio(correct, provided)
