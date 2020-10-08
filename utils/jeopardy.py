@@ -2,6 +2,7 @@ from sqlite3 import Error
 from utils.db import MarvinDB
 import json
 import os
+from utils.helper import link_grabber, strip_tags
 
 
 class Jeopardy(MarvinDB):
