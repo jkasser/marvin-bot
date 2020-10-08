@@ -9,7 +9,7 @@ from utils.news import MarvinNews
 from utils.mapquest import Mapquest
 from utils.rapid_api import RapidWeatherAPI
 from utils.jeopardy import Jeopardy
-from utils.helper import fuzz_compare_answers
+from utils.helper import fuzz_compare_answers, update_leaderboard, check_if_user_in_leaderboard, get_current_player_from_leaderboard
 import datetime, time
 from data.quotes import *
 
@@ -28,6 +28,8 @@ open_weather = cfg["rapidAPI"]["key"]
 mapquest_token = cfg["mapquest"]["key"]
 # Variables in memory
 named_queues = {"General": []}
+question_list = []
+leaderboard = []
 
 
 # Instantiate Objects here
@@ -43,12 +45,16 @@ weather_api = RapidWeatherAPI(open_weather)
 @bot.event
 async def on_ready():  # method expected by client. This runs once when connected
     print(f'We have logged in as {bot.user}')  # notification of login.
+    standings = jep.get_leaderboard()
+    for standing in standings:
+        leaderboard.append({standing[1]: f'${standing[2]}'})
+    update_jep_leaderboard.start()
     check_reddit_lol_stream.start()
     check_reddit_travel_stream.start()
     check_the_news.start()
     check_and_update_latest_assets_version.start()
     get_rito_status.start()
-    check_reminders.start()
+    check_for_reminders.start()
 
 
 @bot.event
@@ -387,65 +393,77 @@ async def get_news_for_keyword(ctx, query):
 
 @bot.command(name='playjep', help="Play a round of jeopardy!")
 async def play_jeopardy(ctx):
-    player = ctx.author.name
-    await ctx.send('This is Marvinpardy!\nAnd here is your host... Me! A clinically depressed robot!')
-    standings = jep.get_leaderboard()
-    if jep.check_if_player_exists(player):
-        for standing in standings:
-            if player == standing[1]:
-                worth = standing[2]
-                await ctx.send(f'I see you are back for more {player}!\nYour current worth is: ${worth}')
-                break
-    else:
-        jep.insert_player(player)
-        new_line = "\n"
-        await ctx.send(f'Welcome new contestant! Here are the current standings!\n{f"{new_line}".join([f"{standing[1]}: {standing[2]}" for standing in standings])}')
-
-    id, category, question, worth, answer = jep.get_question()
-    await ctx.send(f'Category: **{category}**\nValue: **{worth}**\nQuestion: **{question}**')
+    current_player = ctx.author.name
     timeout = 60
+    # Once we get to 5 questions left, retrieve another 20, store them in memory
+    if len(question_list) <= 5:
+        questions = jep.get_questions()
+        for question in questions:
+            question_dict = {
+                "id": question[0],
+                "category": question[1],
+                "question": jep.parse_question(question[2]),
+                "worth": question[3],
+                "answer": question[4]
+            }
+            question_list.append(question_dict)
+    # create a new contestant or welcome someone back
+    await ctx.send('This is Marvinpardy!\nAnd here is your host... Me! A clinically depressed robot!')
+    if len(leaderboard) != 0:
+        if check_if_user_in_leaderboard(leaderboard, current_player):
+            worth = get_current_player_from_leaderboard(leaderboard, current_player)
+            await ctx.send(f'I see you are back for more {current_player}!\nYour current worth is: {worth}')
+        else:
+            await ctx.send('Welcome new contestant!')
+            leaderboard.append({current_player: "$0"})
+    else:
+        await ctx.send('Welcome new contestant!')
+        leaderboard.append({current_player: "$0"})
+
+    # now ask a random question
+    question_to_ask = random.choice(question_list)
+    await ctx.send(f'Category: **{question_to_ask["category"]}**\nValue: **{question_to_ask["worth"]}**\nQuestion: **{question_to_ask["question"]}**')
+    await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
+    # remove the question from the list in memory
+    question_list.pop(question_list.index(question_to_ask))
+    # await for the response and check the answer
     def check(m):
         return m.author.name == ctx.author.name
-    await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
     user_answer = await bot.wait_for("message", check=check, timeout=timeout)
-    correctness = fuzz_compare_answers(answer.lower(), user_answer.content.lower())
-    await ctx.send(f'The correct answer is: **{answer}**\nYou answered: **{user_answer.content}**')
+    correctness = fuzz_compare_answers(question_to_ask["answer"], user_answer.content)
+    await ctx.send(f'The correct answer is: **{question_to_ask["answer"]}**\nYou answered: **{user_answer.content}**')
     await ctx.send(f'Your answer is: **{correctness}%** correct.')
+    # determine correctness and update leaderboard, polling task will update scores in the DB every 5 minutes
     if correctness >= 60:
-        await ctx.send(f'We will consider that a valid answer, you have just earned {worth}')
-        jep.update_player_score(worth, player)
-        new_worth = jep.get_player_worth(player)[0]
-        await ctx.send(f'Your worth is now: ${new_worth}')
+        await ctx.send(f'We will consider that a valid answer, you have just earned {question_to_ask["worth"]}')
+        new_worth = update_leaderboard(leaderboard, current_player, question_to_ask["worth"])
+        await ctx.send(f'Your worth is now: {new_worth}')
     else:
         await ctx.send(f'That was not correct!')
-        lost_worth = f'$-{worth.split("$")[1]}'
-        jep.update_player_score(lost_worth, player)
-        new_worth = jep.get_player_worth(player)[0]
-        await ctx.send(f'Your worth is now: ${new_worth}')
+        lost_worth = f'$-{question_to_ask["worth"].split("$")[1]}'
+        new_worth = update_leaderboard(leaderboard, current_player, lost_worth)
+        await ctx.send(f'Your worth is now: {new_worth}')
 
 
 @bot.command('jepstandings', help="See the current standings!")
 async def get_jep_standings(ctx):
-    standings = jep.get_leaderboard()
-    await ctx.send(f'Player: Worth')
-    for standing in standings:
-        player = standing[1]
-        worth = standing[2]
-        await ctx.send(f'**{player}**: **${worth}**')
+    await ctx.send(f'**Player**: **Worth**')
+    for standing in leaderboard:
+        for player, worth in standing.items():
+            await ctx.send(f'{player}: {worth}')
 
 
-@tasks.loop(seconds=10)
-async def check_reminders():
-    results = reminder.check_reminders()
-    if len(results):
-        # results are a tuple of index, name, when, what, channel_id, and sent
-        for result in results:
-            # check the when date to see if its => now
-            if datetime.datetime.now() >= result[2]:
-                channel = bot.get_channel(result[4])
-                await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
-                # set it as sent
-                reminder.mark_reminder_sent(result[0])
+
+@tasks.loop(seconds=500)
+async def update_jep_leaderboard():
+    for standing in leaderboard:
+        for player,value in standing.items():
+            # check if player exists in db
+            if jep.check_if_player_exists(player):
+                jep.update_player_score(value, player)
+            # if they don't insert player and then update:
+            else:
+                jep.insert_player(player, value)
 
 
 @bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
@@ -630,6 +648,22 @@ async def get_rito_status():
                 embedded_link.add_field(name="created", value=x["created"])
                 await status_channel.send(embed=embedded_link)
                 rito.insert_issue_hash(x["hash"])
+
+
+
+@tasks.loop(seconds=10)
+async def check_for_reminders():
+    results = reminder.check_reminders()
+    if len(results):
+        # results are a tuple of index, name, when, what, channel_id, and sent
+        for result in results:
+            # check the when date to see if its => now
+            if datetime.datetime.now() >= result[2]:
+                channel = bot.get_channel(result[4])
+                await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
+                # set it as sent
+                reminder.mark_reminder_sent(result[0])
+
 
 
 @bot.event
