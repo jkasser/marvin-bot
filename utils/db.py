@@ -7,7 +7,7 @@ class MarvinDB:
     def __init__(self):
         self.conn = None
         try:
-            self.conn = sqlite3.connect('marvin.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+            self.conn = sqlite3.connect('marvin.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30)
         except Error as e:
             print(e)
 
