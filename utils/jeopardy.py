@@ -84,7 +84,7 @@ class Jeopardy(MarvinDB):
             return True
 
     def update_player_score(self, value: str, player_name: str):
-        value = int(value.split('$')[1])
+        value = int(value.split('$')[1].replace(',', ''))
         cur = self.conn.cursor()
         cur.execute(self.UPDATE_PLAYER_SCORE, (value, player_name))
         self.conn.commit()
