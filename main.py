@@ -453,17 +453,17 @@ async def get_jep_standings(ctx):
             await ctx.send(f'{player}: {worth}')
 
 
-
-@tasks.loop(seconds=500)
-async def update_jep_leaderboard():
-    for standing in leaderboard:
-        for player,value in standing.items():
-            # check if player exists in db
-            if jep.check_if_player_exists(player):
-                jep.update_player_score(value, player)
-            # if they don't insert player and then update:
-            else:
-                jep.insert_player(player, value)
+# TODO::: restructure leaderboard to account for inserting values into DB (clear values in mem, or keep 2 records)
+# @tasks.loop(seconds=600)
+# async def update_jep_leaderboard():
+#     for standing in leaderboard:
+#         for player,value in standing.items():
+#             # check if player exists in db
+#             if jep.check_if_player_exists(player):
+#                 jep.update_player_score(value, player)
+#             # if they don't insert player and then update:
+#             else:
+#                 jep.insert_player(player, value)
 
 
 @bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
