@@ -14,6 +14,7 @@ python-dateutil = "*"
 praw = "*"
 newsapi-python = "*"
 fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [requires]
 python_version = "3.7"
