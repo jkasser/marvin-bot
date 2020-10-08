@@ -406,7 +406,7 @@ async def play_jeopardy(ctx):
 
     def check(m):
         return m.author.name == ctx.author.name
-    user_answer = await bot.wait_for("message", check=check)
+    user_answer = await bot.wait_for("message", check=check, timeout=30)
     correctness = compare_answers(answer, user_answer.content)
     await ctx.send(f'The correct answer is: **{answer}**\nYou answered: **{user_answer.content}**')
     await ctx.send(f'Your answer is: **{correctness * 100}%** correct.')
