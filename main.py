@@ -402,11 +402,11 @@ async def play_jeopardy(ctx):
 
     id, category, question, worth, answer = jep.get_question()
     await ctx.send(f'Category: **{category}**\nValue: **{worth}**\nQuestion: **{question}**')
-    await ctx.send('You have **30** seconds to answer starting now!')
-
+    timeout = 60
     def check(m):
         return m.author.name == ctx.author.name
-    user_answer = await bot.wait_for("message", check=check, timeout=30)
+    await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
+    user_answer = await bot.wait_for("message", check=check, timeout=timeout)
     correctness = compare_answers(answer, user_answer.content)
     await ctx.send(f'The correct answer is: **{answer}**\nYou answered: **{user_answer.content}**')
     await ctx.send(f'Your answer is: **{correctness * 100}%** correct.')
