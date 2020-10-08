@@ -16,7 +16,7 @@ class Jeopardy(MarvinDB):
         answer text NOT NULL
     );"""
     INSERT_QUESTION = f"""INSERT INTO {QUESTION_TABLE_NAME}(category,question,worth,answer) VALUES(?,?,?,?)"""
-    GET_RANDOM_QUESTION = f"""SELECT * FROM {QUESTION_TABLE_NAME} ORDER BY RANDOM() LIMIT 1;"""
+    GET_RANDOM_QUESTIONS = f"""SELECT * FROM {QUESTION_TABLE_NAME} ORDER BY RANDOM() LIMIT 20;"""
 
     LEADERBOARD_TABLE_NAME = 'leaderboard'
     LEADERBOARD_TABLE = f"""CREATE TABLE IF NOT EXISTS {LEADERBOARD_TABLE_NAME} (
@@ -25,7 +25,7 @@ class Jeopardy(MarvinDB):
         worth integer NOT NULL
 );"""
 
-    INSERT_PLAYER = f"""INSERT INTO {LEADERBOARD_TABLE_NAME}(player, worth) VALUES(?,0)"""
+    INSERT_PLAYER = f"""INSERT INTO {LEADERBOARD_TABLE_NAME}(player, worth) VALUES(?,?)"""
     CHECK_IF_PLAYER_EXISTS = f"""SELECT EXISTS(SELECT * FROM {LEADERBOARD_TABLE_NAME} WHERE player=? LIMIT 1)"""
     GET_CURRENT_STANDINGS = f"""SELECT * FROM {LEADERBOARD_TABLE_NAME}"""
     UPDATE_PLAYER_SCORE = f"""UPDATE {LEADERBOARD_TABLE_NAME} SET worth = worth + ? WHERE player=?"""
@@ -74,7 +74,7 @@ class Jeopardy(MarvinDB):
         return "\n".join(new_q)
 
 
-    def get_question(self):
+    def get_questions(self):
         """  returns
         id integer PRIMARY KEY,
         category text NOT NULL,
@@ -82,9 +82,9 @@ class Jeopardy(MarvinDB):
         worth text NOT NULL,
         answer text NOT NULL """
         cur = self.conn.cursor()
-        question = cur.execute(self.GET_RANDOM_QUESTION).fetchone()
+        questions = cur.execute(self.GET_RANDOM_QUESTIONS).fetchall()
         self.conn.commit()
-        return question
+        return questions
 
     def insert_player(self, player_name):
         return self.insert_query(self.INSERT_PLAYER, (player_name,))
@@ -106,10 +106,11 @@ class Jeopardy(MarvinDB):
 
     def get_leaderboard(self):
         cur = self.conn.cursor()
-        results = cur.execute(self.GET_CURRENT_STANDINGS)
+        results = cur.execute(self.GET_CURRENT_STANDINGS).fetchall()
         return results
 
     def get_player_worth(self, player_name):
+        """ Returns (id, player, worth)"""
         cur = self.conn.cursor()
         worth = cur.execute(self.GET_PLAYER_WORTH, (player_name,)).fetchone()
         return worth
