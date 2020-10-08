@@ -39,6 +39,7 @@ news_bot = MarvinNews(cfg["news"]["key"])
 mapq = Mapquest(mapquest_token)
 weather_api = RapidWeatherAPI(open_weather)
 
+
 @bot.event
 async def on_ready():  # method expected by client. This runs once when connected
     print(f'We have logged in as {bot.user}')  # notification of login.
@@ -407,10 +408,10 @@ async def play_jeopardy(ctx):
         return m.author.name == ctx.author.name
     await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
     user_answer = await bot.wait_for("message", check=check, timeout=timeout)
-    correctness = fuzz_compare_answers(answer, user_answer.content)
+    correctness = fuzz_compare_answers(answer.lower(), user_answer.content.lower())
     await ctx.send(f'The correct answer is: **{answer}**\nYou answered: **{user_answer.content}**')
     await ctx.send(f'Your answer is: **{correctness}%** correct.')
-    if correctness >= 50:
+    if correctness >= 60:
         await ctx.send(f'We will consider that a valid answer, you have just earned {worth}')
         jep.update_player_score(worth, player)
         new_worth = jep.get_player_worth(player)[0]
