@@ -512,11 +512,11 @@ async def get_todays_weather(ctx, query):
 
 #### Task Loops start here ####
 
-@tasks.loop(seconds=300)
+@tasks.loop(seconds=600)
 async def check_reddit_travel_stream():
     try:
         travel_channel = bot.get_channel(758126844708651041)
-        post_list = reddit_feed.get_travel_stream(limit=50)
+        post_list = reddit_feed.get_travel_stream(limit=5)
         if len(post_list) >= 1:
             for post in post_list:
                 if reddit_feed.check_if_post_exists(post[0]):
@@ -534,10 +534,10 @@ async def check_reddit_travel_stream():
         pass
 
 
-@tasks.loop(seconds=300)
+@tasks.loop(seconds=600)
 async def check_reddit_lol_stream():
     lol_channel = bot.get_channel(761291587044376598)
-    post_list = reddit_feed.get_lol_stream(limit=50)
+    post_list = reddit_feed.get_lol_stream(limit=5)
     if len(post_list) >= 1:
         for post in post_list:
             if reddit_feed.check_if_post_exists(post[0]):
@@ -560,7 +560,7 @@ async def check_reddit_lol_stream():
 async def check_the_news():
     news_channel = bot.get_channel(761691682383069214)
     sources = ",".join(cfg["news"]["sources"])
-    news_list = news_bot.news.get_top_headlines(page_size=20, sources=sources)["articles"]
+    news_list = news_bot.news.get_top_headlines(page_size=3, sources=sources)["articles"]
     if isinstance(news_list, list):
         for post in news_list:
             # parse the article
