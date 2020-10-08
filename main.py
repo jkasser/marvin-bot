@@ -410,7 +410,7 @@ async def play_jeopardy(ctx):
     correctness = fuzz_compare_answers(answer, user_answer.content)
     await ctx.send(f'The correct answer is: **{answer}**\nYou answered: **{user_answer.content}**')
     await ctx.send(f'Your answer is: **{correctness}%** correct.')
-    if correctness >= .50:
+    if correctness >= 50:
         await ctx.send(f'We will consider that a valid answer, you have just earned {worth}')
         jep.update_player_score(worth, player)
         new_worth = jep.get_player_worth(player)[0]
