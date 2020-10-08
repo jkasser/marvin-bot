@@ -3,6 +3,7 @@ import re
 import difflib
 from io import StringIO
 from html.parser import HTMLParser
+from fuzzywuzzy import fuzz
 
 
 class HTMLStripper(HTMLParser):
@@ -42,3 +43,6 @@ def link_grabber(text):
 def compare_answers(correct, provided):
     return float(str(difflib.SequenceMatcher(None, correct, provided).ratio())[:5])
 
+
+def fuzz_compare_answers(correct, provided):
+    return fuzz.partial_ratio(correct, provided)

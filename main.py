@@ -9,7 +9,7 @@ from utils.news import MarvinNews
 from utils.mapquest import Mapquest
 from utils.rapid_api import RapidWeatherAPI
 from utils.jeopardy import Jeopardy
-from utils.helper import compare_answers
+from utils.helper import fuzz_compare_answers
 import datetime, time
 from data.quotes import *
 
@@ -407,9 +407,9 @@ async def play_jeopardy(ctx):
         return m.author.name == ctx.author.name
     await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
     user_answer = await bot.wait_for("message", check=check, timeout=timeout)
-    correctness = compare_answers(answer, user_answer.content)
+    correctness = fuzz_compare_answers(answer, user_answer.content)
     await ctx.send(f'The correct answer is: **{answer}**\nYou answered: **{user_answer.content}**')
-    await ctx.send(f'Your answer is: **{correctness * 100}%** correct.')
+    await ctx.send(f'Your answer is: **{correctness}%** correct.')
     if correctness >= .50:
         await ctx.send(f'We will consider that a valid answer, you have just earned {worth}')
         jep.update_player_score(worth, player)

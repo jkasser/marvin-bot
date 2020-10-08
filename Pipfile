@@ -13,6 +13,7 @@ pytz = "*"
 python-dateutil = "*"
 praw = "*"
 newsapi-python = "*"
+fuzzywuzzy = "*"
 
 [requires]
 python_version = "3.7"
