@@ -53,11 +53,25 @@ class Jeopardy(MarvinDB):
                 cur.execute(
                     self.INSERT_QUESTION,
                     (question["category"],
-                     question["question"],
+                     self.parse_question(question["question"]),
                      value,
                      question["answer"])
                 )
                 self.conn.commit()
+
+    def parse_question(self, question: str):
+        new_q = []
+        # check for hrefs
+        links = link_grabber(question)
+        if len(links) > 0:
+            for link in links:
+                new_q.append(link)
+
+        # now grab the text:
+        string_question = strip_tags(question)
+        new_q.append(string_question)
+        return "\n".join(new_q)
+
 
     def get_question(self):
         """  returns

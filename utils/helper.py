@@ -1,6 +1,29 @@
 import calendar
 import re
 import difflib
+from io import StringIO
+from html.parser import HTMLParser
+
+
+class HTMLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = StringIO()
+
+    def handle_data(self, d):
+        self.text.write(d)
+
+    def get_data(self):
+        return self.text.getvalue()
+
+
+def strip_tags(html):
+    s = HTMLStripper()
+    s.feed(html)
+    return s.get_data()
 
 
 def get_user_friendly_date_from_string(date_string: str) -> str:
@@ -11,15 +34,11 @@ def get_slug_from_url(url):
     return f'{url.strip("/").split("/")[-1]}'
 
 
-def parse_question_from_link(text):
-    question = re.compile(r'(?<=\>).*(?=\<)')
-    return question.search(text).group()
-
-
-def parse_href_from_string(text):
-    url = re.compile(r'(?<=\")http.+?(?=\\\")')
-    return url.search(text).group()
+def link_grabber(text):
+    link_text = re.compile(r'(?<=\")http.+?(?=\")')
+    return link_text.findall(text)
 
 
 def compare_answers(correct, provided):
     return float(str(difflib.SequenceMatcher(None, correct, provided).ratio())[:5])
+
