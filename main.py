@@ -9,7 +9,7 @@ from utils.news import MarvinNews
 from utils.mapquest import Mapquest
 from utils.rapid_api import RapidWeatherAPI
 from utils.jeopardy import Jeopardy
-from utils.helper import fuzz_compare_answers, update_leaderboard, sum_leaderboard_values
+from utils.helper import fuzz_compare_answers, update_current_worth
 import datetime, time
 from data.quotes import *
 
