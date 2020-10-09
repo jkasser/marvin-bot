@@ -9,7 +9,7 @@ from utils.news import MarvinNews
 from utils.mapquest import Mapquest
 from utils.rapid_api import RapidWeatherAPI
 from utils.jeopardy import Jeopardy
-from utils.helper import fuzz_compare_answers, update_leaderboard, check_if_user_in_leaderboard, get_current_player_from_leaderboard
+from utils.helper import fuzz_compare_answers, update_leaderboard, sum_leaderboard_values
 import datetime, time
 from data.quotes import *
 
@@ -29,7 +29,8 @@ mapquest_token = cfg["mapquest"]["key"]
 # Variables in memory
 named_queues = {"General": []}
 question_list = []
-leaderboard = []
+leaderboard = {"overall_standings": {},
+               "current_bank": {}}
 
 
 # Instantiate Objects here
@@ -47,7 +48,8 @@ async def on_ready():  # method expected by client. This runs once when connecte
     print(f'We have logged in as {bot.user}')  # notification of login.
     standings = jep.get_leaderboard()
     for standing in standings:
-        leaderboard.append({standing[1]: f'${standing[2]}'})
+        leaderboard["current_bank"][standing[1]] = f'${standing[2]}'
+        leaderboard["overall_standings"][standing[1]] = f'${standing[2]}'
     update_jep_leaderboard.start()
     check_reddit_lol_stream.start()
     check_reddit_travel_stream.start()
@@ -410,15 +412,15 @@ async def play_jeopardy(ctx):
     # create a new contestant or welcome someone back
     await ctx.send('This is Marvinpardy!\nAnd here is your host... Me! A clinically depressed robot!')
     if len(leaderboard) != 0:
-        if check_if_user_in_leaderboard(leaderboard, current_player):
-            worth = get_current_player_from_leaderboard(leaderboard, current_player)
+        if current_player in leaderboard["current_bank"].keys():
+            worth = leaderboard["current_bank"][current_player]
             await ctx.send(f'I see you are back for more {current_player}!\nYour current worth is: {worth}')
         else:
             await ctx.send('Welcome new contestant!')
-            leaderboard.append({current_player: "$0"})
+            leaderboard["current_bank"][current_player] = "$0"
     else:
         await ctx.send('Welcome new contestant!')
-        leaderboard.append({current_player: "$0"})
+        leaderboard["current_bank"][current_player] = "$0"
 
     # now ask a random question
     question_to_ask = random.choice(question_list)
@@ -448,22 +450,28 @@ async def play_jeopardy(ctx):
 @bot.command('jepstandings', help="See the current standings!")
 async def get_jep_standings(ctx):
     await ctx.send(f'**Player**: **Worth**')
-    for standing in leaderboard:
-        for player, worth in standing.items():
-            await ctx.send(f'{player}: {worth}')
+    for current_player, current_worth in leaderboard["current_bank"].items():
+        await ctx.send(f'{current_player}: {current_worth}')
 
 
-# TODO::: restructure leaderboard to account for inserting values into DB (clear values in mem, or keep 2 records)
-# @tasks.loop(seconds=600)
-# async def update_jep_leaderboard():
-#     for standing in leaderboard:
-#         for player,value in standing.items():
-#             # check if player exists in db
-#             if jep.check_if_player_exists(player):
-#                 jep.update_player_score(value, player)
-#             # if they don't insert player and then update:
-#             else:
-#                 jep.insert_player(player, value)
+@tasks.loop(seconds=600)
+async def update_jep_leaderboard():
+    for player, worth in leaderboard["current_bank"].items():
+        if player in leaderboard["overall_standings"].keys():
+            new_overall_worth = sum_leaderboard_values(worth, leaderboard["overall_standings"][player])
+            leaderboard["overall_standings"][player] = new_overall_worth
+        else:
+            leaderboard["overall_standings"][player] = worth
+    # then reset overall back to 0 so next time we try to insert we aren't duplicating results
+    for overall_player, overall_worth in leaderboard["overall_standings"].items():
+        if overall_worth != "$0":
+            if jep.check_if_player_exists(overall_player):
+                jep.update_player_score(overall_player, overall_player)
+            else:
+                jep.insert_player(overall_player, overall_worth)
+            leaderboard["overall_standings"][overall_player] = "$0"
+        else:
+            continue
 
 
 @bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")

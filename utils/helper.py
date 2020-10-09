@@ -48,26 +48,16 @@ def fuzz_compare_answers(correct, provided):
     return fuzz.token_set_ratio(correct, provided)
 
 
-def update_leaderboard(leaderboard:list, current_player, current_value):
-    """expects a list of dicts"""
-    for item in leaderboard:
-        for player, value in item.items():
-            if current_player == player:
-                addition = int(current_value.split('$')[1].replace(',', ''))
-                new_value = f"${int(value.split('$')[1]) + int(addition)}"
-                item[player] = new_value
-                return new_value
+def update_leaderboard(leaderboard: dict, current_player, current_value):
+    for player, value in leaderboard["current_bank"].items():
+        if current_player == player:
+            addition = int(current_value.split('$')[1].replace(',', ''))
+            new_value = f"${int(value.split('$')[1]) + int(addition)}"
+            leaderboard[player] = new_value
+            return new_value
 
 
-def check_if_user_in_leaderboard(leaderboard: list, player_to_check):
-    """ expects a list of dicts """
-    if not any(standing[player_to_check] for standing in leaderboard):
-        return False
-    else:
-        return True
-
-def get_current_player_from_leaderboard(leaderboard:list, player_to_get):
-    for standing in leaderboard:
-        for player, worth in standing.items():
-            if player == player_to_get:
-                return worth
+def sum_leaderboard_values(current: str, overall: str):
+    """ Expects an amount in the form of $1000 or $-1000 """
+    total = int(current.split('$')[1].replace(',', '')) + int(overall.split('$')[1].replace(',', ''))
+    return f'${total}'
