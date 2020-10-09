@@ -53,7 +53,7 @@ def update_leaderboard(leaderboard: dict, current_player, current_value):
         if current_player == player:
             addition = int(current_value.split('$')[1].replace(',', ''))
             new_value = f"${int(value.split('$')[1]) + int(addition)}"
-            leaderboard[player] = new_value
+            leaderboard["current_bank"][player] = new_value
             return new_value
 
 
