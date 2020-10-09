@@ -453,26 +453,6 @@ async def get_jep_standings(ctx):
         await ctx.send(f'{current_player}: {current_worth}')
 
 
-@tasks.loop(seconds=600)
-async def update_jep_leaderboard():
-    for player, worth in leaderboard["current_bank"].items():
-        if player in leaderboard["overall_standings"].keys():
-            new_overall_worth = sum_leaderboard_values(worth, leaderboard["overall_standings"][player])
-            leaderboard["overall_standings"][player] = new_overall_worth
-        else:
-            leaderboard["overall_standings"][player] = worth
-    # then reset overall back to 0 so next time we try to insert we aren't duplicating results
-    for overall_player, overall_worth in leaderboard["overall_standings"].items():
-        if overall_worth != "$0":
-            if jep.check_if_player_exists(overall_player):
-                jep.update_player_score(overall_player, overall_player)
-            else:
-                jep.insert_player(overall_player, overall_worth)
-            leaderboard["overall_standings"][overall_player] = "$0"
-        else:
-            continue
-
-
 @bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
 async def get_summoner(ctx, summoner_name):
     summoner_name = summoner_name.lower()
@@ -536,6 +516,12 @@ async def get_todays_weather(ctx, query):
         await ctx.send('Please provide a city/state or zip code.')
 
 #### Task Loops start here ####
+@tasks.loop(minutes=10)
+async def update_jep_leaderboard():
+    # every 10 minutes update the database with our leaderboard in memory
+    for player, worth in leaderboard.items():
+        jep.update_player_score(worth, player)
+
 
 @tasks.loop(minutes=15)
 async def check_reddit_travel_stream():
