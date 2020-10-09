@@ -409,7 +409,7 @@ async def play_jeopardy(ctx):
             }
             question_list.append(question_dict)
     # create a new contestant or welcome someone back
-    await ctx.send('This is Marvinpardy!\nAnd here is your host... Me! A clinically depressed robot!')
+    await ctx.send('Let\'s play!')
     if len(leaderboard) != 0:
         if current_player in leaderboard.keys():
             worth = leaderboard[current_player]
