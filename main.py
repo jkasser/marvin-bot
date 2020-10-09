@@ -537,7 +537,7 @@ async def get_todays_weather(ctx, query):
 
 #### Task Loops start here ####
 
-@tasks.loop(seconds=600)
+@tasks.loop(minutes=15)
 async def check_reddit_travel_stream():
     try:
         travel_channel = bot.get_channel(758126844708651041)
@@ -559,7 +559,7 @@ async def check_reddit_travel_stream():
         pass
 
 
-@tasks.loop(seconds=600)
+@tasks.loop(minutes=8)
 async def check_reddit_lol_stream():
     lol_channel = bot.get_channel(761291587044376598)
     post_list = reddit_feed.get_lol_stream(limit=5)
@@ -638,7 +638,7 @@ async def check_and_update_latest_assets_version():
             await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
 
 
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=15)
 async def get_rito_status():
     status_channel = bot.get_channel(763153164798394378)
     issues = rito.get_and_parse_riot_status_issues()
@@ -657,7 +657,6 @@ async def get_rito_status():
                 rito.insert_issue_hash(x["hash"])
 
 
-
 @tasks.loop(seconds=10)
 async def check_for_reminders():
     results = reminder.check_reminders()
@@ -670,7 +669,6 @@ async def check_for_reminders():
                 await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
                 # set it as sent
                 reminder.mark_reminder_sent(result[0])
-
 
 
 @bot.event
