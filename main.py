@@ -29,9 +29,7 @@ mapquest_token = cfg["mapquest"]["key"]
 # Variables in memory
 named_queues = {"General": []}
 question_list = []
-leaderboard = {"overall_standings": {},
-               "current_bank": {}}
-
+leaderboard = {}
 
 # Instantiate Objects here
 jep = Jeopardy()
@@ -48,8 +46,9 @@ async def on_ready():  # method expected by client. This runs once when connecte
     print(f'We have logged in as {bot.user}')  # notification of login.
     standings = jep.get_leaderboard()
     for standing in standings:
-        leaderboard["current_bank"][standing[1]] = f'${standing[2]}'
-        leaderboard["overall_standings"][standing[1]] = f'${standing[2]}'
+        db_player = standing[1]
+        db_worth = f'${standing[2]}'
+        leaderboard[db_player] = db_worth
     update_jep_leaderboard.start()
     check_reddit_lol_stream.start()
     check_reddit_travel_stream.start()
@@ -412,15 +411,15 @@ async def play_jeopardy(ctx):
     # create a new contestant or welcome someone back
     await ctx.send('This is Marvinpardy!\nAnd here is your host... Me! A clinically depressed robot!')
     if len(leaderboard) != 0:
-        if current_player in leaderboard["current_bank"].keys():
-            worth = leaderboard["current_bank"][current_player]
+        if current_player in leaderboard.keys():
+            worth = leaderboard[current_player]
             await ctx.send(f'I see you are back for more {current_player}!\nYour current worth is: {worth}')
         else:
             await ctx.send('Welcome new contestant!')
-            leaderboard["current_bank"][current_player] = "$0"
+            leaderboard[current_player] = "$0"
     else:
         await ctx.send('Welcome new contestant!')
-        leaderboard["current_bank"][current_player] = "$0"
+        leaderboard[current_player] = "$0"
 
     # now ask a random question
     question_to_ask = random.choice(question_list)
@@ -438,19 +437,19 @@ async def play_jeopardy(ctx):
     # determine correctness and update leaderboard, polling task will update scores in the DB every 5 minutes
     if correctness >= 60:
         await ctx.send(f'We will consider that a valid answer, you have just earned {question_to_ask["worth"]}')
-        new_worth = update_leaderboard(leaderboard, current_player, question_to_ask["worth"])
+        new_worth = update_current_worth(leaderboard, current_player, question_to_ask["worth"])
         await ctx.send(f'Your worth is now: {new_worth}')
     else:
         await ctx.send(f'That was not correct!')
         lost_worth = f'$-{question_to_ask["worth"].split("$")[1]}'
-        new_worth = update_leaderboard(leaderboard, current_player, lost_worth)
+        new_worth = update_current_worth(leaderboard, current_player, lost_worth)
         await ctx.send(f'Your worth is now: {new_worth}')
 
 
 @bot.command('jepstandings', help="See the current standings!")
 async def get_jep_standings(ctx):
     await ctx.send(f'**Player**: **Worth**')
-    for current_player, current_worth in leaderboard["current_bank"].items():
+    for current_player, current_worth in leaderboard.items():
         await ctx.send(f'{current_player}: {current_worth}')
 
 
