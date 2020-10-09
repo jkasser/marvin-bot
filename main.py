@@ -430,9 +430,14 @@ async def play_jeopardy(ctx):
     # await for the response and check the answer
     def check(m):
         return m.author.name == ctx.author.name
-    user_answer = await bot.wait_for("message", check=check, timeout=timeout)
-    correctness = fuzz_compare_answers(question_to_ask["answer"], user_answer.content)
-    await ctx.send(f'The correct answer is: **{question_to_ask["answer"]}**\nYou answered: **{user_answer.content}**')
+    try:
+        user_answer = await bot.wait_for("message", check=check, timeout=timeout)
+        user_answer = user_answer.content
+    except TimeoutError:
+        await ctx.send('BZZZZ! You have run out of time!')
+        user_answer = ""
+    correctness = fuzz_compare_answers(question_to_ask["answer"], user_answer)
+    await ctx.send(f'The correct answer is: **{question_to_ask["answer"]}**\nYou answered: **{user_answer}**')
     await ctx.send(f'Your answer is: **{correctness}%** correct.')
     # determine correctness and update leaderboard, polling task will update scores in the DB every 5 minutes
     if correctness >= 60:
