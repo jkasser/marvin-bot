@@ -415,7 +415,8 @@ async def play_jeopardy(ctx):
     current_player = ctx.author.name
     jep_channel = bot.get_channel(764262102155132938)
     if ctx.channel.id != jep_channel.id:
-        await ctx.send(f'Please use this over in {jep_channel}!')
+        await ctx.send(f'Please use this over in {jep_channel.mention}!')
+        return
     else:
         timeout = 60
         # Once we get to 5 questions left, retrieve another 20, store them in memory
