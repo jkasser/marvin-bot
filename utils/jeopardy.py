@@ -28,7 +28,7 @@ class Jeopardy(MarvinDB):
     INSERT_PLAYER = f"""INSERT INTO {LEADERBOARD_TABLE_NAME}(player, worth) VALUES(?,?)"""
     CHECK_IF_PLAYER_EXISTS = f"""SELECT EXISTS(SELECT * FROM {LEADERBOARD_TABLE_NAME} WHERE player=? LIMIT 1)"""
     GET_CURRENT_STANDINGS = f"""SELECT * FROM {LEADERBOARD_TABLE_NAME}"""
-    UPDATE_PLAYER_SCORE = f"""UPDATE {LEADERBOARD_TABLE_NAME} SET worth = worth + ? WHERE player=?"""
+    UPDATE_PLAYER_SCORE = f"""UPDATE {LEADERBOARD_TABLE_NAME} SET worth = ? WHERE player=?"""
     GET_PLAYER_WORTH = f"""SELECT worth FROM {LEADERBOARD_TABLE_NAME} where player=?"""
 
     def __init__(self):
@@ -99,6 +99,7 @@ class Jeopardy(MarvinDB):
             return True
 
     def update_player_score(self, value: str, player_name: str):
+        """ Takes a string and plits it into an int for the database """
         value = int(value.split('$')[1].replace(',', ''))
         cur = self.conn.cursor()
         cur.execute(self.UPDATE_PLAYER_SCORE, (value, player_name))
