@@ -48,16 +48,10 @@ def fuzz_compare_answers(correct, provided):
     return fuzz.token_set_ratio(correct, provided)
 
 
-def update_leaderboard(leaderboard: dict, current_player, current_value):
-    for player, value in leaderboard["current_bank"].items():
+def update_current_worth(leaderboard: dict, current_player, current_value):
+    for player, value in leaderboard.items():
         if current_player == player:
             addition = int(current_value.split('$')[1].replace(',', ''))
             new_value = f"${int(value.split('$')[1]) + int(addition)}"
-            leaderboard["current_bank"][player] = new_value
+            leaderboard[player] = new_value
             return new_value
-
-
-def sum_leaderboard_values(current: str, overall: str):
-    """ Expects an amount in the form of $1000 or $-1000 """
-    total = int(current.split('$')[1].replace(',', '')) + int(overall.split('$')[1].replace(',', ''))
-    return f'${total}'
