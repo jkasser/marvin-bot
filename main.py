@@ -525,7 +525,9 @@ async def get_todays_weather(ctx, query):
 async def update_jep_leaderboard():
     # every 10 minutes update the database with our leaderboard in memory
     for player, worth in leaderboard.items():
-        jep.update_player_score(worth, player)
+        # ignore if its 0, we will get a division error
+        if worth != "$0":
+            jep.update_player_score(worth, player)
 
 
 @tasks.loop(minutes=15)
