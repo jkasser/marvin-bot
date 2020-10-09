@@ -2,6 +2,7 @@ import yaml
 import random
 import discord
 from discord.ext import commands, tasks
+from asyncio import TimeoutError
 from utils.riot import Riot
 from utils.reminder import ReminderBot
 from utils.reddit import MarvinReddit
@@ -10,7 +11,8 @@ from utils.mapquest import Mapquest
 from utils.rapid_api import RapidWeatherAPI
 from utils.jeopardy import Jeopardy
 from utils.helper import fuzz_compare_answers, update_current_worth
-import datetime, time
+import datetime
+import time
 from data.quotes import *
 
 
@@ -120,7 +122,7 @@ async def get_clash(ctx):
 
 
 @bot.command(name='whatsmyvibe', help='What you vibing too right now lil gangsta?')
-async def get_vibe(ctx, user: discord.Member=None):
+async def get_vibe(ctx, user: discord.Member = None):
     user = user or ctx.author  # default to the caller
     spot = next((activity for activity in user.activities if isinstance(activity, discord.Spotify)), None)
     if spot is None:
@@ -135,8 +137,8 @@ async def get_vibe(ctx, user: discord.Member=None):
 
 
 @bot.command(name='roll', help='Type !roll <max number> to get a random number between 0 and the max!')
-async def roll_dice(ctx, max):
-    await ctx.send(f'You rolled {random.randint(0, int(max))}')
+async def roll_dice(ctx, max_roll):
+    await ctx.send(f'You rolled {random.randint(0, int(max_roll))}')
 
 
 @bot.command(name='decide', help='Let marvin make a decision for you!')
@@ -168,14 +170,16 @@ async def get_all_roles_in_channel(ctx):
     await ctx.send(", ".join([str(r.name) for r in ctx.guild.roles]))
 
 
-@bot.command(name='remind', help='Let me remind you of something! Just type \"!remind <who> in <when> to <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
-async def create_reminder(ctx, *text, user: discord.Member=None):
+@bot.command(name='remind',
+             help='Let me remind you of something! Just type \"!remind <who> in <when> to'
+                  ' <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
+async def create_reminder(ctx, *text, user: discord.Member = None):
     text = f'!remind {" ".join(text)}'
     now = datetime.datetime.now()
     user = user or ctx.author
     channel_id = ctx.message.channel.id
     try:
-        # parse the string into 3 fields to insert into the databse
+        # parse the string into 3 fields to insert into the database
         name, when, what = reminder.parse_reminder_text(text)
         if name.lower() == 'me':
             name = '@' + user.mention
@@ -183,42 +187,46 @@ async def create_reminder(ctx, *text, user: discord.Member=None):
         when_datetime = reminder.get_when_remind_date(when, start_time=now)
         # now insert it into the db
         reminder.insert_reminder((name, when_datetime, what, channel_id))
-        await ctx.send(f'I will remind {name} - "{what}" at {when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M:%S, %Z")}')
+        await ctx.send(f'I will remind {name} - "{what}" at '
+                       f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M:%S, %Z")}')
     except ValueError:
-        await ctx.send('ERROR: Reminder was in an invalid format! Please use: !remind <who> in|on <when> to|that <what>.\nDo not spell out numbers. Years and Months must be whole numbers.\nWho must come first, when/what can come in either order.')
+        await ctx.send('ERROR: Reminder was in an invalid format! '
+                       'Please use: !remind <who> in|on <when> to|that <what>.'
+                       '\nDo not spell out numbers. Years and Months must be whole numbers.'
+                       '\nWho must come first, when/what can come in either order.')
 
 
 @bot.command(name='adduser', help="Add a user to the channel. You must be a member of TheOGs to use this command.")
 @commands.has_any_role("Admins", "TheOGs")
 async def add_user_to_channel(ctx, * users):
-        members = await ctx.guild.fetch_members(limit=150).flatten()
-        for user in users:
-            for member in members:
-                if user in member.name:
-                    try:
-                        perms = ctx.message.channel.overwrites_for(member)
-                        perms.send_messages = True
-                        perms.read_messages = True
-                        perms.attach_files = True
-                        perms.embed_links = True
-                        perms.read_message_history = True
-                        perms.mention_everyone = True
-                        perms.use_external_emojis = True
-                        perms.attach_files = True
-                        perms.speak = True
-                        perms.connect = True
-                        perms.change_nickname = True
-                        perms.stream = True
-                        await ctx.message.channel.set_permissions(member, overwrite=perms)
-                        await ctx.send(f'I have added the following member: {member.name}')
-                        break
-                    except Exception as e:
-                        await ctx.send(f'I have encountered the following error: {e}')
+    members = await ctx.guild.fetch_members(limit=150).flatten()
+    for user in users:
+        for member in members:
+            if user in member.name:
+                try:
+                    perms = ctx.message.channel.overwrites_for(member)
+                    perms.send_messages = True
+                    perms.read_messages = True
+                    perms.attach_files = True
+                    perms.embed_links = True
+                    perms.read_message_history = True
+                    perms.mention_everyone = True
+                    perms.use_external_emojis = True
+                    perms.attach_files = True
+                    perms.speak = True
+                    perms.connect = True
+                    perms.change_nickname = True
+                    perms.stream = True
+                    await ctx.message.channel.set_permissions(member, overwrite=perms)
+                    await ctx.send(f'I have added the following member: {member.name}')
+                    break
+                except Exception as e:
+                    await ctx.send(f'I have encountered the following error: {e}')
 
 
 @bot.command(name='makeprivate', help="Make a private channel for you and x members")
 @commands.has_any_role("Admins", "TheOGs")
-async def make_private_channel(ctx, * members:discord.Member):
+async def make_private_channel(ctx, * members: discord.Member):
     try:
         guild = ctx.guild
         creator = ctx.author
@@ -230,7 +238,9 @@ async def make_private_channel(ctx, * members:discord.Member):
         channel = discord.utils.get(guild.text_channels, name=channel_name)
 
         if channel is None:
-            channel = await guild.create_text_channel(channel_name, category=discord.utils.get(ctx.guild.categories, name='private'), overwrites=overwrites)
+            channel = await guild.create_text_channel(channel_name,
+                                                      category=discord.utils.get(ctx.guild.categories, name='private'),
+                                                      overwrites=overwrites)
             await ctx.send(f'Channel: {channel} has been created!')
         elif channel:
             await ctx.send(f'Channel: {channel_name} already exists!')
@@ -254,7 +264,8 @@ async def make_private_channel(ctx, * members:discord.Member):
         await ctx.send(f'I have encountered the following error: {e}')
 
 
-@bot.command(name='qcreate', help="Create a single word named queue in memory, if left blank, will create the 'General' queue, which exists by default.\nEx. !qcreate myqueue")
+@bot.command(name='qcreate', help="Create a single word named queue in memory, if left blank, will create the 'General'"
+                                  " queue, which exists by default.\nEx. !qcreate myqueue")
 @commands.has_any_role("Admins", "TheOGs")
 async def create_named_queue(ctx, name='General'):
     if name not in named_queues.keys():
@@ -264,7 +275,8 @@ async def create_named_queue(ctx, name='General'):
         await ctx.send(f'Queue: {name}, already exists!')
 
 
-@bot.command(name='qaddme', help="Call !qaddme <name> to be added to a specific queue, if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue")
+@bot.command(name='qaddme', help="Call !qaddme <name> to be added to a specific queue, "
+                                 "if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue")
 async def add_me_to_queue(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
@@ -280,7 +292,8 @@ async def add_me_to_queue(ctx, name=None):
     await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username)+1}')
 
 
-@bot.command(name='qadduser', help="This only works to add a user to the general queue, pass in the user\'s username.\nEx. !adduser marvin")
+@bot.command(name='qadduser', help="This only works to add a user to the general queue, "
+                                   "pass in the user\'s username.\nEx. !adduser marvin")
 @commands.has_any_role("Admins", "TheOGs")
 async def add_user_to_queue(ctx, user):
     queue = named_queues["General"]
@@ -301,7 +314,9 @@ async def add_user_to_queue(ctx, user):
                 await ctx.send(f'No member found for {user}')
 
 
-@bot.command(name='qlist', help="See the current queue list of the queue name provided. If no name is provided then it will provide the list of the General queue.\nEx. !qlist myqueue")
+@bot.command(name='qlist', help="See the current queue list of the queue name provided."
+                                " If no name is provided then it will provide the list of the General queue."
+                                "\nEx. !qlist myqueue")
 async def get_queue_list(ctx, name=None):
     if name is None:
         queue = named_queues["General"]
@@ -318,7 +333,8 @@ async def get_queue_list(ctx, name=None):
         await ctx.send(f'The {name} queue is currently empty.')
 
 
-@bot.command(name='qclear', help="Clears the provided queue name. If no queue name is provided it will clear the General queue.\nEx. !qclear myqueue")
+@bot.command(name='qclear', help="Clears the provided queue name. If no queue name is provided it will "
+                                 "clear the General queue.\nEx. !qclear myqueue")
 @commands.has_any_role("Admins", "TheOGs")
 async def clear_queue(ctx, name=None):
     if name is None:
@@ -334,7 +350,8 @@ async def clear_queue(ctx, name=None):
     await ctx.send(f'The queue: {name} has been cleared!')
 
 
-@bot.command(name='qnext', help="Call the next person in the provided queue. If no queue name is provided, it will call the next person from the General queue.\nEx. !qnext myqueue")
+@bot.command(name='qnext', help="Call the next person in the provided queue. If no queue name is provided, "
+                                "it will call the next person from the General queue.\nEx. !qnext myqueue")
 @commands.has_any_role("Admins", "TheOGs")
 async def get_next_user_in_queue(ctx, name=None):
     if name is None:
@@ -367,7 +384,8 @@ async def purge(ctx):
 
 @bot.command(name='getnewssources', help="See where I pull my news from!")
 async def get_news_sources(ctx):
-    await ctx.send(f'I get my news from the following sources: {", ".join(cfg["news"]["sources"]).replace("-", " ").capitalize()}')
+    await ctx.send(f'I get my news from the following sources: '
+                   f'{", ".join(cfg["news"]["sources"]).replace("-", " ").capitalize()}')
 
 
 @bot.command(name='getnews', help="Get the top 3 articles for your keyword! Please wrap multiple words in quotes.")
@@ -423,10 +441,12 @@ async def play_jeopardy(ctx):
 
     # now ask a random question
     question_to_ask = random.choice(question_list)
-    await ctx.send(f'Category: **{question_to_ask["category"]}**\nValue: **{question_to_ask["worth"]}**\nQuestion: **{question_to_ask["question"]}**')
+    await ctx.send(f'Category: **{question_to_ask["category"]}**\nValue: **'
+                   f'{question_to_ask["worth"]}**\nQuestion: **{question_to_ask["question"]}**')
     await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
     # remove the question from the list in memory
     question_list.pop(question_list.index(question_to_ask))
+
     # await for the response and check the answer
     def check(m):
         return m.author.name == ctx.author.name
@@ -478,9 +498,9 @@ async def get_summoner(ctx, summoner_name):
             name, summoner_level, profile_icon_id = results[1], results[5], results[6]
     embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
     # Get the summoner icon
-    file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+    disc_file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
     embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
-    await ctx.send(file=file, embed=embedded_link)
+    await ctx.send(file=disc_file, embed=embedded_link)
 
 
 @bot.command(name='updatesummoner', help="Pass in a summoner name to update them in the databse")
@@ -493,9 +513,9 @@ async def update_summoner(ctx, summoner_name):
         return
     embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
     # Get the summoner icon
-    file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+    disc_file = discord.File(rito.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
     embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
-    await ctx.send(file=file, embed=embedded_link)
+    await ctx.send(file=disc_file, embed=embedded_link)
 
 
 @bot.command(name='getweather', help="Provide city/state/country/zip to get today's weather forecast!")
@@ -520,7 +540,8 @@ async def get_todays_weather(ctx, query):
     else:
         await ctx.send('Please provide a city/state or zip code.')
 
-#### Task Loops start here ####
+
+# Task Loops start here #
 @tasks.loop(minutes=10)
 async def update_jep_leaderboard():
     # every 10 minutes update the database with our leaderboard in memory
@@ -588,7 +609,8 @@ async def check_the_news():
                 continue
             else:
                 try:
-                    embedded_link = discord.Embed(title=article["title"], description=article["description"], url=article["url"])
+                    embedded_link = discord.Embed(title=article["title"], description=article["description"],
+                                                  url=article["url"])
                     embedded_link.add_field(name="Source", value=article["source"], inline=True)
                     embedded_link.add_field(name="Author", value=article["author"], inline=True)
                     embedded_link.add_field(name="Published", value=article["published"], inline=True)
@@ -605,14 +627,16 @@ async def check_the_news():
 
 @tasks.loop(hours=1)
 async def check_and_update_latest_assets_version():
-    if datetime.datetime.now().hour >= 23 and datetime.datetime.now().hour <= 6:
+    hour = datetime.datetime.now().hour
+    if hour >= 23 or hour <= 6:
         api_updates_channel = bot.get_channel(763088226860138576)
         api_current_version, cdn = rito.get_latest_data_version()
         if rito.check_if_assets_current_version_exists():
             assets_db_version = rito.get_current_assets_version_from_db()[0]
             # See if the api version is greater than our current one
             if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
-                await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!\nDownloading latest version: {api_current_version}')
+                await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
+                                               f'\nDownloading latest version: {api_current_version}')
                 # Update our local assets
                 rito.download_new_assets(cdn, api_current_version)
                 # Now Update it in the DB
