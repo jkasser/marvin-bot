@@ -413,39 +413,43 @@ async def get_news_for_keyword(ctx, query):
 @bot.command(name='playjep', help="Play a round of jeopardy!")
 async def play_jeopardy(ctx):
     current_player = ctx.author.name
-    timeout = 60
-    # Once we get to 5 questions left, retrieve another 20, store them in memory
-    if len(question_list) <= 5:
-        questions = jep.get_questions()
-        for question in questions:
-            question_dict = {
-                "id": question[0],
-                "category": question[1],
-                "question": jep.parse_question(question[2]),
-                "worth": question[3],
-                "answer": question[4]
-            }
-            question_list.append(question_dict)
-    # create a new contestant or welcome someone back
-    await ctx.send('Let\'s play!')
-    if len(leaderboard) != 0:
-        if current_player in leaderboard.keys():
-            worth = leaderboard[current_player]
-            await ctx.send(f'I see you are back for more {current_player}!\nYour current worth is: {worth}')
+    jep_channel = bot.get_channel(764262102155132938)
+    if ctx.channel.id != jep_channel.id:
+        await ctx.send(f'Please use this over in {jep_channel}!')
+    else:
+        timeout = 60
+        # Once we get to 5 questions left, retrieve another 20, store them in memory
+        if len(question_list) <= 5:
+            questions = jep.get_questions()
+            for question in questions:
+                question_dict = {
+                    "id": question[0],
+                    "category": question[1],
+                    "question": jep.parse_question(question[2]),
+                    "worth": question[3],
+                    "answer": question[4]
+                }
+                question_list.append(question_dict)
+        # create a new contestant or welcome someone back
+        await ctx.send('Let\'s play!')
+        if len(leaderboard) != 0:
+            if current_player in leaderboard.keys():
+                worth = leaderboard[current_player]
+                await ctx.send(f'I see you are back for more {current_player}!\nYour current worth is: {worth}')
+            else:
+                await ctx.send('Welcome new contestant!')
+                leaderboard[current_player] = "$0"
         else:
             await ctx.send('Welcome new contestant!')
             leaderboard[current_player] = "$0"
-    else:
-        await ctx.send('Welcome new contestant!')
-        leaderboard[current_player] = "$0"
 
-    # now ask a random question
-    question_to_ask = random.choice(question_list)
-    await ctx.send(f'Category: **{question_to_ask["category"]}**\nValue: **'
-                   f'{question_to_ask["worth"]}**\nQuestion: **{question_to_ask["question"]}**')
-    await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
-    # remove the question from the list in memory
-    question_list.pop(question_list.index(question_to_ask))
+        # now ask a random question
+        question_to_ask = random.choice(question_list)
+        await ctx.send(f'Category: **{question_to_ask["category"]}**\nValue: **'
+                       f'{question_to_ask["worth"]}**\nQuestion: **{question_to_ask["question"]}**')
+        await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
+        # remove the question from the list in memory
+        question_list.pop(question_list.index(question_to_ask))
 
     # await for the response and check the answer
     def check(m):
