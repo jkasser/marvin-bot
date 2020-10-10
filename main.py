@@ -430,7 +430,7 @@ async def get_news_for_keyword(ctx, query):
 async def play_jeopardy(ctx):
     current_player = ctx.author.name
     print(ctx.channel.parent)
-    if ctx.channel.parent != 764524003075031050:
+    if ctx.channel.category_id != 764524003075031050:
         await ctx.send(f'Please use this over in any of the channels in the Jeopardy category!')
         return
     else:
