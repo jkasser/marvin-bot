@@ -244,6 +244,21 @@ async def make_private_channel(ctx, * members: discord.Member):
             await ctx.send(f'Channel: {channel} has been created!')
         elif channel:
             await ctx.send(f'Channel: {channel_name} already exists!')
+        # whoops add permissions to creater also
+        perms = channel.overwrites_for(creator)
+        perms.send_messages = True
+        perms.read_messages = True
+        perms.attach_files = True
+        perms.embed_links = True
+        perms.read_message_history = True
+        perms.mention_everyone = True
+        perms.use_external_emojis = True
+        perms.attach_files = True
+        perms.speak = True
+        perms.connect = True
+        perms.change_nickname = True
+        perms.stream = True
+        await channel.set_permissions(creator, overwrite=perms)
         for member in members:
             perms = channel.overwrites_for(member)
             perms.send_messages = True
@@ -259,6 +274,7 @@ async def make_private_channel(ctx, * members: discord.Member):
             perms.change_nickname = True
             perms.stream = True
             await channel.set_permissions(member, overwrite=perms)
+
         await ctx.send(f'I have added: {", ".join([member.name for member in members])} to channel')
     except Exception as e:
         await ctx.send(f'I have encountered the following error: {e}')
@@ -413,9 +429,8 @@ async def get_news_for_keyword(ctx, query):
 @bot.command(name='playjep', help="Play a round of jeopardy!")
 async def play_jeopardy(ctx):
     current_player = ctx.author.name
-    jep_channel = bot.get_channel(764262102155132938)
-    if ctx.channel.id != jep_channel.id:
-        await ctx.send(f'Please use this over in {jep_channel.mention}!')
+    if ctx.channel.parentID != 764524003075031050:
+        await ctx.send(f'Please use this over in any of the channels in the Jeopardy category!')
         return
     else:
         timeout = 60
