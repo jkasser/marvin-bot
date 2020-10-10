@@ -429,7 +429,8 @@ async def get_news_for_keyword(ctx, query):
 @bot.command(name='playjep', help="Play a round of jeopardy!")
 async def play_jeopardy(ctx):
     current_player = ctx.author.name
-    if ctx.channel.parentID != 764524003075031050:
+    print(ctx.channel.parent)
+    if ctx.channel.parent != 764524003075031050:
         await ctx.send(f'Please use this over in any of the channels in the Jeopardy category!')
         return
     else:
