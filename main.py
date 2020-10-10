@@ -645,7 +645,7 @@ async def check_the_news():
         await news_channel.send('I wasn\'t able to find any news!')
 
 
-@tasks.loop(hours=1)
+@tasks.loop(hours=2)
 async def check_and_update_latest_assets_version():
     hour = datetime.datetime.now().hour
     if hour >= 23 or hour <= 6:
@@ -664,7 +664,7 @@ async def check_and_update_latest_assets_version():
                 await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
             # otherwise if they are equal then just say we are on the most current version
             elif int(''.join(api_current_version.split('.'))) == int(''.join(assets_db_version.split('.'))):
-                await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
+                # await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
                 return
         else:
             # If the field doesn't exist then download the latest version
