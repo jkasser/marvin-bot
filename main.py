@@ -570,7 +570,7 @@ async def update_jep_leaderboard():
         # check if player is in the database
         if jep.check_if_player_exists(player):
             if worth != "$0":
-                jep.update_player_score(worth, player)
+                jep.update_player_score(player, worth)
         else:
             jep.insert_player(player, worth)
 
