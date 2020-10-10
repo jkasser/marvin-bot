@@ -567,8 +567,12 @@ async def update_jep_leaderboard():
     # every 10 minutes update the database with our leaderboard in memory
     for player, worth in leaderboard.items():
         # ignore if its 0, we will get a division error
-        if worth != "$0":
-            jep.update_player_score(worth, player)
+        # check if player is in the database
+        if jep.check_if_player_exists(player):
+            if worth != "$0":
+                jep.update_player_score(worth, player)
+        else:
+            jep.insert_player(player, worth)
 
 
 @tasks.loop(minutes=15)

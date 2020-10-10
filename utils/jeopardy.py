@@ -98,7 +98,7 @@ class Jeopardy(MarvinDB):
         else:
             return True
 
-    def update_player_score(self, value: str, player_name: str):
+    def update_player_score(self, player_name: str, value: str):
         """ Takes a string and plits it into an int for the database """
         value = int(value.split('$')[1].replace(',', ''))
         cur = self.conn.cursor()
