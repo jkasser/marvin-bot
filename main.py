@@ -239,7 +239,7 @@ async def make_private_channel(ctx, * members: discord.Member):
 
         if channel is None:
             channel = await guild.create_text_channel(channel_name,
-                                                      category=discord.utils.get(ctx.guild.categories, name='private'),
+                                                      category=discord.utils.get(ctx.guild.categories, name='🔐 Private'),
                                                       overwrites=overwrites)
             await ctx.send(f'Channel: {channel} has been created!')
         elif channel:
@@ -429,7 +429,6 @@ async def get_news_for_keyword(ctx, query):
 @bot.command(name='playjep', help="Play a round of jeopardy!")
 async def play_jeopardy(ctx):
     current_player = ctx.author.name
-    print(ctx.channel.category_id)
     if ctx.channel.category_id != 764524003075031050:
         await ctx.send(f'Please use this over in any of the channels in the Jeopardy category!')
         return
