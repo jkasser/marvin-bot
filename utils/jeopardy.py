@@ -87,7 +87,8 @@ class Jeopardy(MarvinDB):
         return questions
 
     def insert_player(self, player_name, value):
-        return self.insert_query(self.INSERT_PLAYER, (player_name, value))
+        int_value = int(value.split('$')[1].replace(',', ''))
+        return self.insert_query(self.INSERT_PLAYER, (player_name, int_value))
 
     def check_if_player_exists(self, player_name):
         cur = self.conn.cursor()
