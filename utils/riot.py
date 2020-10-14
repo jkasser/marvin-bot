@@ -241,3 +241,12 @@ class Riot(MarvinDB):
     def insert_issue_hash(self, issue_hash: str):
         """ Values: issue_hash"""
         return self.insert_query(self.INSERT_ISSUE_HASH, (issue_hash,))
+
+
+    def get_match_by_match_id(self, match_id):
+        r = requests.get(self.base_url + 'match/v4/matches/' + str(match_id), headers=self.headers)
+        return r.json()
+
+    def get_match_timeline_by_match_id(self, match_id):
+        r = requests.get(self.base_url + 'match/v4/timelines/by-match/' + str(match_id), headers=self.headers)
+        return r.json()
