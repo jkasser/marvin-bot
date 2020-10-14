@@ -660,7 +660,7 @@ async def check_and_update_latest_assets_version():
                 assets_db_version = rito.get_current_assets_version_from_db()[0]
                 # See if the api version is greater than our current one
                 if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
-                    api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
+                    await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
                                                    f'\nDownloading latest version: {api_current_version}')
                     # Update our local assets
                     rito.download_new_assets(cdn, api_current_version)
