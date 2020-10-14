@@ -525,7 +525,8 @@ async def get_to_do(ctx):
 
 
 @bot.command(name='todoadd', help="Add an item to your to do list!")
-async def add_to_do(ctx, item):
+async def add_to_do(ctx, * item):
+    item_to_add = " ".join(item)
     user = ctx.author
     channel = await ctx.author.create_dm()
     if not user in to_do.keys():
@@ -533,8 +534,9 @@ async def add_to_do(ctx, item):
     to_do[user].append(item)
     new_line = '\n'
     lines = [f"{to_do[user].index(x) + 1}. {x}" for x in to_do[user]]
-    await channel.send(f"Your to do list is now:")
-    await channel.send(f"{new_line}".join(lines))
+    await ctx.send(f'Added {item_to_add} to your to do list!')
+    await channel.send(f'Your to do list is now:')
+    await channel.send(f'{new_line}'.join(lines))
 
 
 @bot.command(name='todoremove', help="Remove an item by its position in your to do list!")
