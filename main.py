@@ -652,32 +652,34 @@ async def check_the_news():
 @tasks.loop(hours=2)
 async def check_and_update_latest_assets_version():
     hour = datetime.datetime.now().hour
-    if hour >= 23 or hour <= 6:
+    if hour >= 23 or hour <= 8:
         api_updates_channel = bot.get_channel(763088226860138576)
         api_current_version, cdn = rito.get_latest_data_version()
-        if rito.check_if_assets_current_version_exists():
-            assets_db_version = rito.get_current_assets_version_from_db()[0]
-            # See if the api version is greater than our current one
-            if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
-                await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
-                                               f'\nDownloading latest version: {api_current_version}')
-                # Update our local assets
+        try:
+            if rito.check_if_assets_current_version_exists():
+                assets_db_version = rito.get_current_assets_version_from_db()[0]
+                # See if the api version is greater than our current one
+                if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
+                    api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
+                                                   f'\nDownloading latest version: {api_current_version}')
+                    # Update our local assets
+                    rito.download_new_assets(cdn, api_current_version)
+                    # Now Update it in the DB
+                    rito.update_assets_current_version(current_version=api_current_version)
+                    await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
+                # otherwise if they are equal then just say we are on the most current version
+                elif int(''.join(api_current_version.split('.'))) == int(''.join(assets_db_version.split('.'))):
+                    # await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
+                    return
+            else:
+                # If the field doesn't exist then download the latest version
                 rito.download_new_assets(cdn, api_current_version)
-                # Now Update it in the DB
-                rito.update_assets_current_version(current_version=api_current_version)
+                # update our local assets
+                # Add it to the DB
+                rito.insert_assets_current_version(api_current_version)
                 await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
-            # otherwise if they are equal then just say we are on the most current version
-            elif int(''.join(api_current_version.split('.'))) == int(''.join(assets_db_version.split('.'))):
-                # await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
-                return
-        else:
-            # If the field doesn't exist then download the latest version
-            rito.download_new_assets(cdn, api_current_version)
-            # update our local assets
-            # Add it to the DB
-            rito.insert_assets_current_version(api_current_version)
-            await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
-
+        except RuntimeError:
+            await api_updates_channel.send('Update task is already in progress!')
 
 @tasks.loop(minutes=15)
 async def get_rito_status():
