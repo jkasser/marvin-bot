@@ -194,8 +194,7 @@ class Riot(MarvinDB):
     def download_new_assets(self, url, version_name):
         file_name = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'{version_name}.tgz'
         urllib.request.urlretrieve(url, file_name)
-        self.delete_existing_asset()
-        self.extract_assets(file_to_extract=file_name)
+        return file_name
 
     def delete_existing_asset(self):
         for dir in os.listdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR):

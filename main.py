@@ -663,7 +663,11 @@ async def check_and_update_latest_assets_version():
                     await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
                                                    f'\nDownloading latest version: {api_current_version}')
                     # Update our local assets
-                    rito.download_new_assets(cdn, api_current_version)
+                    new_assets = rito.download_new_assets(cdn, api_current_version)
+                    # Delete our local copy
+                    rito.delete_existing_asset()
+                    # Extract the new one
+                    rito.extract_assets(file_to_extract=new_assets)
                     # Now Update it in the DB
                     rito.update_assets_current_version(current_version=api_current_version)
                     await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
@@ -673,8 +677,12 @@ async def check_and_update_latest_assets_version():
                     return
             else:
                 # If the field doesn't exist then download the latest version
-                rito.download_new_assets(cdn, api_current_version)
-                # update our local assets
+                # Update our local assets
+                new_assets = rito.download_new_assets(cdn, api_current_version)
+                # Delete our local copy
+                rito.delete_existing_asset()
+                # Extract the new one
+                rito.extract_assets(file_to_extract=new_assets)
                 # Add it to the DB
                 rito.insert_assets_current_version(api_current_version)
                 await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
