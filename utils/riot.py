@@ -1,6 +1,7 @@
 import yaml
 import requests
-import os, shutil
+import os
+import shutil
 import tarfile
 import urllib.request
 from datetime import datetime
@@ -197,14 +198,20 @@ class Riot(MarvinDB):
         return file_name
 
     def delete_existing_asset(self):
-        for dir in os.listdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR):
-            if not dir.endswith('.tgz'):
-                try:
-                    # os.remove is for files
-                    os.remove(dir)
-                except IsADirectoryError:
-                    # recursively remove a dir and everything in it
-                    shutil.rmtree(dir)
+        try:
+            path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR
+            for dir in os.listdir(path):
+                if not dir.endswith('.tgz'):
+                    os.chmod(path + dir, 0o0777)
+                    if not os.path.isdir(path + dir):
+                        # os.remove is for files
+                        os.remove(path + dir)
+                    else:
+                        # recursively remove a dir and everything in it
+                        shutil.rmtree(path + dir)
+        except Exception as e:
+            print(e)
+            return
 
     def extract_assets(self, file_to_extract):
         tar = tarfile.open(file_to_extract, 'r:gz')
