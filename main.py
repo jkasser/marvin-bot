@@ -55,7 +55,7 @@ async def on_ready():  # method expected by client. This runs once when connecte
     check_reddit_lol_stream.start()
     check_reddit_travel_stream.start()
     check_the_news.start()
-    check_and_update_latest_assets_version.start()
+    # check_and_update_latest_assets_version.start()
     get_rito_status.start()
     check_for_reminders.start()
 
