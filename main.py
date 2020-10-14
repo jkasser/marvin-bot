@@ -32,6 +32,7 @@ mapquest_token = cfg["mapquest"]["key"]
 named_queues = {"General": []}
 question_list = []
 leaderboard = {}
+to_do = {}
 
 # Instantiate Objects here
 jep = Jeopardy()
@@ -496,6 +497,62 @@ async def get_jep_standings(ctx):
     await ctx.send(f'**Player**: **Worth**')
     for current_player, current_worth in leaderboard.items():
         await ctx.send(f'{current_player}: {current_worth}')
+
+
+@bot.command(name='todocreate', help="Create your own to do list! Visible only to you!")
+async def create_to_do(ctx):
+    user = ctx.author
+    if not user in to_do.keys():
+        to_do[user] = []
+        await ctx.send('Your to do list has been created!')
+    else:
+        await ctx.send('You already have an existing to do list!')
+
+
+@bot.command(name='todoget', help="Retrieve your current to do list via DM!")
+async def get_to_do(ctx):
+    user = ctx.author
+    channel = await ctx.author.create_dm()
+    if not user in to_do.keys():
+        to_do[user] = []
+        await channel.send('Your to do list has been created!\nYour to do list is currently empty!')
+    elif len(to_do[user]) == 0:
+        await channel.send('You have no items in your to do list!')
+    else:
+        new_line = '\n'
+        lines = [f"{to_do[user].index(x)+1}. {x}" for x in to_do[user]]
+        await channel.send(f"{new_line}".join(lines))
+
+
+@bot.command(name='todoadd', help="Add an item to your to do list!")
+async def add_to_do(ctx, item):
+    user = ctx.author
+    channel = await ctx.author.create_dm()
+    if not user in to_do.keys():
+        to_do[user] = []
+    to_do[user].append(item)
+    new_line = '\n'
+    lines = [f"{to_do[user].index(x) + 1}. {x}" for x in to_do[user]]
+    await channel.send(f"Your to do list is now:")
+    await channel.send(f"{new_line}".join(lines))
+
+
+@bot.command(name='todoremove', help="Remove an item by its position in your to do list!")
+async def remove_to_do(ctx, item):
+    user = ctx.author
+    channel = await ctx.author.create_dm()
+    if not user in to_do.keys():
+        await channel.send('You do not currently have a to do list!')
+    elif len(to_do[user]) == 0:
+        await channel.send('Your to do list is currently empty, there is nothing to remove!')
+    elif int(item) > len(to_do[user]):
+        await channel.send(f'You only have {len(to_do[user])} item(s) in your list! Try another value.')
+    else:
+        try:
+            popped_item = to_do[user].pop(int(item)-1)
+            await channel.send(f'You have removed {popped_item}!')
+        except Exception as e:
+            await channel.send(f'I encountered the following error:\n{e}')
 
 
 @bot.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
