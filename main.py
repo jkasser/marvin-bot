@@ -531,7 +531,7 @@ async def add_to_do(ctx, * item):
     channel = await ctx.author.create_dm()
     if not user in to_do.keys():
         to_do[user] = []
-    to_do[user].append(item)
+    to_do[user].append(item_to_add)
     new_line = '\n'
     lines = [f"{to_do[user].index(x) + 1}. {x}" for x in to_do[user]]
     await ctx.send(f'Added {item_to_add} to your to do list!')
