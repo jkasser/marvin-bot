@@ -55,7 +55,7 @@ async def on_ready():  # method expected by client. This runs once when connecte
     check_reddit_lol_stream.start()
     check_reddit_travel_stream.start()
     check_the_news.start()
-    # check_and_update_latest_assets_version.start()
+    check_and_update_latest_assets_version.start()
     get_rito_status.start()
     check_for_reminders.start()
 
@@ -686,8 +686,8 @@ async def check_and_update_latest_assets_version():
                 # Add it to the DB
                 rito.insert_assets_current_version(api_current_version)
                 await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
-        except RuntimeError:
-            await api_updates_channel.send('Update task is already in progress!')
+        except Exception as e:
+            await api_updates_channel.send(e)
 
 @tasks.loop(minutes=15)
 async def get_rito_status():
