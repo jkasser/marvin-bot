@@ -10,10 +10,7 @@ token = cfg["disc"]["token"]
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"], intents=intents)
 
-# Variables in memory
-named_queues = {"General": []}
-
-
+# Get the list of cogs
 extensions = [
     'cogs.marvin',
     'cogs.todo',
