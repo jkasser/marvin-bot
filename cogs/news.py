@@ -141,5 +141,10 @@ class MarvinNews(MarvinDB, commands.Cog):
         else:
             await news_channel.send('I wasn\'t able to find any news!')
 
+    @check_the_news.before_loop
+    async def before_check_the_news(self):
+      await self.bot.wait_until_ready()
+
+
 def setup(bot):
     bot.add_cog(MarvinNews(bot))

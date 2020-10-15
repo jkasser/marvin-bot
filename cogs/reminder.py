@@ -121,6 +121,10 @@ class ReminderBot(MarvinDB, commands.Cog):
                     # set it as sent
                     self.mark_reminder_sent(result[0])
 
+    @check_for_reminders.before_loop
+    async def before_check_for_reminders(self):
+      await self.bot.wait_until_ready()
+
 
 def setup(bot):
     bot.add_cog(ReminderBot(bot))

@@ -365,6 +365,14 @@ class Riot(MarvinDB, commands.Cog):
                     await status_channel.send(embed=embedded_link)
                     self.insert_issue_hash(x["hash"])
 
+    @check_and_update_latest_assets_version.before_loop
+    async def before_check_and_update_latest_assets_version(self):
+      await self.bot.wait_until_ready()
+
+    @get_rito_status.before_loop
+    async def before_get_rito_status(self):
+        await self.bot.wait_until_ready()
+
 
 def setup(bot):
     bot.add_cog(Riot(bot))

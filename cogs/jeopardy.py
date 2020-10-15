@@ -212,6 +212,10 @@ class Jeopardy(MarvinDB, commands.Cog):
             else:
                 self.insert_player(player, worth)
 
+    @update_jep_leaderboard.before_loop
+    async def before_update_jep_leaderboard(self):
+      await self.bot.wait_until_ready()
+
 
 def setup(bot):
     bot.add_cog(Jeopardy(bot))

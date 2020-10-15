@@ -36,7 +36,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
         except Error as e:
             print(e)
         self.check_reddit_travel_stream.start()
-        self.check_reddit_travel_stream.start()
+        self.check_reddit_lol_stream.start()
 
     def add_post_id_to_db(self, post_id):
         self.insert_query(self.INSERT_POST, (post_id,))
@@ -79,7 +79,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
     @tasks.loop(minutes=15)
     async def check_reddit_travel_stream(self):
         try:
-            travel_channel = self.bot.get_channel(758126844708651041)
+            travel_channel =  self.bot.get_channel(758126844708651041)
             post_list = self.get_travel_stream(limit=5)
             if len(post_list) >= 1:
                 for post in post_list:
@@ -98,7 +98,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
             pass
 
     @tasks.loop(minutes=8)
-    async def check_reddit_lol_streamself(self):
+    async def check_reddit_lol_stream(self):
         lol_channel = self.bot.get_channel(761291587044376598)
         post_list = self.get_lol_stream(limit=5)
         if len(post_list) >= 1:
@@ -117,6 +117,14 @@ class MarvinReddit(MarvinDB, commands.Cog):
                         self.add_post_id_to_db(post[0])
                     except Exception:
                         continue
+
+    @check_reddit_lol_stream.before_loop
+    async def before_check_reddit_lol_stream(self):
+      await self.bot.wait_until_ready()
+
+    @check_reddit_travel_stream.before_loop
+    async def before_check_reddit_travel_stream(self):
+      await self.bot.wait_until_ready()
 
 
 def setup(bot):
