@@ -48,7 +48,7 @@ class ToDo(MarvinDB, commands.Cog):
         results = self.get_query(self.GET_TO_DO_LISTS)
         return results
 
-    @commands.command(name='todoadd', help="Add an item to your to do list!")
+    @commands.command(name='todo', help="Add an item to your to do list!")
     async def add_to_do(self, ctx, *item):
         item_to_add = " ".join(item)
         user = str(ctx.author)
