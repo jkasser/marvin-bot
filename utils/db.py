@@ -2,14 +2,10 @@ import sqlite3
 from sqlite3 import Error
 
 
-class MarvinDB:
+class DB:
 
     def __init__(self):
         self.conn = None
-        try:
-            self.conn = sqlite3.connect('marvin.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30)
-        except Error as e:
-            print(e)
 
     def create_table(self, conn, create_table_sql):
         try:
@@ -38,4 +34,24 @@ class MarvinDB:
 
     def close_conn(self):
         self.conn.close()
+
+
+class MarvinDB(DB):
+
+    def __init__(self):
+        super(MarvinDB, self).__init__()
+        try:
+            self.conn = sqlite3.connect('marvin.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30)
+        except Error as e:
+            print(e)
+
+
+class SubscriptionsDB(DB):
+
+    def __init__(self):
+        super(SubscriptionsDB, self).__init__()
+        try:
+            self.conn = sqlite3.connect('subscriptions.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30)
+        except Error as e:
+            print(e)
 
