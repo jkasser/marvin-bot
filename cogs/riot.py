@@ -4,13 +4,16 @@ import os
 import shutil
 import tarfile
 import urllib.request
+import time
+import discord
+from discord.ext import commands, tasks
 from datetime import datetime
 from pytz import reference
 from utils.db import MarvinDB
 from utils.helper import get_user_friendly_date_from_string
 
 
-class Riot(MarvinDB):
+class Riot(MarvinDB, commands.Cog):
 
     ASSETS_BASE_DIR = '/assets/riot_games/'
 
@@ -54,8 +57,10 @@ class Riot(MarvinDB):
     INSERT_ISSUE_HASH = F"""INSERT INTO {LOL_STATUS_TABLE_NAME} (issue_hash) VALUES(?)"""
     CHECK_ISSUE_HASH = f"""SELECT EXISTS(SELECT * FROM {LOL_STATUS_TABLE_NAME} WHERE issue_hash=? LIMIT 1)"""
 
-    def __init__(self):
+    def __init__(self, bot):
         super(Riot, self).__init__()
+        # setup bot for cogs
+        self.bot = bot
         # Create the database
         self.summoner_table = self.create_table(self.conn, self.SUMMONER_TABLE)
         self.data_version_table = self.create_table(self.conn, self.ASSETS_VER_TABLE)
@@ -70,6 +75,8 @@ class Riot(MarvinDB):
             "Content-Type": "application/json",
             "X-Riot-Token": self.key
         }
+        self.get_rito_status.start()
+        self.check_and_update_latest_assets_version.start()
 
     def get_clash_schedule(self):
         endpoint = self.base_url + f'clash/v1/tournaments'
@@ -248,7 +255,6 @@ class Riot(MarvinDB):
         """ Values: issue_hash"""
         return self.insert_query(self.INSERT_ISSUE_HASH, (issue_hash,))
 
-
     def get_match_by_match_id(self, match_id):
         r = requests.get(self.base_url + 'match/v4/matches/' + str(match_id), headers=self.headers)
         return r.json()
@@ -256,3 +262,109 @@ class Riot(MarvinDB):
     def get_match_timeline_by_match_id(self, match_id):
         r = requests.get(self.base_url + 'match/v4/timelines/by-match/' + str(match_id), headers=self.headers)
         return r.json()
+
+    @commands.command(name='clash', help='Get current and upcoming clash tournament schedule.')
+    async def get_clash(self, ctx):
+        schedule = self.get_clash_schedule()
+        await ctx.send(str(schedule))
+
+    @commands.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
+    async def get_summoner(self, ctx, summoner_name):
+        summoner_name = summoner_name.lower()
+        results = self.get_summoner_by_name(summoner_name)
+        if results is None:
+            try:
+                name, summoner_level, profile_icon_id = self.get_and_update_summoner_from_riot_by_name(summoner_name)
+            # this will return None if no results are found which raises a type error
+            except TypeError:
+                await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
+                return
+        else:
+            one_day_ago = int(str(time.time()).replace('.', '')[:len(str(results[7]))]) - 86400
+            if results[7] <= one_day_ago:
+                # its been awhile, let's get new info
+                name, summoner_level, profile_icon_id = self.get_and_update_summoner_from_riot_by_name(summoner_name)
+            else:
+                name, summoner_level, profile_icon_id = results[1], results[5], results[6]
+        embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
+        # Get the summoner icon
+        disc_file = discord.File(self.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+        embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
+        await ctx.send(file=disc_file, embed=embedded_link)
+
+    @commands.command(name='updatesummoner', help="Pass in a summoner name to update them in the databse")
+    async def update_summoner(self, ctx, summoner_name):
+        summoner_name = summoner_name.lower()
+        try:
+            name, summoner_level, profile_icon_id = self.get_and_update_summoner_from_riot_by_name(summoner_name)
+        except TypeError:
+            await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
+            return
+        embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
+        # Get the summoner icon
+        disc_file = discord.File(self.get_profile_img_for_id(profile_icon_id), filename=f'{profile_icon_id}.png')
+        embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
+        await ctx.send(file=disc_file, embed=embedded_link)
+
+    @tasks.loop(hours=2)
+    async def check_and_update_latest_assets_version(self):
+        hour = datetime.now().hour
+        if hour >= 23 or hour <= 5:
+            api_updates_channel = self.bot.get_channel(763088226860138576)
+            api_current_version, cdn = self.get_latest_data_version()
+            try:
+                if self.check_if_assets_current_version_exists():
+                    assets_db_version = self.get_current_assets_version_from_db()[0]
+                    # See if the api version is greater than our current one
+                    if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
+                        await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
+                                                       f'\nDownloading latest version: {api_current_version}')
+                        # Update our local assets
+                        new_assets = self.download_new_assets(cdn, api_current_version)
+                        # Delete our local copy
+                        self.delete_existing_asset()
+                        # Extract the new one
+                        await api_updates_channel.send('Extracting new assets!')
+                        self.extract_assets(file_to_extract=new_assets)
+                        # Now Update it in the DB
+                        self.update_assets_current_version(current_version=api_current_version)
+                        await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
+                    # otherwise if they are equal then just say we are on the most current version
+                    elif int(''.join(api_current_version.split('.'))) == int(''.join(assets_db_version.split('.'))):
+                        # await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
+                        return
+                else:
+                    # If the field doesn't exist then download the latest version
+                    # Update our local assets
+                    new_assets = self.download_new_assets(cdn, api_current_version)
+                    # Delete our local copy
+                    self.delete_existing_asset()
+                    # Extract the new one
+                    self.extract_assets(file_to_extract=new_assets)
+                    # Add it to the DB
+                    self.insert_assets_current_version(api_current_version)
+                    await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
+            except Exception as e:
+                await api_updates_channel.send(e)
+
+    @tasks.loop(minutes=15)
+    async def get_rito_status(self):
+        status_channel = self.bot.get_channel(763153164798394378)
+        issues = self.get_and_parse_riot_status_issues()
+        if len(issues) > 0:
+            for x in issues:
+                if self.check_if_issue_hash_exists(x["hash"]):
+                    continue
+                else:
+                    if x["severity"] == "info":
+                        color = 0xf8d568
+                    else:
+                        color = 0xff0000
+                    embedded_link = discord.Embed(title=x["title"], description=x["updates"], color=color)
+                    embedded_link.add_field(name="created", value=x["created"])
+                    await status_channel.send(embed=embedded_link)
+                    self.insert_issue_hash(x["hash"])
+
+
+def setup(bot):
+    bot.add_cog(Riot(bot))
