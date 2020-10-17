@@ -55,3 +55,14 @@ def update_current_worth(leaderboard: dict, current_player, current_value):
             new_value = f"${int(value.split('$')[1]) + int(addition)}"
             leaderboard[player] = new_value
             return new_value
+
+
+def check_if_valid_hour(supplied_hour: str):
+    try:
+        hour = int(supplied_hour)
+        if 1 <= hour <= 24:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
