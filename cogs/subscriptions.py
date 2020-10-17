@@ -63,6 +63,51 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         self.insert_or_update_subs_in_db.start()
         self.check_if_time_to_notify_user_of_sub.start()
 
+    def get_user(self, user):
+        cur = self.conn.cursor()
+        results = cur.execute(self.GET_USER, (user,))
+        results = results.fetchall()
+        self.conn.commit()
+        return results
+
+    def get_users(self):
+        return self.get_query(self.GET_ALL_USERS)
+
+    def get_subs(self):
+        return self.get_query(self.GET_ALL_SUBS)
+
+    def get_active_subs(self, user_id):
+        cur = self.conn.cursor()
+        results = cur.execute(self.GET_ACTIVE_SUBS_BY_USER_ID, (user_id,))
+        results = results.fetchall()
+        self.conn.commit()
+        return results
+
+    def insert_user(self, user, timezone, disc_id):
+        return self.insert_query(self.INSERT_USER, (user, timezone, disc_id))
+
+    def insert_sub(self, user_id, sub_type, sub_details, when_send, active, last_sent):
+        return self.insert_query(self.INSERT_SUB, (user_id, sub_type, sub_details, when_send, active, last_sent,))
+
+    def update_last_sent_time_for_sub_by_id(self, sub_id, last_sent):
+        self.update_query(self.UPDATE_SUB_LAST_SENT, (last_sent, sub_id,))
+
+    def update_sub_active_status(self, sub_id, active):
+        self.update_query(self.UPDATE_SUB_ACTIVE_STATUS, (active, sub_id,))
+
+    def check_if_user_exists(self, user):
+        cur = self.conn.cursor()
+        results = cur.execute(self.CHECK_IF_EXISTS, (user,))
+        results = results.fetchone()[0]
+        if results == 0:
+            return False
+        else:
+            return True
+
+    def get_user_object_by_id(self, user_id):
+        user = self.bot.fetch_user(user_id)
+        # returns, name, id, etc
+        return user
 
     @commands.command(name='subsettz', help="Set your timezone for your subscriptions!")
     async def set_subscription_timezone(self, ctx):
