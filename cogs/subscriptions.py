@@ -261,25 +261,28 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
     async def return_users_subs(self, ctx):
         user = str(ctx.author)
         # we only need to get subs for the user
-        for x in self.user_subs[user]["sub_list"]:
-            if "id" in x.keys():
-                sub_type = x["type"]
-                sub_hour = x["when"]
-                sub_details = x["details"]
-                last_sent = x["last_sent"]
-                sub_active = x["active"]
-                sub_id = x["id"]
-                if sub_active == 0:
-                    active_status = 'inactive'
-                else:
-                    active_status = 'active'
-                await ctx.send(
-                    f'You have an **{active_status}** **{sub_type}** sub for **{sub_details}** at **{sub_hour}:00**.\n'
-                    f'This sub was last sent at: {last_sent} and it\'s id is **{sub_id}**.'
-                )
-        temporary_subs = [x for x in self.user_subs[user]["sub_list"] if "id" not in x.keys()]
-        if len(temporary_subs) > 0:
-            await ctx.send(f'You have {len(temporary_subs)} still pending in memory! Please check back in 5 minutes!')
+        try:
+            for x in self.user_subs[user]["sub_list"]:
+                if "id" in x.keys():
+                    sub_type = x["type"]
+                    sub_hour = x["when"]
+                    sub_details = x["details"]
+                    last_sent = x["last_sent"]
+                    sub_active = x["active"]
+                    sub_id = x["id"]
+                    if sub_active == 0:
+                        active_status = 'inactive'
+                    else:
+                        active_status = 'active'
+                    await ctx.send(
+                        f'You have an **{active_status}** **{sub_type}** sub for **{sub_details}** at **{sub_hour}:00**.\n'
+                        f'This sub was last sent at: {last_sent} and it\'s id is **{sub_id}**.'
+                    )
+            temporary_subs = [x for x in self.user_subs[user]["sub_list"] if "id" not in x.keys()]
+            if len(temporary_subs) > 0:
+                await ctx.send(f'You have {len(temporary_subs)} still pending in memory! Please check back in 5 minutes!')
+        except KeyError:
+            await ctx.send('You have no current subscriptions! Set your timezone with !subsettz then try !subweather.')
 
     @commands.command(name='subupdate', help="Update a sub by it's ID, and either active or inactive")
     async def update_sub_for_user(self, ctx, sub_id, active):
