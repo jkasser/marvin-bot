@@ -205,7 +205,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         def check(m):
             return m.author.name == ctx.author.name
         # user doesnt exist or they haven't set their timezone
-        if user not in self.user_subs.keys() or self.user_subs[user]["tz"] == "":
+        if user not in self.user_subs.keys() or ("tz" in self.user_subs[user].keys() and self.user_subs[user]["tz"] == ""):
             await ctx.send('You have not set your timezone! Please call !subsettz first!')
             # break out user needs to set timezone
             return
