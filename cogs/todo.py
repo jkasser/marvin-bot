@@ -75,7 +75,8 @@ class ToDo(MarvinDB, commands.Cog):
         else:
             try:
                 popped_item = self.to_do[user].pop(int(item) - 1)
-                await channel.send(f'You have removed {popped_item}!')
+                to_do_item = f'--{self.to_do[user][int(item-1)]}--'
+                await channel.send(f'You have accomplished {to_do_item}!')
             except Exception as e:
                 await channel.send(f'I encountered the following error:\n{e}')
 
@@ -97,6 +98,11 @@ class ToDo(MarvinDB, commands.Cog):
         else:
             new_line = '\n'
             lines = [f"{self.to_do[user].index(x) + 1}. {x}" for x in self.to_do[user]]
+            finished_count = 0
+            for x in self.to_do[user]:
+                if '--' in x:
+                    finished_count += 1
+            finished_percent = f'{(finished_count / len(self.to_do[user])) * 100}% Complete'
             await channel.send(f"{new_line}".join(lines))
 
     @tasks.loop(minutes=10)
