@@ -2,6 +2,7 @@ import requests
 import re
 import yaml
 import discord
+import datetime
 from utils.mapquest import Mapquest
 from discord.ext import commands
 
@@ -36,25 +37,28 @@ class RapidWeatherAPI(commands.Cog):
             weather["type"] = str(data["weather"][0]["description"]).capitalize()
             return weather
 
+    def get_weather_for_area(self, location):
+        results = self.mapq.get_lat_long_for_location(str(location))
+        forecast = self.get_daily_weather_for_city(lat=results["lat"], long=results["long"])
+        if forecast is not None:
+            embed = discord.Embed(title=f"Weather in {location}",
+                                  color=0x87ceeb,
+                                  timestamp=datetime.datetime.now().astimezone())
+            embed.add_field(name="Description", value=f"**{forecast['type']}**", inline=False)
+            embed.add_field(name="Temperature(F)", value=f"**{forecast['temp']}°F**", inline=False)
+            embed.add_field(name="Feels Like(F)", value=f"**{forecast['feels_like']}°F**", inline=False)
+            embed.add_field(name="Min Temp(F)", value=f"**{forecast['min']}°F**", inline=False)
+            embed.add_field(name="Max Temp(F)", value=f"**{forecast['max']}°F**", inline=False)
+            embed.add_field(name="Humidity(%)", value=f"**{forecast['humidity']}%**", inline=False)
+            embed.add_field(name="Wind(MPH)", value=f"**{forecast['wind']}MPH**", inline=False)
+            embed.set_thumbnail(url=results["thumb"])
+            return embed
+
     @commands.command(name='getweather', help="Provide city/state/country/zip to get today's weather forecast!")
     async def get_todays_weather(self, ctx, query):
         if query is not None:
-            results = self.mapq.get_lat_long_for_location(str(query))
-            forecast = self.get_daily_weather_for_city(lat=results["lat"], long=results["long"])
-            if forecast is not None:
-                embed = discord.Embed(title=f"Weather in {query}",
-                                      color=0x87ceeb,
-                                      timestamp=ctx.message.created_at, )
-                embed.add_field(name="Description", value=f"**{forecast['type']}**", inline=False)
-                embed.add_field(name="Temperature(F)", value=f"**{forecast['temp']}°F**", inline=False)
-                embed.add_field(name="Feels Like(F)", value=f"**{forecast['feels_like']}°F**", inline=False)
-                embed.add_field(name="Min Temp(F)", value=f"**{forecast['min']}°F**", inline=False)
-                embed.add_field(name="Max Temp(F)", value=f"**{forecast['max']}°F**", inline=False)
-                embed.add_field(name="Humidity(%)", value=f"**{forecast['humidity']}%**", inline=False)
-                embed.add_field(name="Wind(MPH)", value=f"**{forecast['wind']}MPH**", inline=False)
-                embed.set_thumbnail(url=results["thumb"])
-                embed.set_footer(text=f"Requested by {ctx.author.name}")
-                await ctx.send(embed=embed)
+            embed = self.get_weather_for_area(query)
+            await ctx.send(embed=embed)
         else:
             await ctx.send('Please provide a city/state or zip code.')
 
