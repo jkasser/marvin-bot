@@ -246,7 +246,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                         )
                         await ctx.send(f'Great! '
                                        f'I have you scheduled to receive {sub_type} alerts for: {sub_details} '
-                                       f'around {time_of_day}:00 every day')
+                                       f'around {time_of_day}:00 every day.')
                     else:
                         await ctx.send('Your supplied value was incorrect! Please pick a number between 1 and 24 and'
                                        ' try this command again!')
