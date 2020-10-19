@@ -11,18 +11,6 @@ import pytz
 
 class Subscriptions(commands.Cog, SubscriptionsDB):
 
-    SUB_USERS_TABLE_NAME = "users"
-    SUB_USERS_TABLE = f"""CREATE TABLE IF NOT EXISTS {SUB_USERS_TABLE_NAME} (
-        id integer PRIMARY KEY,
-        user text NOT NULL,
-        timezone text NOT NULL,
-        disc_id integer NOT NULL
-    );"""
-    INSERT_USER = f"""INSERT INTO {SUB_USERS_TABLE_NAME}(user, timezone, disc_id) VALUES(?,?,?)"""
-    CHECK_IF_EXISTS = f"""SELECT EXISTS(SELECT * FROM {SUB_USERS_TABLE_NAME} WHERE user=? LIMIT 1)"""
-    GET_USER = f"""SELECT * FROM {SUB_USERS_TABLE_NAME} WHERE user=? LIMIT 1"""
-    GET_ALL_USERS = f"""SELECT * FROM {SUB_USERS_TABLE_NAME}"""
-
     SUBSCRIPTION_TABLE_NAME = "subs"
     SUBSCRIPTION_TABLE = f"""CREATE TABLE IF NOT EXISTS {SUBSCRIPTION_TABLE_NAME} (
         id integer PRIMARY KEY,
@@ -32,7 +20,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         when_send integer NOT NULL,
         active integer NOT NULL,
         last_sent timestamp,
-        FOREIGN KEY(user_id) REFERENCES {SUB_USERS_TABLE_NAME}(id)
+        FOREIGN KEY(user_id) REFERENCES {SubscriptionsDB.SUB_USERS_TABLE_NAME}(id)
     );"""
     INSERT_SUB = f"""INSERT INTO {SUBSCRIPTION_TABLE_NAME}(user_id, sub_type, sub_details, when_send, active, last_sent) 
     VALUES(?,?,?,?,?,?)"""
@@ -47,7 +35,6 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         super(Subscriptions, self).__init__()
         self.user_subs = dict()
         self.bot = bot
-        self.create_table(self.conn, self.SUB_USERS_TABLE)
         self.create_table(self.conn, self.SUBSCRIPTION_TABLE)
         # put it all into memory
         users = self.get_users() # returns id, user, timezone
@@ -63,16 +50,6 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         self.insert_or_update_subs_in_db.start()
         self.check_if_time_to_notify_user_of_sub.start()
 
-    def get_user(self, user):
-        cur = self.conn.cursor()
-        results = cur.execute(self.GET_USER, (user,))
-        results = results.fetchall()
-        self.conn.commit()
-        return results
-
-    def get_users(self):
-        return self.get_query(self.GET_ALL_USERS)
-
     def get_subs(self):
         return self.get_query(self.GET_ALL_SUBS)
 
@@ -83,9 +60,6 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         self.conn.commit()
         return results
 
-    def insert_user(self, user, timezone, disc_id):
-        return self.insert_query(self.INSERT_USER, (user, timezone, disc_id))
-
     def insert_sub(self, user_id, sub_type, sub_details, when_send, active, last_sent):
         return self.insert_query(self.INSERT_SUB, (user_id, sub_type, sub_details, when_send, active, last_sent,))
 
@@ -95,15 +69,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
     def update_sub_active_status(self, sub_id, active):
         self.update_query(self.UPDATE_SUB_ACTIVE_STATUS, (active, sub_id,))
 
-    def check_if_user_exists(self, user):
-        cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS, (user,))
-        results = results.fetchone()[0]
-        if results == 0:
-            return False
-        else:
-            return True
-
+    # keep this one here since it needs access to the bot
     def get_user_object_by_id(self, user_id):
         user = self.bot.fetch_user(user_id)
         # returns, name, id, etc
