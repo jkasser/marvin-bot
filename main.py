@@ -19,7 +19,8 @@ extensions = [
     'cogs.news',
     'cogs.reminder',
     'cogs.reddit',
-    'cogs.rapid_api'
+    'cogs.rapid_api',
+    'cogs.subscriptions'
 ]
 
 
