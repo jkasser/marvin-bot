@@ -75,7 +75,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         # returns, name, id, etc
         return user
 
-    @commands.command(name='subsettz', help="Set your timezone for your subscriptions!")
+    @commands.command(name='subsettz', help='Set your timezone for your subscriptions!')
     async def set_subscription_timezone(self, ctx):
         timeout = 30
         user = str(ctx.author)
@@ -117,7 +117,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 await ctx.send('You have taken too long to decide! Good-bye!')
                 return
 
-    @commands.command(name='subupdatetz', help="Change your current timezone.")
+    @commands.command(name='subupdatetz', help='Change your current timezone.')
     async def update_timezone(self, ctx):
         timeout = 30
         user = str(ctx.author)
@@ -152,7 +152,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
             await ctx.send('You have taken too long to decide! Good-bye!')
             return
 
-    @commands.command(name='gettimezones', help="Get a list of timezones in a direct message")
+    @commands.command(name='gettimezones', help='Get a list of timezones in a direct message.')
     async def send_timezones_in_dm(self, ctx):
         channel = await ctx.author.create_dm()
         tzs = ""
@@ -163,7 +163,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
             else:
                 continue
 
-    @commands.command(name='subweather', help="This will subscribe you to weather! Just pass in your location")
+    @commands.command(name='subweather', help='This will subscribe you to weather! Just pass in your location.')
     async def subscribe_user_to_weather(self, ctx):
         timeout = 120
         user = str(ctx.author)
@@ -223,7 +223,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 await ctx.send('You have taken too long to decide! Good-bye!')
                 return
 
-    @commands.command(name='subget', help="Get a list of subscriptions for your user!")
+    @commands.command(name='subget', help='Get a list of subscriptions for your user!')
     async def return_users_subs(self, ctx):
         user = str(ctx.author)
         # we only need to get subs for the user
@@ -250,7 +250,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         except KeyError:
             await ctx.send('You have no current subscriptions! Set your timezone with !subsettz then try !subweather.')
 
-    @commands.command(name='subupdate', help="Update a sub by it's ID, and either active or inactive")
+    @commands.command(name='subupdate', help='Update a sub by it\'s ID, and either active or inactive.')
     async def update_sub_for_user(self, ctx, sub_id, active):
         sub_id = int(sub_id)
         user = str(ctx.author)
@@ -336,7 +336,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                 # it's time to send this bad boy!
                                 # call some logic here to run the sub
                                 if sub_type.lower() == 'weather':
-                                    # invoke the bot get weather comamnd
+                                    # invoke the bot get weather command
                                     weather_embed = Weather(self.bot).get_weather_for_area(sub_details)
                                     await user.dm_channel.send(embed=weather_embed)
                                     # update the last sent time in memory and in the database
