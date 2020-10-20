@@ -22,3 +22,7 @@ def get_time_in_specified_timezone(user_tz: str):
         return datetime.now(user_tz)
     except pytz.exceptions.UnknownTimeZoneError:
         print(f'Your timezone: {user_tz}, was not valid! Please try again')
+
+def get_date_from_epoch(timestamp: int) -> datetime:
+    ts = datetime.fromtimestamp(int(timestamp))
+    return ts
