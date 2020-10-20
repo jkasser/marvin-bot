@@ -37,7 +37,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         self.bot = bot
         self.create_table(self.conn, self.SUBSCRIPTION_TABLE)
         # put it all into memory
-        users = self.get_users() # returns id, user, timezone
+        users = self.users
         if len(users) > 0:
             for user in users:
                 self.user_subs[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], sub_list=[])

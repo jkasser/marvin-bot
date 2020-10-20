@@ -65,6 +65,7 @@ class SubscriptionsDB(DB):
         try:
             self.conn = sqlite3.connect('subscriptions.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30)
             self.create_table(self.conn, self.SUB_USERS_TABLE)
+            self.users = self.get_users()  # returns id, user, timezone
         except Error as e:
             print(e)
 
