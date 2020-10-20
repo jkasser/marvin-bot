@@ -90,5 +90,3 @@ class SubscriptionsDB(DB):
             return False
         else:
             return True
-
-
