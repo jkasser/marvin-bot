@@ -85,7 +85,7 @@ class Weather(commands.Cog):
             embed.set_thumbnail(url=results["thumb"])
             return embed
 
-    @commands.command(name='getweather', help="Provide city/state/country/zip to get today's weather forecast!")
+    @commands.command(name='getweather', help='Provide city/state/country/zip to get today's weather forecast!")
     async def get_todays_weather(self, ctx, * location):
         location = " ".join(location)
         if len(location) > 0:

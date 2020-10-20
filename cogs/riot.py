@@ -268,7 +268,7 @@ class Riot(MarvinDB, commands.Cog):
         schedule = self.get_clash_schedule()
         await ctx.send(str(schedule))
 
-    @commands.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
+    @commands.command(name='getsummoner', help='Pass in a summoner name and to get their info!')
     async def get_summoner(self, ctx, summoner_name):
         summoner_name = summoner_name.lower()
         results = self.get_summoner_by_name(summoner_name)
@@ -292,7 +292,7 @@ class Riot(MarvinDB, commands.Cog):
         embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
         await ctx.send(file=disc_file, embed=embedded_link)
 
-    @commands.command(name='updatesummoner', help="Pass in a summoner name to update them in the databse")
+    @commands.command(name='updatesummoner', help='Pass in a summoner name to update them in the databse')
     async def update_summoner(self, ctx, summoner_name):
         summoner_name = summoner_name.lower()
         try:

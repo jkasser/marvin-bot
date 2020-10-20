@@ -48,7 +48,7 @@ class ToDo(MarvinDB, commands.Cog):
         results = self.get_query(self.GET_TO_DO_LISTS)
         return results
 
-    @commands.command(name='todo', help="Add an item to your to do list!")
+    @commands.command(name='todo', help='Add an item to your to do list!')
     async def add_to_do(self, ctx, *item):
         item_to_add = " ".join(item)
         user = str(ctx.author)
@@ -62,7 +62,7 @@ class ToDo(MarvinDB, commands.Cog):
         await channel.send(f'Your to do list is now:')
         await channel.send(f'{new_line}'.join(lines))
 
-    @commands.command(name='todoremove', help="Remove an item by its position in your to do list!")
+    @commands.command(name='todoremove', help='Remove an item by its position in your to do list!')
     async def remove_self(self, ctx, item):
         user = str(ctx.author)
         channel = await ctx.author.create_dm()
@@ -80,13 +80,13 @@ class ToDo(MarvinDB, commands.Cog):
             except Exception as e:
                 await channel.send(f'I encountered the following error:\n{e}')
 
-    @commands.command(name='todoclear', help="Clear your to do list!")
+    @commands.command(name='todoclear', help='Clear your to do list!')
     async def clear_to_do(self, ctx):
         user = str(ctx.author)
         self.to_do[user] = []
         await ctx.send('Your to do list has been cleared!')
 
-    @commands.command(name='todoget', help="Retrieve your current to do list via DM!")
+    @commands.command(name='todoget', help='Retrieve your current to do list via DM!')
     async def get_to_do(self, ctx):
         user = str(ctx.author)
         channel = await ctx.author.create_dm()
