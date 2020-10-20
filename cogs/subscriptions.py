@@ -5,7 +5,7 @@ from utils import timezones
 from utils.helper import check_if_valid_hour
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from cogs.rapid_api import RapidWeatherAPI
+from cogs.weather import Weather
 import pytz
 
 
@@ -337,7 +337,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                 # call some logic here to run the sub
                                 if sub_type.lower() == 'weather':
                                     # invoke the bot get weather comamnd
-                                    weather_embed = RapidWeatherAPI(self.bot).get_weather_for_area(sub_details)
+                                    weather_embed = Weather(self.bot).get_weather_for_area(sub_details)
                                     await user.dm_channel.send(embed=weather_embed)
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)

@@ -19,7 +19,7 @@ extensions = [
     'cogs.news',
     'cogs.reminder',
     'cogs.reddit',
-    'cogs.rapid_api',
+    'cogs.weather',
     'cogs.subscriptions'
 ]
 
