@@ -75,8 +75,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         # returns, name, id, etc
         return user
 
-    @commands.command(name='subsettz', help='Set your timezone for your subscriptions!')
-    async def set_subscription_timezone(self, ctx):
+    @commands.command(name='subsettz', help='Set your timezone for your user profile!')
+    async def set_subscription_timezone(self, ctx, supplied_tz=None):
         timeout = 30
         user = str(ctx.author)
         def check(m):
@@ -89,33 +89,42 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         else:
             # add the user to our dict and add their discord ID to the body
             self.user_subs[user] = dict(disc_id=ctx.author.id)
-            await ctx.send('Please enter your preferred timezone! Here are some examples:\n'
-                           'America/Denver, US/Eastern, US/Alaska, Europe/Berlin')
-            try:
-                user_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
-                user_answer = user_answer.content
-                possible_tz = timezones.get_possible_timezones(user_answer)
-                if timezones.check_if_timezone_match(possible_tz):
-                    await ctx.send(f'I have found the matching timezone: {possible_tz[0]}')
-                    if user in self.user_subs.keys():
-                        # if user exists set their tz
-                        self.user_subs[user]["tz"] = possible_tz[0]
+            if supplied_tz is None:
+                await ctx.send('Please enter your preferred timezone! Here are some examples:\n'
+                               'America/Denver, US/Eastern, US/Alaska, Europe/Berlin')
+                try:
+                    user_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    user_answer = user_answer.content
+                    possible_tz = timezones.get_possible_timezones(user_answer)
+                    if timezones.check_if_timezone_match(possible_tz):
+                        await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
+                                       f'Your timezone has been set successfully!')
                     else:
-                        # otherwise create the user
-                        self.user_subs[user] = dict(tz=possible_tz[0])
-                    await ctx.send('Your timezone has been set!')
+                        if len(possible_tz) == 0:
+                            await ctx.send(f'Your provided timezone: {user_answer}, does not match any timezones!\n'
+                                           f'Please try this command again. To get a list of timezones, call !gettimezones')
+                        elif len(possible_tz) > 1:
+                            await ctx.send(f'I have found the following possible matches: {", ".join(possible_tz)}.\n'
+                                           f'Please try this again after deciding which timezone you would like to use!')
+                            # bail out since they provided an ambiguous match
+                        return
+                except TimeoutError:
+                    await ctx.send('You have taken too long to decide! Good-bye!')
+                    return
+            else:
+                possible_tz = timezones.get_possible_timezones(supplied_tz)
+                if timezones.check_if_timezone_match(possible_tz):
+                    await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
+                                   f'Your timezone has been set successfully!')
                 else:
                     if len(possible_tz) == 0:
-                        await ctx.send(f'Your provided timezone: {user_answer}, does not match any timezones!\n'
+                        await ctx.send(f'Your provided timezone: {supplied_tz}, does not match any timezones!\n'
                                        f'Please try this command again. To get a list of timezones, call !gettimezones')
                     elif len(possible_tz) > 1:
                         await ctx.send(f'I have found the following possible matches: {", ".join(possible_tz)}.\n'
                                        f'Please try this again after deciding which timezone you would like to use!')
                         # bail out since they provided an ambiguous match
                     return
-            except TimeoutError:
-                await ctx.send('You have taken too long to decide! Good-bye!')
-                return
 
     @commands.command(name='subupdatetz', help='Change your current timezone.')
     async def update_timezone(self, ctx):
