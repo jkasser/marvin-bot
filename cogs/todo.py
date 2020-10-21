@@ -33,6 +33,7 @@ class ToDo(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_EXISTS, (user,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:

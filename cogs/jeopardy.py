@@ -107,6 +107,7 @@ class Jeopardy(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_PLAYER_EXISTS, (player_name,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -122,12 +123,14 @@ class Jeopardy(MarvinDB, commands.Cog):
     def get_leaderboard(self):
         cur = self.conn.cursor()
         results = cur.execute(self.GET_CURRENT_STANDINGS).fetchall()
+        self.conn.commit()
         return results
 
     def get_player_worth(self, player_name):
         """ Returns (id, player, worth)"""
         cur = self.conn.cursor()
         worth = cur.execute(self.GET_PLAYER_WORTH, (player_name,)).fetchone()
+        self.conn.commit()
         return worth
 
     @commands.command(name='playjep', help='Play a round of jeopardy!')

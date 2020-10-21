@@ -42,6 +42,7 @@ class MarvinNews(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_EXISTS, (article_slug,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:

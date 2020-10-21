@@ -132,6 +132,7 @@ class Riot(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_ID, (summoner_id,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -141,6 +142,7 @@ class Riot(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_NAME, (summoner_name,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -149,6 +151,7 @@ class Riot(MarvinDB, commands.Cog):
     def check_if_summoner_needs_update(self, summoner_id: str, current_revision_date: int):
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_SUMMONER_BY_ID, (summoner_id,)).fetchone()
+        self.conn.commit()
         if results[7] < current_revision_date:
             return True
         else:
@@ -178,6 +181,7 @@ class Riot(MarvinDB, commands.Cog):
     def check_if_assets_current_version_exists(self):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_CURRENT_VER_EXISTS).fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -246,6 +250,7 @@ class Riot(MarvinDB, commands.Cog):
     def check_if_issue_hash_exists(self, hash_id: str):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_ISSUE_HASH, (hash_id,)).fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
