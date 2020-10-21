@@ -1,9 +1,13 @@
 import calendar
 import re
 import difflib
+import base64
 from io import StringIO
 from html.parser import HTMLParser
 from fuzzywuzzy import fuzz
+from dateutil import parser
+from datetime import datetime
+from utils.enums import *
 
 
 class HTMLStripper(HTMLParser):
@@ -29,6 +33,19 @@ def strip_tags(html):
 
 def get_user_friendly_date_from_string(date_string: str) -> str:
     return f'{calendar.month_name[int(date_string.split("-")[1])]} {date_string.split("-")[2].split("T")[0]}, {date_string.split("-")[0]}'
+
+
+def turn_datetime_into_string(datetime_object) -> str:
+    return datetime_object.strftime('%m/%d/%Y')
+
+
+def get_turning_age_from_date_str(date_str: str):
+    split_date = date_str.split('/')
+    print(split_date)
+    if len(split_date) == 3:
+        current_year = 2021
+        age = current_year - int(split_date[2])
+        return age
 
 
 def get_slug_from_url(url):
@@ -66,3 +83,29 @@ def check_if_valid_hour(supplied_hour: str):
             return False
     except ValueError:
         return False
+
+
+def encode_value(value: str):
+    return base64.b64encode(value.encode('utf-8')).decode()
+
+
+def decode_value(value: str):
+    return base64.b64decode(value.encode('utf-8')).decode()
+
+
+def parse_string_to_datetime(date):
+    return parser.parse(date)
+
+
+def map_bool_to_active(bool_value: int) -> str:
+    return ACTIVE_ENUM[int(bool_value)]
+
+
+def map_active_to_bool(active_or_inactive: str) -> int:
+    for k, v in ACTIVE_ENUM.items():
+        if active_or_inactive.lower().strip() == v:
+            return k
+
+
+def get_current_hour_of_day():
+    return datetime.now().astimezone().hour

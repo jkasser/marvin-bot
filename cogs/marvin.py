@@ -72,7 +72,7 @@ class MarvinBot(commands.Cog):
         await ctx.send(", ".join([str(r.name) for r in ctx.guild.roles]))
 
     @commands.command(name='adduser',
-                      help="Add a user to the channel. You must be a member of TheOGs to use this command.")
+                      help='Add a user to the channel. You must be a member of TheOGs to use this command.')
     @commands.has_any_role("Admins", "TheOGs")
     async def add_user_to_channel(self, ctx, *users):
         members = await ctx.guild.fetch_members(limit=150).flatten()
@@ -99,9 +99,9 @@ class MarvinBot(commands.Cog):
                     except Exception as e:
                         await ctx.send(f'I have encountered the following error: {e}')
 
-    @commands.command(name='makeprivate', help="Make a private channel for you and x members")
+    @commands.command(name='makeprivate', help='Make a private channel for you and the supplied members.')
     @commands.has_any_role("Admins", "TheOGs")
-    async def make_private_channel(self, ctx, *members: discord.Member):
+    async def make_private_channel(self, ctx, * members: discord.Member):
         try:
             guild = ctx.guild
             creator = ctx.author
@@ -156,8 +156,8 @@ class MarvinBot(commands.Cog):
             await ctx.send(f'I have encountered the following error: {e}')
 
     @commands.command(name='qcreate',
-                      help="Create a single word named queue in memory, if left blank, will create the 'General'"
-                      " queue, which exists by default.\nEx. !qcreate myqueue")
+                      help='Create a single word named queue in memory, if left blank, will create the "General"'
+                           'queue, which exists by default.\nEx. !qcreate myqueue')
     @commands.has_any_role("Admins", "TheOGs")
     async def create_named_queue(self, ctx, name='General'):
         if name not in self.named_queues.keys():
@@ -166,8 +166,8 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.send(f'Queue: {name}, already exists!')
 
-    @commands.command(name='qaddme', help="Call !qaddme <name> to be added to a specific queue, "
-                                     "if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue")
+    @commands.command(name='qaddme', help='Call !qaddme <name> to be added to a specific queue, '
+                                     'if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue.')
     async def add_me_to_queue(self, ctx, name=None):
         if name is None:
             queue = self.named_queues["General"]
@@ -182,8 +182,8 @@ class MarvinBot(commands.Cog):
         queue.append(username)
         await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username) + 1}')
 
-    @commands.command(name='qadduser', help="This only works to add a user to the general queue, "
-                                       "pass in the user\'s username.\nEx. !adduser marvin")
+    @commands.command(name='qadduser', help='This only works to add a user to the general queue, '
+                                       'pass in the user\'s username.\nEx. !adduser marvin.')
     @commands.has_any_role("Admins", "TheOGs")
     async def add_user_to_queue(self, ctx, user):
         queue = self.named_queues["General"]
@@ -203,9 +203,9 @@ class MarvinBot(commands.Cog):
                 elif members.index(member) + 1 == len(members) and user not in member.name:
                     await ctx.send(f'No member found for {user}')
 
-    @commands.command(name='qlist', help="See the current queue list of the queue name provided."
-                                    " If no name is provided then it will provide the list of the General queue."
-                                    "\nEx. !qlist myqueue")
+    @commands.command(name='qlist', help='See the current queue list of the queue name provided.'
+                                    ' If no name is provided then it will provide the list of the General queue.'
+                                    '\nEx. !qlist myqueue')
     async def get_queue_list(self, ctx, name=None):
         if name is None:
             queue = self.named_queues["General"]
@@ -221,8 +221,8 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.send(f'The {name} queue is currently empty.')
 
-    @commands.command(name='qclear', help="Clears the provided queue name. If no queue name is provided it will "
-                                     "clear the General queue.\nEx. !qclear myqueue")
+    @commands.command(name='qclear', help='Clears the provided queue name. If no queue name is provided it will '
+                                     'clear the General queue.\nEx. !qclear myqueue')
     @commands.has_any_role("Admins", "TheOGs")
     async def clear_queue(self, ctx, name=None):
         if name is None:
@@ -237,8 +237,8 @@ class MarvinBot(commands.Cog):
         queue.clear()
         await ctx.send(f'The queue: {name} has been cleared!')
 
-    @commands.command(name='qnext', help="Call the next person in the provided queue. If no queue name is provided, "
-                                    "it will call the next person from the General queue.\nEx. !qnext myqueue")
+    @commands.command(name='qnext', help='Call the next person in the provided queue. If no queue name is provided, '
+                                    'it will call the next person from the General queue.\nEx. !qnext myqueue')
     @commands.has_any_role("Admins", "TheOGs")
     async def get_next_user_in_queue(self, ctx, name=None):
         if name is None:
@@ -257,11 +257,11 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.send(f'The {name} queue is empty! There is no one else to call')
 
-    @commands.command(name='getmyid', help="Return your discord user ID, helpful for debugging.")
+    @commands.command(name='getmyid', help='Return your discord user ID, helpful for debugging.')
     async def get_my_user_id(self, ctx):
         await ctx.send(f'Your user ID is: {ctx.message.author.id}')
 
-    @commands.command(pass_context=True, help="Delete all the messages from this channel")
+    @commands.command(pass_context=True, help='Delete all the messages from this channel.')
     @commands.has_any_role("Admins")
     async def purge(self, ctx):
         await ctx.channel.purge()

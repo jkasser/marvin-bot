@@ -10,7 +10,7 @@ from discord.ext import commands, tasks
 from datetime import datetime
 from pytz import reference
 from utils.db import MarvinDB
-from utils.helper import get_user_friendly_date_from_string
+from utils.helper import get_user_friendly_date_from_string, get_current_hour_of_day
 
 
 class Riot(MarvinDB, commands.Cog):
@@ -132,6 +132,7 @@ class Riot(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_ID, (summoner_id,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -141,6 +142,7 @@ class Riot(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_NAME, (summoner_name,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -149,6 +151,7 @@ class Riot(MarvinDB, commands.Cog):
     def check_if_summoner_needs_update(self, summoner_id: str, current_revision_date: int):
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_SUMMONER_BY_ID, (summoner_id,)).fetchone()
+        self.conn.commit()
         if results[7] < current_revision_date:
             return True
         else:
@@ -178,6 +181,7 @@ class Riot(MarvinDB, commands.Cog):
     def check_if_assets_current_version_exists(self):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_CURRENT_VER_EXISTS).fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -246,6 +250,7 @@ class Riot(MarvinDB, commands.Cog):
     def check_if_issue_hash_exists(self, hash_id: str):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_ISSUE_HASH, (hash_id,)).fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
@@ -268,7 +273,7 @@ class Riot(MarvinDB, commands.Cog):
         schedule = self.get_clash_schedule()
         await ctx.send(str(schedule))
 
-    @commands.command(name='getsummoner', help="Pass in a summoner name and to get their info!")
+    @commands.command(name='getsummoner', help='Pass in a summoner name and to get their info!')
     async def get_summoner(self, ctx, summoner_name):
         summoner_name = summoner_name.lower()
         results = self.get_summoner_by_name(summoner_name)
@@ -292,7 +297,7 @@ class Riot(MarvinDB, commands.Cog):
         embedded_link.set_image(url=f'attachment://{profile_icon_id}.png')
         await ctx.send(file=disc_file, embed=embedded_link)
 
-    @commands.command(name='updatesummoner', help="Pass in a summoner name to update them in the databse")
+    @commands.command(name='updatesummoner', help='Pass in a summoner name to update them in the databse')
     async def update_summoner(self, ctx, summoner_name):
         summoner_name = summoner_name.lower()
         try:
@@ -308,7 +313,7 @@ class Riot(MarvinDB, commands.Cog):
 
     @tasks.loop(hours=2)
     async def check_and_update_latest_assets_version(self):
-        hour = datetime.now().hour
+        hour = get_current_hour_of_day()
         if hour >= 23 or hour <= 5:
             api_updates_channel = self.bot.get_channel(763088226860138576)
             api_current_version, cdn = self.get_latest_data_version()

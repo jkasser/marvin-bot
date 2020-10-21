@@ -32,6 +32,7 @@ class MarvinNews(MarvinDB, commands.Cog):
             self.create_table(self.conn, self.NEWS_TABLE)
         except Error as e:
             print(e)
+        self.article_tracker = list()
         self.check_the_news.start()
 
     def add_article_to_db(self, article_slug):
@@ -41,25 +42,31 @@ class MarvinNews(MarvinDB, commands.Cog):
         cur = self.conn.cursor()
         results = cur.execute(self.CHECK_IF_EXISTS, (article_slug,))
         results = results.fetchone()[0]
+        self.conn.commit()
         if results == 0:
             return False
         else:
             return True
 
-    def get_news(self, q, page_size=3, page=1):
+    def get_news(self, * q, page_size=3, page=1):
+        query = " ".join(q)
         article_list = []
         start_date = date.today() - timedelta(days=1)
-        response = self.news.get_everything(q=str(q), page_size=page_size, page=page, from_param=str(start_date))
+        response = self.news.get_everything(q=query, page_size=page_size, page=page, from_param=str(start_date))
         if response["status"] == 'ok':
             if len(response["articles"]) >= 1:
                 for article in response["articles"]:
-                    if self.check_if_article_exists(self.get_article_slug(article["url"])):
+                    # if self.check_if_article_exists(self.get_article_slug(article["url"])):
+                    if self.get_article_slug(article["article_slug"]) in self.article_tracker:
                         continue
                     else:
+                        # it doesn't exist so return it to the user and append it to the dict in memory
                         article_list.append(self.get_article_data(article))
+                        self.article_tracker.append(article["article_slug"])
                 if len(article_list) == 0:
                     page = page + 1
-                    return self.get_news(q=q, page_size=page_size, page=page)
+                    # pass in the original tuple since it's expecting a tuple
+                    return self.get_news(q, page_size=page_size, page=page)
                 else:
                     return article_list
         else:
@@ -86,14 +93,14 @@ class MarvinNews(MarvinDB, commands.Cog):
         }
         return article_data
 
-    @commands.command(name='getnewssources', help="See where I pull my news from!")
+    @commands.command(name='getnewssources', help='See where I pull my news from!')
     async def get_news_sources(self, ctx):
         await ctx.send(f'I get my news from the following sources: '
                        f'{", ".join(self.cfg["news"]["sources"]).replace("-", " ").capitalize()}')
 
-    @commands.command(name='getnews', help="Get the top 3 articles for your keyword! Please wrap multiple words in quotes.")
-    async def get_news_for_keyword(self, ctx, query):
-        news_list = self.get_news(q=query)
+    @commands.command(name='getnews', help='Get the top 3 articles for your keyword!')
+    async def get_news_for_keyword(self, ctx, * query):
+        news_list = self.get_news(query)
         if isinstance(news_list, list):
             for article in news_list:
                 try:
@@ -105,8 +112,6 @@ class MarvinNews(MarvinDB, commands.Cog):
                     if article["thumb"] is not "" and article["thumb"] is not None:
                         embedded_link.set_thumbnail(url=article["thumb"])
                     await ctx.send(embed=embedded_link)
-                    await ctx.send('---------------------------------------------------------------')
-                    self.add_article_to_db(article["article_slug"])
                 except Exception:
                     continue
         else:
@@ -122,7 +127,8 @@ class MarvinNews(MarvinDB, commands.Cog):
                 # parse the article
                 article = self.get_article_data(post)
                 # check if the news has already been posted
-                if self.check_if_article_exists(self.get_article_slug(article["article_slug"])):
+                # if self.check_if_article_exists(self.get_article_slug(article["article_slug"])):
+                if self.get_article_slug(article["article_slug"]) in self.article_tracker:
                     continue
                 else:
                     try:
@@ -134,8 +140,8 @@ class MarvinNews(MarvinDB, commands.Cog):
                         if article["thumb"] is not "" and article["thumb"] is not None:
                             embedded_link.set_thumbnail(url=article["thumb"])
                         await news_channel.send(embed=embedded_link)
-                        await news_channel.send('---------------------------------------------------------------')
-                        self.add_article_to_db(article["article_slug"])
+                        # self.add_article_to_db(article["article_slug"])
+                        self.article_tracker.append(article["article_slug"])
                     except Exception:
                         continue
         else:
