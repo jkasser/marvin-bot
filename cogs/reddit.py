@@ -105,6 +105,14 @@ class MarvinReddit(MarvinDB, commands.Cog):
                     except Exception:
                         continue
 
+    @tasks.loop(hours=1)
+    async def clear_post_trackers(self):
+        hour = get_current_hour_of_day()
+        if hour >= 0 and hour <= 1:
+            # clear out our lists in memory every 24 hours, check every hour,
+            self.post_tracker["lol_stream"].clear()
+            self.post_tracker["travel_stream"].clear()
+
     @check_reddit_lol_stream.before_loop
     async def before_check_reddit_lol_stream(self):
       await self.bot.wait_until_ready()
@@ -113,14 +121,9 @@ class MarvinReddit(MarvinDB, commands.Cog):
     async def before_check_reddit_travel_stream(self):
       await self.bot.wait_until_ready()
 
-
-    @tasks.loop(hours=1)
-    async def clear_post_trackers(self):
-        hour = get_current_hour_of_day()
-        if hour >= 0 and hour <= 1:
-            # clear out our lists in memory every 24 hours, check every hour,
-            self.post_tracker["lol_stream"].clear()
-            self.post_tracker["travel_stream"].clear()
+    @clear_post_trackers.before_loop
+    async def before_clear_post_trackers(self):
+        await self.bot.wait_until_ready
 
 
 def setup(bot):
