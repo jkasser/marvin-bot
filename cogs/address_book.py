@@ -213,7 +213,10 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                             bday_reminder_response = 0
                             await channel.send('Skipping birthday!')
                         else:
-                            bday_response = parse_string_to_datetime(bday_response)
+                            try:
+                                bday_response = parse_string_to_datetime(bday_response)
+                            except Exception:
+                                bday_response = None
                             if isinstance(bday_response, datetime):
                                 # if they provide a birthday then we should ask if they want a reminder
                                 await channel.send('Would you like me to remind you on their birthday? Y/N')
