@@ -375,7 +375,9 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         str_value = value
                     if field.lower() in contact.keys():
                         contact[field.lower()] = value
-                        await ctx.send(f'Great! I have updated the {field} to {str_value} for {contact["name"]}.')
+                        # now we also want to set the update flag to True here
+                        contact["update_pending"] = True
+                        await ctx.send(f'Great! I have updated the {field} to {str_value}.')
                         return
                     else:
                         await ctx.send(f'I could\'t find a valid field for: {field}. Here are the fields I have '
