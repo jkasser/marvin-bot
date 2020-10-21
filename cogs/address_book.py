@@ -307,7 +307,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         if contact_id is None:
             await ctx.send('You must supply an ID of the contact to update! If you don\'t see an ID yet then give it '
                            'a few minutes while I update my database! Once an ID present you can update the '
-                           'applicable contact.')
+                           'applicable contact. The ID must be an integer!')
             return
         elif field is None:
             await ctx.send('You must supply the field you wish to update, e.g. name/phone/address/email/birthday')
