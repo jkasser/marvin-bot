@@ -105,3 +105,7 @@ def map_active_to_bool(active_or_inactive: str) -> int:
     for k, v in ACTIVE_ENUM.items():
         if active_or_inactive.lower().strip() == v:
             return k
+
+
+def get_current_hour_of_day():
+    return datetime.now().astimezone().hour
