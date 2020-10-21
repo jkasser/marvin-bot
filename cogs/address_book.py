@@ -286,8 +286,8 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            int(contact["id"]) == int(contact_id) if "id" in contact.keys()]
                 if len(contact) == 0:
                     await ctx.send(f'I wasn\'t able to find a contact that matched ID: {contact_id}. It takes me a couple'
-                                   f' minutes to update my database which is where I get the ID from. You can always'
-                                   f'do a !contactget <contact name> to see if that contact exists and what their ID'
+                                   f' minutes to update my database which is where I get the ID from. You can always '
+                                   f'do a !contactget <contact name> to see if that contact exists and what their ID '
                                    f'is!')
                     return
                 elif len(contact) > 1:
