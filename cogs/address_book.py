@@ -341,7 +341,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         # ok check if the user exists
         if user in self.address_book.keys():
             # check if they have any contacts
-            if len(self.address_book[user]["address_book"] == 0):
+            if len(self.address_book[user]["address_book"]) == 0:
                 await ctx.send('You have no contacts! Add some with !contactadd.')
                 return
             else:
