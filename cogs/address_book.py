@@ -27,7 +27,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
     GET_ENTRY_FOR_USER = F""" SELECT * FROM {ADDRESS_TABLE_NAME} WHERE name LIKE ? AND user_id = ?"""
 
     UPDATE_ENTRY_FOR_USER = f"""UPDATE {ADDRESS_TABLE_NAME} SET name = ?, address = ?, phone = ?, email = ?, 
-                            birthday = ?, birthday_reminder = ?, WHERE name LIKE ? AND user_id = ?"""
+                            birthday = ?, birthday_reminder = ? WHERE id = ? AND user_id = ?"""
     CHECK_IF_ENTRY_EXISTS = f"""SELECT EXISTS(SELECT * FROM {ADDRESS_TABLE_NAME} 
                                     WHERE user_id=? AND name = ? LIMIT 1)"""
     INSERT_CONTACT = f"""INSERT INTO {ADDRESS_TABLE_NAME} (user_id, name, address, phone, email, birthday, 
