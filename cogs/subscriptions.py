@@ -292,7 +292,6 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
 
     @tasks.loop(minutes=5)
     async def insert_or_update_subs_in_db(self):
-        # do some stuff here to insert
         for user, info in self.user_subs.items():
             # if we haven't set the user ID, then we haven't stored it yet
             if "user_id" not in info.keys():
