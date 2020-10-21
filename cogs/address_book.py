@@ -256,15 +256,43 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '"!contactadd".')
 
     @commands.command(name='contactdelete', help='Remove a contact by their name.')
-    async def delete_contact(self, ctx, * contact_name):
+    async def delete_contact(self, ctx, contact_id):
         user = str(ctx.author)
-        contact_name = " ".join(contact_name)
+        if contact_id is None:
+            await ctx.send('You must supply an id of the contact to delete! If you don\'t see an id yet then give it '
+                           'a few minutes while I update my database! Once an id is present you can update the '
+                           'applicable contact.')
+            return
+        try:
+            contact_id = int(contact_id)
+        except ValueError:
+            await ctx.send('The ID must be a whole number! Please try again.')
+            return
         if user in self.address_book.keys():
-            pass
-        else:
-            await ctx.send('Before you can use my address book feature, I need to get your timezone (for reminders)! '
-                           'Please type "!subsettz" to set your timezone with me, and then try adding a contact with'
-                           '"!contactadd".')
+            # check if they have any contacts
+            if len(self.address_book[user]["address_book"] == 0):
+                await ctx.send('You have no contacts! Add some with !contactadd.')
+                return
+            else:
+                # if they have contacts let's get the contact - do a str compare on ID since it could be an empty string
+                contact = [contact for contact in self.address_book[user]["address_book"] if
+                           contact["id"] == str(contact_id)]
+                if len(contact) == 0:
+                    await ctx.send(f'I wasn\'t able to find a contact that matched ID: {id}. It takes me a couple'
+                                   f' minutes to update my database which is where I get the ID from. You can always'
+                                   f'do a !contactget <contact name> to see if that contact exists and what their ID'
+                                   f'is!')
+                    return
+                elif len(contact) > 1:
+                    await ctx.send(f'Somehow I have found {len(contact)} matches. Please contact an admin.')
+                    return
+                else:
+                    contact = contact[0]
+                    await ctx.send(f'Deleting entry for {contact["name"]}!')
+                    del self.address_book[user]["address_book"][self.address_book[user]["address_book"].index(contact)]
+                    # now delete from the database as well
+                    self.delete_contact_by_id(int(contact_id))
+                    await ctx.send('Contact deleted!')
 
     @commands.command(name='contactupdate', help='Update a contact by their name.')
     async def update_contact(self, ctx, * contact_name, field, value):
