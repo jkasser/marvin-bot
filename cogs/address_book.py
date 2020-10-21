@@ -112,7 +112,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     await ctx.send(f'I have found {len(potential_hits)} matche(s) and '
                                    f'will send the relevant info to you via a direct message!')
                     for hit in potential_hits:
-                        msg = f'{hit["name"].capitalize(0)}\'s Information:\n'
+                        msg = f'{hit["name"].capitalize()}\'s Information:\n'
                         for field, value in hit.items():
                             if field.lower() == 'birthday':
                                 value = turn_datetime_into_string(value)
