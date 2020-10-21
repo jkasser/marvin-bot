@@ -68,7 +68,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         self.conn.commit()
         return results
 
-    def insert_contacts_into_db(self, user_id, name, address, phone, email, birthday, birthday_reminder):
+    def insert_contact_into_db(self, user_id, name, address, phone, email, birthday, birthday_reminder):
         values = (
             user_id, name, encode_value(address), encode_value(phone), encode_value(email),
             birthday, birthday_reminder,
