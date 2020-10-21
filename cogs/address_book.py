@@ -373,11 +373,11 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         value = map_active_to_bool(value.lower())
                     else:
                         str_value = value
-                    try:
+                    if field.lower() in contact.keys():
                         contact[field.lower()] = value
                         await ctx.send(f'Great! I have updated the {field} to {str_value} for {contact["name"]}.')
                         return
-                    except KeyError:
+                    else:
                         await ctx.send(f'I could\'t find a valid field for: {field}. Here are the fields I have '
                                        f'available to update: '
                                        f'{", ".join([key for key in contact.keys() if key != "id"])}')
