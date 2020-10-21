@@ -51,7 +51,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     # the info will be stored encoded
                     contact_info = dict(
                         id=address[0],
-                        name=decode_value(address[2]),
+                        name=address[2],
                         address=decode_value(address[3]),
                         phone=decode_value(address[4]),
                         email=decode_value(address[5]),
