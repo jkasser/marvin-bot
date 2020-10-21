@@ -409,7 +409,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         # then we know we have to insert into the database
                         # expects: user_id, name, address, phone, email, birthday, birthday_reminder
                         # encoding happens within the insert contact method, so leave them as strings here
-                        contact_id = self.insert_contact(
+                        contact_id = self.insert_contact_into_db(
                             user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
                             contact["birthday"], int(contact["birthday_reminder"])
                         )
