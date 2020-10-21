@@ -367,7 +367,47 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '!subsettz to set your timezone. Then you will want to add contacts before you have'
                            'something to update.')
 
+    @tasks.loop(minutes=5)
+    async def insert_or_update_contacts_in_database(self):
+        for user, info in self.address_book.items():
+            if "user_id" not in info.keys():
+                # if the user isn't in the database we need to add him first with TZ info and get his user_id for the
+                if not self.check_if_user_exists(user):
+                    # insert the user and the timezone
+                    user_id = self.insert_user(user, info["tz"], info["disc_id"])
+                    # add this key to the dict in memory now
+                    info["user_id"] = user_id
+                    # if they aren't in the dictionary in memory, and not in the database, then something else broke
+                else:
+                    user_id = self.get_user(user)[0][0]
+            else:
+                # their id is stored in memory so we can just grab the user id from there
+                user_id = info["user_id"]
+            # if address_book isnt in info.keys then the user has just set their tz, not created any subscriptions yet
+            if "address_book" in info.keys():
+                # now get every contact in the database
+                for contact in info["address_book"]:
+                    if "id" not in contact.keys():
+                        # then we know we have to insert into the database
+                        # expects: user_id, name, address, phone, email, birthday, birthday_reminder
+                        # encoding happens within the insert contact method, so leave them as strings here
+                        contact_id = self.insert_contact(
+                            user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
+                            contact["birthday"], int(contact["birthday_reminder"])
+                        )
+                        # set the contact ID in the dict <- from this point on users can update/delete contacts
+                        contact["id"] = contact_id
+                    else:
+                        # if id is in keys then lets try to update the contact
+                        # expects: user_id, name, address, phone, email, birthday, birthday_reminder
+                        self.update_contact_by_user_id_and_name(
+                            user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
+                            contact["birthday"], int(contact["birthday_reminder"])
+                        )
 
+    @insert_or_update_contacts_in_database.before_loop
+    async def before_insert_or_update_contacts_in_database(self):
+        await self.bot.wait_until_ready()
 
 # TODO::: Insert, Update, Delete commands. Tasks loop for updates (determine when to update and how)
 # TODO::: add loop to check birthday stuff
