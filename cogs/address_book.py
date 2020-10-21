@@ -23,14 +23,17 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         birthday_reminder integer,
         FOREIGN KEY(user_id) REFERENCES {SubscriptionsDB.SUB_USERS_TABLE_NAME}(id)
     );"""
-    INSERT_ADDRESS = f"""INSERT INTO {ADDRESS_TABLE_NAME}(user_id, name, address, phone, birthday, birthday_reminder) 
-    VALUES(?,?,?,?,?,?)"""
-    CHECK_IF_ENTRY_EXISTS = f"""SELECT EXISTS(SELECT * FROM {ADDRESS_TABLE_NAME} 
-                                WHERE user_id=? AND name = ? LIMIT 1)"""
     GET_ADDRESS_BOOK_FOR_USER = f"""SELECT * FROM {ADDRESS_TABLE_NAME} where user_id = ?"""
-    UPDATE_ENTRY_FOR_USER = f"""UPDATE {ADDRESS_TABLE_NAME} SET ? = ? WHERE name LIKE ? AND user_id = ?"""
-    DELETE_ENTRY_FOR_USER = f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE name LIKE ? AND user_id = ?"""
+    DELETE_ENTRY_FOR_USER = f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ? AND user_id = ?"""
     GET_ENTRY_FOR_USER = F""" SELECT * FROM {ADDRESS_TABLE_NAME} WHERE name LIKE ? AND user_id = ?"""
+
+    UPDATE_ENTRY_FOR_USER = f"""UPDATE {ADDRESS_TABLE_NAME} SET name = ?, address = ?, phone = ?, email = ?, 
+                            birthday = ?, birthday_reminder = ?, WHERE name LIKE ? AND user_id = ?"""
+    CHECK_IF_ENTRY_EXISTS = f"""SELECT EXISTS(SELECT * FROM {ADDRESS_TABLE_NAME} 
+                                    WHERE user_id=? AND name = ? LIMIT 1)"""
+    INSERT_CONTACT = f"""INSERT INTO {ADDRESS_TABLE_NAME} (user_id, name, address, phone, email, birthday, birthday_reminder) 
+                        VALUES(?,?,?,?,?,?,?)"""
+    DELETE_CONTACT = F"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ?"""
 
     def __init__(self, bot):
         super(AddressBook, self).__init__()
