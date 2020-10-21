@@ -415,13 +415,17 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         )
                         # set the contact ID in the dict <- from this point on users can update/delete contacts
                         contact["id"] = contact_id
-                    else:
+                    elif "update_pending" in contact.keys() and contact["update_pending"]:
                         # if id is in keys then lets try to update the contact
                         # expects: user_id, name, address, phone, email, birthday, birthday_reminder
-                        self.update_contact_by_user_id_and_name(
+                        self.update_contact_by_user_id_and_contact_id(
                             user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
-                            contact["birthday"], int(contact["birthday_reminder"])
+                            contact["birthday"], int(contact["birthday_reminder"]), contact["id"]
                         )
+                        # set the update_pending flag to false
+                        contact["update_pending"] = False
+                    else:
+                        continue
 
     @insert_or_update_contacts_in_database.before_loop
     async def before_insert_or_update_contacts_in_database(self):
