@@ -1,8 +1,8 @@
 from discord.ext import commands, tasks
 from utils.db import SubscriptionsDB
 from asyncio import TimeoutError
-from utils import timezones
-from utils.helper import check_if_valid_hour
+from utils import timezones, enums
+from utils.helper import check_if_valid_hour, map_active_to_bool
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from cogs.weather import Weather
@@ -44,9 +44,11 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 # retrieve the subs for this user by user ID
                 subs = self.get_active_subs(user[0])
                 for sub in subs:
-                    sub_dict = dict(id=sub[0], type=sub[2], details=sub[3], when=sub[4], active=sub[5], last_sent=sub[6])
+                    sub_dict = dict(
+                        id=sub[0], type=sub[2], details=sub[3], when=sub[4], active=sub[5], last_sent=sub[6]
+                    )
                     self.user_subs[user[1]]["sub_list"].append(sub_dict)
-        self.active_map = {"active": 1, "inactive": 0}
+
         self.insert_or_update_subs_in_db.start()
         self.check_if_time_to_notify_user_of_sub.start()
 
@@ -268,11 +270,11 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
             # if it does, then access it directly
             for sub in self.user_subs[user]["sub_list"]:
                 if sub["id"] == sub_id:
-                    # if an id is there (its been inserted) and the proivided id matches
+                    # if an id is there (its been inserted) and the provided id matches
                     if "id" in sub.keys() and sub_id == sub["id"]:
                         try:
-                            # set it equal to the prefereed activeness
-                            sub["active"] = self.active_map[str(active).lower()]
+                            # set it equal to the preferred activeness
+                            sub["active"] = map_active_to_bool(str(active).lower())
                             # now update the database
                             self.update_sub_active_status(sub_id, sub["active"])
                             await ctx.send(f'Your sub {sub["id"]} has been set to {active}!')
@@ -280,7 +282,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                         except KeyError:
                             # This means they didn't provide active/inactive correctly!
                             await ctx.send(f'You said set it to {active}. '
-                                           f'My only possible choices are: {",".join(self.active_map.keys())}')
+                                           f'My only possible choices are: {",".join(enums.ACTIVE_ENUM.keys())}')
                             return
                 else:
                     continue
