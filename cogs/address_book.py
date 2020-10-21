@@ -101,7 +101,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
             await ctx.send('Please provide a name to search for!')
             return
         else:
-            await ctx.send(f'Looking up {contact_name}...')
+            await ctx.send(f'Looking up {contact_name.capitalize()}...')
             if user in self.address_book.keys():
                 channel = await ctx.author.create_dm()
                 potential_hits = [contact for contact in self.address_book[user]["address_book"]
@@ -110,7 +110,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     await ctx.send(f'I have found {len(potential_hits)} matche(s) and '
                                    f'will send the relevant info to you via a direct message!')
                     for hit in potential_hits:
-                        msg = f'{contact_name}\'s Information:\n'
+                        msg = f'{hit["name"].capitalize(0)}\'s Information:\n'
                         for field, value in hit.items():
                             if field.lower() == 'birthday':
                                 value = turn_datetime_into_string(value)
@@ -118,6 +118,8 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                                 field = 'Birthday Reminders'
                                 value = map_bool_to_active(int(value))
                             msg += f'{str(field).capitalize()}: {str(value)}\n'
+                        # add a blank line between entries
+                        msg += '\n'
                         await channel.send(msg)
                 else:
                     # we can't find anyone
@@ -256,11 +258,11 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '"!contactadd".')
 
     @commands.command(name='contactdelete', help='Remove a contact by their name.')
-    async def delete_contact(self, ctx, contact_id):
+    async def delete_contact(self, ctx, contact_id=None):
         user = str(ctx.author)
         if contact_id is None:
-            await ctx.send('You must supply an id of the contact to delete! If you don\'t see an id yet then give it '
-                           'a few minutes while I update my database! Once an id is present you can update the '
+            await ctx.send('You must supply an ID of the contact to delete! If you don\'t see an ID yet then give it '
+                           'a few minutes while I update my database! Once an ID is present you can update the '
                            'applicable contact.')
             return
         try:
@@ -278,7 +280,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                 contact = [contact for contact in self.address_book[user]["address_book"] if
                            contact["id"] == str(contact_id)]
                 if len(contact) == 0:
-                    await ctx.send(f'I wasn\'t able to find a contact that matched ID: {id}. It takes me a couple'
+                    await ctx.send(f'I wasn\'t able to find a contact that matched ID: {contact_id}. It takes me a couple'
                                    f' minutes to update my database which is where I get the ID from. You can always'
                                    f'do a !contactget <contact name> to see if that contact exists and what their ID'
                                    f'is!')
@@ -295,11 +297,11 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     await ctx.send('Contact deleted!')
 
     @commands.command(name='contactupdate', help='Update a contact by their name.')
-    async def update_contact(self, ctx, contact_id, field, value):
+    async def update_contact(self, ctx, contact_id=None, field=None, value=None):
         user = str(ctx.author)
         if contact_id is None:
-            await ctx.send('You must supply an id of the contact to update! If you don\'t see an id yet then give it '
-                           'a few minutes while I update my database! Once an id is present you can update the '
+            await ctx.send('You must supply an ID of the contact to update! If you don\'t see an ID yet then give it '
+                           'a few minutes while I update my database! Once an ID present you can update the '
                            'applicable contact.')
             return
         elif field is None:
