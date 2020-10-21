@@ -385,7 +385,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '!subsettz to set your timezone. Then you will want to add contacts before you have'
                            'something to update.')
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=3)
     async def insert_or_update_contacts_in_database(self):
         for user, info in self.address_book.items():
             if "user_id" not in info.keys():
