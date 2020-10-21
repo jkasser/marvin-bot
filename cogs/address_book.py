@@ -1,11 +1,10 @@
 from discord.ext import commands, tasks
 from utils.db import SubscriptionsDB
 from asyncio import TimeoutError
-from utils import timezones
-from utils.helper import check_if_valid_hour, parse_string_to_datetime, turn_datetime_into_string
+from utils.helper import parse_string_to_datetime, turn_datetime_into_string
 from utils.helper import decode_value, encode_value, map_active_to_bool, map_bool_to_active
+from utils.enums import ACTIVE_ENUM
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import pytz
 
 
