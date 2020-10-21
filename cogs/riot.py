@@ -10,7 +10,7 @@ from discord.ext import commands, tasks
 from datetime import datetime
 from pytz import reference
 from utils.db import MarvinDB
-from utils.helper import get_user_friendly_date_from_string
+from utils.helper import get_user_friendly_date_from_string, get_current_hour_of_day
 
 
 class Riot(MarvinDB, commands.Cog):
@@ -308,7 +308,7 @@ class Riot(MarvinDB, commands.Cog):
 
     @tasks.loop(hours=2)
     async def check_and_update_latest_assets_version(self):
-        hour = datetime.now().hour
+        hour = get_current_hour_of_day()
         if hour >= 23 or hour <= 5:
             api_updates_channel = self.bot.get_channel(763088226860138576)
             api_current_version, cdn = self.get_latest_data_version()
