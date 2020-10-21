@@ -333,6 +333,11 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                 await ctx.send(f'The format of {value} was not correct.'
                                f' Please supply a birthday in the format of MM/DD/YYYY.')
                 return
+        try:
+            contact_id = int(contact_id)
+        except ValueError:
+            await ctx.send('The ID must be a whole number! Please try again.')
+            return
         # ok check if the user exists
         if user in self.address_book.keys():
             # check if they have any contacts
