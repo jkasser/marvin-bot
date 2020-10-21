@@ -132,7 +132,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                                'adding a contact with "!contactadd".')
 
     @commands.command(name='contactadd', help='Add an entry to your address book!')
-    async def insert_contact(self, ctx, * contact_name):
+    async def add_contact(self, ctx, * contact_name):
         timeout = 60
         user = str(ctx.author)
         contact_name = " ".join(contact_name)
