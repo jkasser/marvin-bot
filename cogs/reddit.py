@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands, tasks
 from sqlite3 import Error
 from utils.db import MarvinDB
+from utils.helper import get_current_hour_of_day
 
 
 class MarvinReddit(MarvinDB, commands.Cog):
@@ -35,20 +36,9 @@ class MarvinReddit(MarvinDB, commands.Cog):
             self.create_table(self.conn, self.REDDIT_TABLE)
         except Error as e:
             print(e)
+        self.post_tracker = {"travel_stream": [], "lol_stream": []}
         self.check_reddit_travel_stream.start()
         self.check_reddit_lol_stream.start()
-
-    def add_post_id_to_db(self, post_id):
-        self.insert_query(self.INSERT_POST, (post_id,))
-
-    def check_if_post_exists(self, post_id):
-        cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS, (post_id,))
-        results = results.fetchone()[0]
-        if results == 0:
-            return False
-        else:
-            return True
 
     def get_travel_stream(self, limit=10):
         submissions = [
@@ -83,7 +73,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
             post_list = self.get_travel_stream(limit=5)
             if len(post_list) >= 1:
                 for post in post_list:
-                    if self.check_if_post_exists(post[0]):
+                    if post[0] in self.post_tracker["lol_stream"]:
                         continue
                     else:
                         embedded_link = discord.Embed(title=post[1], description=post[2], url=post[3], color=0x00ff00)
@@ -91,9 +81,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
                         if post[4] != 'default' and post[4] != 'self':
                             embedded_link.set_thumbnail(url=post[4])
                         await travel_channel.send(embed=embedded_link)
-                        await travel_channel.send('---------------------------------------------------------------')
-                        # finally add it to the DB once it has been sent
-                        self.add_post_id_to_db(post[0])
+                        self.post_tracker["travel_stream"].append(post[0])
         except discord.errors.HTTPException:
             pass
 
@@ -103,7 +91,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
         post_list = self.get_lol_stream(limit=5)
         if len(post_list) >= 1:
             for post in post_list:
-                if self.check_if_post_exists(post[0]):
+                if post[0] in self.post_tracker["lol_stream"]:
                     continue
                 else:
                     try:
@@ -112,9 +100,8 @@ class MarvinReddit(MarvinDB, commands.Cog):
                         if post[4] != 'default' and post[4] != 'self':
                             embedded_link.set_thumbnail(url=post[4])
                         await lol_channel.send(embed=embedded_link)
-                        await lol_channel.send('---------------------------------------------------------------')
                         # finally add it to the DB once it has been sent
-                        self.add_post_id_to_db(post[0])
+                        self.post_tracker["lol_stream"].append(post[0])
                     except Exception:
                         continue
 
@@ -125,6 +112,15 @@ class MarvinReddit(MarvinDB, commands.Cog):
     @check_reddit_travel_stream.before_loop
     async def before_check_reddit_travel_stream(self):
       await self.bot.wait_until_ready()
+
+
+    @tasks.loop(hours=1)
+    async def clear_post_trackers(self):
+        hour = get_current_hour_of_day()
+        if hour >= 0 and hour <= 1:
+            # clear out our lists in memory every 24 hours, check every hour,
+            self.post_tracker["lol_stream"].clear()
+            self.post_tracker["travel_stream"].clear()
 
 
 def setup(bot):
