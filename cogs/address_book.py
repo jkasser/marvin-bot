@@ -55,7 +55,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         phone=decode_value(address[4]),
                         email=decode_value(address[5]),
                         birthday=address[6],
-                        bday_reminder=address[7]
+                        birthday_reminder=address[7]
                     )
                     self.address_book[user[1]]["address_book"].append(contact_info)
         self.check_birthday_notification.start()
@@ -353,8 +353,13 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         str_value = value
                         value = map_active_to_bool(value.lower())
                     elif field.lower() in 'birthday':
+                    if field.lower() == 'birthday':
                         str_value = value
                         value = parse_string_to_datetime(value)
+                    # this comes after and takes reminder as well as an option
+                    elif field.lower() in 'birthday_reminder':
+                        str_value = value
+                        value = map_active_to_bool(value.lower())
                     else:
                         str_value = value
                     try:
@@ -422,7 +427,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
             if 0 <= now.hour < 1:
                 for contact in info["address_book"]:
                     # if the birthday exists, reminder is set to 1 i.e. true then lets check
-                    if int(contact["bday_reminder"]) and contact["birthday"] != "" and contact["birthday"] is not None:
+                    if int(contact["birthday_reminder"]) and contact["birthday"] != "" and contact["birthday"] is not None:
                         # birthday is a datetime object, so we can call day/month/hour
                         bday = contact["birthday"]
                         # if the day and month match, and the year is either greater or equal, it's their birthday!!
