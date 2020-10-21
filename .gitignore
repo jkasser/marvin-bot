@@ -134,3 +134,4 @@ test.py
 data/questions.json
 config.yaml
 data/matches.py
+*.db
