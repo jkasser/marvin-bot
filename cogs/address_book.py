@@ -58,6 +58,8 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         bday_reminder=address[7]
                     )
                     self.address_book[user[1]]["address_book"].append(contact_info)
+        self.check_birthday_notification.start()
+        self.insert_or_update_contacts_in_database.start()
 
     def get_address_book_for_user(self, user_id):
         cur = self.conn.cursor()
