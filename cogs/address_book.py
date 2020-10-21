@@ -67,9 +67,26 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         self.conn.commit()
         return results
 
-    def update_address_book_for_user(self, user_id, entry_name, field, value):
-        # expects, field, value, entry_name, user_id in that order
-        self.update_query(self.UPDATE_ENTRY_FOR_USER, (field, value, f'%{entry_name}%', user_id,))
+    def insert_contacts_into_db(self, user_id, name, address, phone, email, birthday, birthday_reminder):
+        values = (
+            user_id, name, encode_value(address), encode_value(phone), encode_value(email),
+            birthday, birthday_reminder,
+        )
+        contact_id = self.insert_query(self.INSERT_CONTACT, values)
+        return contact_id
+
+    def update_contact_by_user_id_and_name(self, user_id, name, address, phone, email, birthday, birthday_reminder):
+        # this needs to go in the order of:
+        # name, address, phone, email, birthday, birthday_reminder
+        # then the where clause of name and user_id. name needs to be wrapped in %% for a like clause
+        where_name = f'%{name}%'
+        values = (
+            user_id, name, encode_value(address), encode_value(phone), encode_value(email),
+            birthday, birthday_reminder, where_name, user_id,)
+        self.update_query(self.UPDATE_ENTRY_FOR_USER, values)
+
+    def delete_contact_by_id(self, contact_id):
+        self.delete_query(self.DELETE_CONTACT, (contact_id,))
 
     # This could potentially be rate limited by the amount of message it would send... commenting out for now
     # @commands.command(name='contactgetall', help='Get your address book!')
@@ -227,7 +244,6 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            'Please type "!subsettz" to set your timezone with me, and then try adding a contact with'
                            '"!contactadd".')
 
-
     @commands.command(name='contactdelete', help='Remove a contact by their name.')
     async def delete_contact(self, ctx, * contact_name):
         user = str(ctx.author)
@@ -240,9 +256,15 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '"!contactadd".')
 
     @commands.command(name='contactupdate', help='Update a contact by their name.')
-    async def update_contact(self, ctx, * contact_name):
+    async def update_contact(self, ctx, * contact_name, field, value):
         user = str(ctx.author)
         contact_name = " ".join(contact_name)
+        if len(contact_name) == 0:
+            await ctx.send('You have not supplied a contact name! Try !contactupdate <contact> <field> <values>\n'
+                           'E.g !contactupdate Marvin Bot')
+        if field is None:
+            await ctx.send('Please supply a')
+        if value is None:
         if user in self.address_book.keys():
             pass
         else:
