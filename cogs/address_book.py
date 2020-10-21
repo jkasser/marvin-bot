@@ -409,10 +409,31 @@ class AddressBook(commands.Cog, SubscriptionsDB):
     async def before_insert_or_update_contacts_in_database(self):
         await self.bot.wait_until_ready()
 
-# TODO::: Insert, Update, Delete commands. Tasks loop for updates (determine when to update and how)
-# TODO::: add loop to check birthday stuff
-# TODO::: on insert into DB make sure to use encode
+    @tasks.loop(hours=1)
+    async def check_birthday_notification(self):
+        for user, info in self.address_book.items():
+            user_tz = pytz.timezone(info["tz"])
+            now = datetime.now(user_tz)
+            # we really only want to alert people on the day of (relative to them)
+            if 0 <= now.hour < 1:
+                for contact in info["address_book"]:
+                    # if the birthday exists, reminder is set to 1 i.e. true then lets check
+                    if int(contact["bday_reminder"]) and contact["birthday"] != "" and contact["birthday"] is not None:
+                        # birthday is a datetime object, so we can call day/month/hour
+                        bday = contact["birthday"]
+                        # if the day and month match, and the year is either greater or equal, it's their birthday!!
+                        if now.day == bday.day and now.month == bday.month and now.year >= bday.year:
+                            # happy birthday sucka! let's make sure your friends remember you, you nameless hero
+                            user = self.bot.get_user(info["disc_id"])
+                            await user.create_dm()
+                            await user.dm_channel.send(
+                                f'It\'s {contact["name"]}\'s birthday! '
+                                f'Don\'t forget to wish them a happy birthay today!'
+                            )
 
+    @check_birthday_notification.before_loop
+    async def before_check_birthday_notification(self):
+        await self.bot.wait_until_ready()
 
 
 def setup(bot):
