@@ -382,7 +382,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     else:
                         await ctx.send(f'I could\'t find a valid field for: {field}. Here are the fields I have '
                                        f'available to update: '
-                                       f'{", ".join([key for key in contact.keys() if key != "id"])}')
+                        f'{", ".join([key for key in contact.keys() if key != "id" if key != "update_pending"])}')
                         return
         else:
             await ctx.send('It looks like this is your first time using my address book feature! Please call'
