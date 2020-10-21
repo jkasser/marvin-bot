@@ -360,10 +360,6 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                 else:
                     contact = contact[0]
                     # since ID is a primary key it will always be unique
-                    if field.lower() in 'bday_reminder':
-                        str_value = value
-                        value = map_active_to_bool(value.lower())
-                    elif field.lower() in 'birthday':
                     if field.lower() == 'birthday':
                         str_value = value
                         value = parse_string_to_datetime(value)
