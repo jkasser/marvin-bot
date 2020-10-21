@@ -325,7 +325,10 @@ class AddressBook(commands.Cog, SubscriptionsDB):
             await ctx.send('You cannot update the ID of a record!')
             return
         elif field.lower() in 'birthday':
-            potential_bday = parse_string_to_datetime
+            try:
+                potential_bday = parse_string_to_datetime(value)
+            except Exception:
+                potential_bday = None
             if not isinstance(potential_bday, datetime):
                 await ctx.send(f'The format of {value} was not correct.'
                                f' Please supply a birthday in the format of MM/DD/YYYY.')
