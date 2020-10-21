@@ -283,7 +283,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
             else:
                 # if they have contacts let's get the contact - do a str compare on ID since it could be an empty string
                 contact = [contact for contact in self.address_book[user]["address_book"] if
-                           contact["id"] == str(contact_id)]
+                           int(contact["id"]) == int(contact_id) if "id" in contact.keys()]
                 if len(contact) == 0:
                     await ctx.send(f'I wasn\'t able to find a contact that matched ID: {contact_id}. It takes me a couple'
                                    f' minutes to update my database which is where I get the ID from. You can always'
