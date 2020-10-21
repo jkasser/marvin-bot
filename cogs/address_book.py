@@ -295,21 +295,78 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     await ctx.send('Contact deleted!')
 
     @commands.command(name='contactupdate', help='Update a contact by their name.')
-    async def update_contact(self, ctx, * contact_name, field, value):
+    async def update_contact(self, ctx, contact_id, field, value):
         user = str(ctx.author)
-        contact_name = " ".join(contact_name)
-        if len(contact_name) == 0:
-            await ctx.send('You have not supplied a contact name! Try !contactupdate <contact> <field> <values>\n'
-                           'E.g !contactupdate Marvin Bot')
-        if field is None:
-            await ctx.send('Please supply a')
-        if value is None:
+        if contact_id is None:
+            await ctx.send('You must supply an id of the contact to update! If you don\'t see an id yet then give it '
+                           'a few minutes while I update my database! Once an id is present you can update the '
+                           'applicable contact.')
+            return
+        elif field is None:
+            await ctx.send('You must supply the field you wish to update, e.g. name/phone/address/email/birthday')
+            return
+        elif value is None:
+            await ctx.send(f'You must supply the new value that I should update {field} to!')
+            return
+        elif field.lower() in 'bday_reminder':
+            try:
+                map_active_to_bool(value.lower())
+            except ValueError:
+                await ctx.send(f'The supplied value {value} failed validation. I can only accept the following values '
+                               f'for the birthday reminder field: {", ".join(ACTIVE_ENUM.values())}')
+        elif field.lower() == 'id':
+            await ctx.send('You cannot update the ID of a record!')
+            return
+        elif field.lower() in 'birthday':
+            potential_bday = parse_string_to_datetime
+            if not isinstance(potential_bday, datetime):
+                await ctx.send(f'The format of {value} was not correct.'
+                               f' Please supply a birthday in the format of MM/DD/YYYY.')
+                return
+        # ok check if the user exists
         if user in self.address_book.keys():
-            pass
+            # check if they have any contacts
+            if len(self.address_book[user]["address_book"] == 0):
+                await ctx.send('You have no contacts! Add some with !contactadd.')
+                return
+            else:
+                # if they have contacts let's get the contact - do a str compare on ID since it could be an empty string
+                contact = [contact for contact in self.address_book[user]["address_book"]
+                           if contact["id"] == str(contact_id)]
+                if len(contact) == 0:
+                    await ctx.send(f'I wasn\'t able to find a contact that matched ID: {contact_id}. It takes me a '
+                                   f'couple minutes to update my database which is where I get the ID from. '
+                                   f'You can always do a !contactget <contact name> to see if that contact exists '
+                                   f'and what their ID is!')
+                    return
+                elif len(contact) > 1:
+                    await ctx.send(f'Somehow I have found {len(contact)} matches. Please contact an admin.')
+                    return
+                else:
+                    contact = contact[0]
+                    # since ID is a primary key it will always be unique
+                    if field.lower() in 'bday_reminder':
+                        str_value = value
+                        value = map_active_to_bool(value.lower())
+                    elif field.lower() in 'birthday':
+                        str_value = value
+                        value = parse_string_to_datetime(value)
+                    else:
+                        str_value = value
+                    try:
+                        contact[field.lower()] = value
+                        await ctx.send(f'Great! I have updated the {field} to {str_value} for {contact["name"]}.')
+                        return
+                    except KeyError:
+                        await ctx.send(f'I could\'t find a valid field for: {field}. Here are the fields I have '
+                                       f'available to update: '
+                                       f'{", ".join([key for key in contact.keys() if key != "id"])}')
+                        return
         else:
-            await ctx.send('Before you can use my address book feature, I need to get your timezone (for reminders)! '
-                           'Please type "!subsettz" to set your timezone with me, and then try adding a contact with'
-                           '"!contactadd".')
+            await ctx.send('It looks like this is your first time using my address book feature! Please call'
+                           '!subsettz to set your timezone. Then you will want to add contacts before you have'
+                           'something to update.')
+
 
 
 # TODO::: Insert, Update, Delete commands. Tasks loop for updates (determine when to update and how)
