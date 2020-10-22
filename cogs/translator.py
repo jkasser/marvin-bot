@@ -36,7 +36,7 @@ class MarvinTranslator(commands.Cog):
         confidence_score = f'{float(response["detectedLanguage"]["score"]) * 100}%'
         detected_input_language = response["detectedLanguage"]["language"]
         result = f'I have detected an input language of **{detected_input_language}** and am {confidence_score} confident' \
-                 f' in my result. Your requested translation(s) are as follows:\n'
+                 f' in my result.\n'
         for x in response["translations"]:
             language = [key for key, value in translate_dict.items() if value.lower() == x["to"].lower()]
             result += f'Translated to {language[0]}: {x["text"]}\n'
