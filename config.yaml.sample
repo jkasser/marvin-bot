@@ -15,3 +15,21 @@ reddit:
 
 news:
   key:
+  sources: [
+  ]
+
+rapidAPI:
+  key:
+
+mapquest:
+  key:
+
+trello:
+  key:
+  token:
+  board_id:
+
+microsoft:
+  translator:
+    key:
+    endpoint:
