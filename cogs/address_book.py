@@ -116,9 +116,9 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         for field, value in hit.items():
                             if field.lower() == 'birthday' and value is not None:
                                 value = turn_datetime_into_string(value)
-                            else:
+                            elif field.lower() == 'birthday' and value is None:
                                 value = ""
-                            if field.lower() == 'birthday_reminder':
+                            elif field.lower() == 'birthday_reminder':
                                 field = 'Birthday Reminders'
                                 value = map_bool_to_active(int(value))
                             msg += f'{str(field).capitalize()}: {str(value)}\n'
