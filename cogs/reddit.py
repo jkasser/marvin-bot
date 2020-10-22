@@ -73,7 +73,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
             post_list = self.get_travel_stream(limit=5)
             if len(post_list) >= 1:
                 for post in post_list:
-                    if post[0] in self.post_tracker["lol_stream"]:
+                    if post[0] in self.post_tracker["travel_stream"]:
                         continue
                     else:
                         embedded_link = discord.Embed(title=post[1], description=post[2], url=post[3], color=0x00ff00)
