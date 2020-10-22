@@ -72,8 +72,9 @@ class MarvinTranslator(commands.Cog):
         if self.check_translate_text_validity(text):
             possible_langs = self.check_translation_language(destination_language)
             if len(possible_langs) >= 1:
+                lang_strings = [code for code in possible_langs]
                 lang_codes = [translate_dict[code] for code in possible_langs]
-                await ctx.send(f'I will attempt to translate your supplied text to: {", ".join(lang_codes)}')
+                await ctx.send(f'I will attempt to translate your supplied text to: {", ".join(lang_strings)}')
                 # now translate!
                 translated_result = self.translate_text(lang_codes, text)
                 await ctx.send(translated_result)
