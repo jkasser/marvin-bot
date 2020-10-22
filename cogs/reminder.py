@@ -95,7 +95,7 @@ class ReminderBot(MarvinDB, commands.Cog):
             # parse the string into 3 fields to insert into the database
             name, when, what = self.parse_reminder_text(text)
             if name.lower() == 'me':
-                name = '@' + user.mention
+                name = user.mention
             # get the date as a datetime object
             when_datetime = self.get_when_remind_date(when, start_time=now)
             # now insert it into the db

@@ -20,7 +20,8 @@ extensions = [
     'cogs.reminder',
     'cogs.reddit',
     'cogs.weather',
-    'cogs.subscriptions'
+    'cogs.subscriptions',
+    'cogs.address_book'
 ]
 
 
