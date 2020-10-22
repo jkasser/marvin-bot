@@ -216,7 +216,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                             try:
                                 bday_response = parse_string_to_datetime(bday_response)
                             except Exception:
-                                bday_response = None
+                                bday_response = ""
                             if isinstance(bday_response, datetime):
                                 # if they provide a birthday then we should ask if they want a reminder
                                 await channel.send('Would you like me to remind you on their birthday? Y/N')
@@ -233,7 +233,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                             else:
                                 await channel.send('I was unable to parse your provided birthday,'
                                                    ' I will continue but leave it blank.')
-                                bday_response = None
+                                bday_response = ""
                                 bday_reminder_response = 0
                         # OK FINALLY create the entry in the book
                         contact_dict = {
@@ -241,11 +241,9 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                             "address": addr_response,
                             "phone": phone_response,
                             "email": email_response,
+                            "birthday": bday_response,
+                            "birthday_reminder": bday_reminder_response
                         }
-                        # It will be none if we couldn't parse a birthday or they chose to skip, if it's set
-                        if bday_response is not None:
-                            contact_dict["birthday"] = bday_response
-                            contact_dict["birthday_reminder"] = bday_reminder_response
                         # now append it! we are done!
                         contact_info.append(contact_dict)
                         await channel.send(f'I have successfully added '
