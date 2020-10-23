@@ -51,7 +51,7 @@ class ReminderBot(MarvinDB, commands.Cog):
         return results
 
     def parse_reminder_text(self, string):
-        name_pattern = re.compile(r'(?<=^\!remind\s)[\S]{1,}')
+        name_pattern = re.compile(r'(?<=^!remind\s)[\S]{1,}')
         when_pattern = re.compile(r'(?<=in\s|on\s).*(?=\sto|\sthat)|(?<=in\s)\d{1,}.+$|(?<=\son\s).+')
         what_pattern = re.compile(r'(?<=that\s|..to\s).*(?=\son)|(?<=that\s|..to\s).*(?=\sin\s\d)|(?<=that\s|..to\s).*')
 
