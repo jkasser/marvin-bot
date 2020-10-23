@@ -6,7 +6,7 @@ class QuickPoll(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="poll", aliases=["mkpoll, createpoll"], pass_context=True)
+    @commands.command(name='poll', aliases=['mkpoll', 'createpoll'], pass_context=True)
     async def poll(self, ctx, question, *options: str):
         if len(options) <= 1:
             await ctx.send('You need more than one option to make a poll!')

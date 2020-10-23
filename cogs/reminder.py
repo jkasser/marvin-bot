@@ -83,7 +83,7 @@ class ReminderBot(MarvinDB, commands.Cog):
             when_remind = parser.parse(date_string)
         return when_remind
 
-    @commands.command(name='remind',
+    @commands.command(name='remind',  aliases=['rem'],
                  help='Let me remind you of something! Just type \"!remind <who> in <when> to'
                       ' <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
     async def create_reminder(self, ctx, *text, user: discord.Member = None):

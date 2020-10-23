@@ -155,7 +155,7 @@ class MarvinBot(commands.Cog):
         except Exception as e:
             await ctx.send(f'I have encountered the following error: {e}')
 
-    @commands.command(name='qcreate',
+    @commands.command(name='qcreate', aliases=['createq', 'queuecreate', 'createqueue'],
                       help='Create a single word named queue in memory, if left blank, will create the "General"'
                            'queue, which exists by default.\nEx. !qcreate myqueue')
     @commands.has_any_role("Admins", "TheOGs")
@@ -182,7 +182,7 @@ class MarvinBot(commands.Cog):
         queue.append(username)
         await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username) + 1}')
 
-    @commands.command(name='qadduser', help='This only works to add a user to the general queue, '
+    @commands.command(name='qadduser', aliases=['qadd', 'queueadd'], help='This only works to add a user to the general queue, '
                                        'pass in the user\'s username.\nEx. !adduser marvin.')
     @commands.has_any_role("Admins", "TheOGs")
     async def add_user_to_queue(self, ctx, user):
@@ -203,7 +203,7 @@ class MarvinBot(commands.Cog):
                 elif members.index(member) + 1 == len(members) and user not in member.name:
                     await ctx.send(f'No member found for {user}')
 
-    @commands.command(name='qlist', help='See the current queue list of the queue name provided.'
+    @commands.command(name='qlist', aliases=['listq', 'listqueue', 'queuelist'], help='See the current queue list of the queue name provided.'
                                     ' If no name is provided then it will provide the list of the General queue.'
                                     '\nEx. !qlist myqueue')
     async def get_queue_list(self, ctx, name=None):
@@ -221,7 +221,7 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.send(f'The {name} queue is currently empty.')
 
-    @commands.command(name='qclear', help='Clears the provided queue name. If no queue name is provided it will '
+    @commands.command(name='qclear', aliases=['clearqueue', 'clearq'], help='Clears the provided queue name. If no queue name is provided it will '
                                      'clear the General queue.\nEx. !qclear myqueue')
     @commands.has_any_role("Admins", "TheOGs")
     async def clear_queue(self, ctx, name=None):
@@ -237,7 +237,7 @@ class MarvinBot(commands.Cog):
         queue.clear()
         await ctx.send(f'The queue: {name} has been cleared!')
 
-    @commands.command(name='qnext', help='Call the next person in the provided queue. If no queue name is provided, '
+    @commands.command(name='qnext', aliases=['queuenext', 'next'], help='Call the next person in the provided queue. If no queue name is provided, '
                                     'it will call the next person from the General queue.\nEx. !qnext myqueue')
     @commands.has_any_role("Admins", "TheOGs")
     async def get_next_user_in_queue(self, ctx, name=None):
@@ -257,7 +257,7 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.send(f'The {name} queue is empty! There is no one else to call')
 
-    @commands.command(name='getmyid', help='Return your discord user ID, helpful for debugging.')
+    @commands.command(name='getmyid', aliases=['myid'], help='Return your discord user ID, helpful for debugging.')
     async def get_my_user_id(self, ctx):
         await ctx.send(f'Your user ID is: {ctx.message.author.id}')
 

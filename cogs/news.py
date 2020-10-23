@@ -93,12 +93,12 @@ class MarvinNews(MarvinDB, commands.Cog):
         }
         return article_data
 
-    @commands.command(name='getnewssources', help='See where I pull my news from!')
+    @commands.command(name='getnewssources', aliases=['getsources'], help='See where I pull my news from!')
     async def get_news_sources(self, ctx):
         await ctx.send(f'I get my news from the following sources: '
                        f'{", ".join(self.cfg["news"]["sources"]).replace("-", " ").capitalize()}')
 
-    @commands.command(name='getnews', help='Get the top 3 articles for your keyword!')
+    @commands.command(name='getnews',  aliases=['checknews', 'news'],  help='Get the top 3 articles for your keyword!')
     async def get_news_for_keyword(self, ctx, * query):
         news_list = self.get_news(query)
         if isinstance(news_list, list):

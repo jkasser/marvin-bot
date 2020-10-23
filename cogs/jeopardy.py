@@ -133,7 +133,7 @@ class Jeopardy(MarvinDB, commands.Cog):
         self.conn.commit()
         return worth
 
-    @commands.command(name='playjep', help='Play a round of jeopardy!')
+    @commands.command(name='playjep', aliases=['jep'], help='Play a round of jeopardy!')
     async def play_jeopardy(self, ctx):
         current_player = ctx.author.name
         if ctx.channel.category_id != 764524003075031050:

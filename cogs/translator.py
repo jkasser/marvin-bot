@@ -66,7 +66,7 @@ class MarvinTranslator(commands.Cog):
         else:
             return self.parse_response(r.json())
 
-    @commands.command(name='translate', help='Translate <destination language> <text>')
+    @commands.command(name='translate', aliases=['tlate', 'trans'],  help='Translate <destination language> <text>')
     async def marvin_translate_text(self, ctx, destination_language, * text):
         text = " ".join(text)
         if self.check_translate_text_validity(text):
@@ -85,7 +85,7 @@ class MarvinTranslator(commands.Cog):
         else:
             await ctx.send(f'You have supplied {len(text)} chars and my max is 10,000! Please try again.')
 
-    @commands.command(name='gettranslatecodes')
+    @commands.command(name='gettranslatecodes',  aliases=['getlangs'] )
     async def get_translate_codes(self, ctx):
         codes = [language_name for language_name in translate_dict.keys()]
         await ctx.send(f'I can translate to the following languages: {", ".join(codes)}')

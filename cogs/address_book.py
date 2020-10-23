@@ -95,7 +95,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
     #     user = str(ctx.author)
     #     pass
 
-    @commands.command(name='contactget', help='Get one entry from your address book!')
+    @commands.command(name='contactget',  aliases=['getcontact'], help='Get one entry from your address book!')
     async def get_contact_by_name(self, ctx, * contact_name):
         timeout=60
         user = str(ctx.author)
@@ -141,7 +141,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
                            'adding a contact with "!contactadd".')
 
-    @commands.command(name='contactadd', help='Add an entry to your address book!')
+    @commands.command(name='contactadd', aliases=['addcontact'], help='Add an entry to your address book!')
     async def add_contact(self, ctx, * contact_name):
         timeout = 60
         user = str(ctx.author)
@@ -274,7 +274,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            'Please type "!subsettz" to set your timezone with me, and then try adding a contact with'
                            '"!contactadd".')
 
-    @commands.command(name='contactdelete', help='Remove a contact by their name.')
+    @commands.command(name='contactdelete', aliases=['deletecontact', 'delcontact'], help='Remove a contact by their name.')
     async def delete_contact(self, ctx, contact_id=None):
         user = str(ctx.author)
         if contact_id is None:
@@ -313,7 +313,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     self.delete_contact_by_id(int(contact_id))
                     await ctx.send('Contact deleted!')
 
-    @commands.command(name='contactupdate', help='Update a contact by their name.')
+    @commands.command(name='contactupdate', aliases=['updatecontact'], help='Update a contact by their name.')
     async def update_contact(self, ctx, contact_id=None, field=None, * value):
         user = str(ctx.author)
         try:
