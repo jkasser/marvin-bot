@@ -97,7 +97,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         self.delete_query(self.DELETE_CONTACT, (contact_id,))
 
     @commands.command(name='contactlist',  aliases=['listcontacts'], help='Get one entry from your address book!')
-    async def get_contact_by_name(self, ctx):
+    async def list_all_contact_names(self, ctx):
         user = str(ctx.author)
         if user in self.address_book.keys():
             channel = await ctx.author.create_dm()
