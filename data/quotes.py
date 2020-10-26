@@ -39,3 +39,47 @@ holy_grail_quotes = [
         "On second thought lets NOT go to Camelot, tis a silly place.",
         "You think you're king just because some hag threw a sword at you?"
 ]
+
+kanye_quotes = [
+        "Does he write his own rhymes, well sort of, I think 'em. That mean I forgot better shit than you ever thought of.",
+        "Excuse me, is you saying something? Uh, uh, you can't tell me nothing",
+        "Closed on Sunday, you my Chick-fil-A",
+        "They say people in your life are seasons, And anything that happen is for a reason",
+        "I hate when I'm on a flight and I wake up with a water bottle next to me like oh great now I gotta be responsible for this water bottle",
+        "Have you ever thought you were in love with someone but then realized you were just staring in a mirror for 20 minutes?",
+        "I'm trying to right my wrongs, but it's funny - those same wrongs helped me write the song",
+        "Yeah, you know what this is - It's a celebration, bitches!,"
+        "Sometimes I can't believe it when I look up in the mirror, how we out in Europe, spendin' Euros,"
+        "Sayin' \"We eat pieces of shit like you for breakfast\" - Huh? Y'all eat pieces of shit? What's the basis?",
+        "What's scary to me is Henny makes girls look like Halle Berry to me",
+        "You should be honored by my lateness that I would even show up to this fake shit",
+        "My greatest pain in life is that I will never be able to see myself perform live.",
+        "We all self-conscious. I'm just the first to admit it.",
+        "George Bush doesn't care about black people.",
+        "I am Warhol. I am the No. 1 most impactful artist of our generation. I am Shakespeare in the flesh.",
+        "I would never want a book's autograph",
+        "I don't use blue. I don't like it. It bugs me out. I hate it.",
+        "The good life, let's go on a living' spree - Shit they say the best things in life are free",
+        "Choke a South Park writer with a fishstick",
+        "I need more drinks and less lights, And that American Apparel girl in just tights",
+        "I'm living' in that 21st century, Doing something mean to it, Do it better than anybody you ever seen do it. Screams from the haters got a nice ring to it. I guess every superhero needs his theme music",
+        "No one man should have all that power, the clock's ticking, I just count the hours",
+        "How 'Ye doin? I'm surviiivin'. I was drinking earlier, now I'm driving",
+        "At the end of day, goddammit I'm killin' this shit",
+        "Where the bad bitches, huh? Where ya hidin'?",
+        "The best living or dead, hands down, huh? Less talk, more head right now huh?",
+        "I think I fell in love with a porn star, got married in the bathroom, honeymoon on the dancefloor - and got divorced by the end of the night. That's one hell of a life",
+        "Hurry up with my damn croissant in this French ass restaurant",
+        "Bitch I'm back out my coma"
+        "All that cocaine on the table you can't snort that",
+        "Now you sittin' courtside, wifey on the other side. Gotta keep 'em separated, I call that apartheid",
+        "I know I got a bad reputation - Walking 'round, always mad reputation",
+        "Leave a pretty girl sad reputation",
+        "Start a Fight Club, Brad reputation",
+        "Have you ever asked your bitch for other bitches?",
+        "The most beautiful thoughts are always besides the darkest",
+        "Let the suicide doors up. I do suicides on the tour bus",
+        "I do suicides on the private jet",
+        "You know what that mean, I'm fly to death",
+        "Couldn't afford a car so she named her daughter Alexis"
+]

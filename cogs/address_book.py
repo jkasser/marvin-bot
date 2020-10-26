@@ -89,12 +89,6 @@ class AddressBook(commands.Cog, SubscriptionsDB):
     def delete_contact_by_id(self, contact_id):
         self.delete_query(self.DELETE_CONTACT, (contact_id,))
 
-    # This could potentially be rate limited by the amount of message it would send... commenting out for now
-    # @commands.command(name='contactgetall', help='Get your address book!')
-    # async def get_address_book(self, ctx):
-    #     user = str(ctx.author)
-    #     pass
-
     @commands.command(name='contactlist',  aliases=['listcontacts'], help='Get one entry from your address book!')
     async def get_contact_by_name(self, ctx):
         user = str(ctx.author)

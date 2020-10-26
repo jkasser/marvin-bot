@@ -20,6 +20,12 @@ class MarvinBot(commands.Cog):
         response = random.choice(holy_grail_quotes)
         await ctx.send(response)
 
+    @commands.command(name='kanye', alies=['yeezy', 'yeezus'],
+                      help='Whipped it out she said I never seen snakes on a plane.')
+    async def get_kanye_quotes(self, ctx):
+        response = random.choice(kanye_quotes)
+        await ctx.send(response)
+
     @commands.command(name='lullaby', help='Let Marvin read you a lullaby!')
     async def post_marvin_lullaby(self, ctx):
         await ctx.send(marvin_lullaby)
