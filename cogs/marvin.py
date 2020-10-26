@@ -37,12 +37,13 @@ class MarvinBot(commands.Cog):
 
     @commands.command(name='whatsmyvibe', help='What you vibing too right now lil gangsta?')
     async def get_vibe(self, ctx, user: discord.Member = None):
+        base_url = 'https://open.spotify.com/track/'
         user = user or ctx.author  # default to the caller
         spot = next((activity for activity in user.activities if isinstance(activity, discord.Spotify)), None)
         if spot is None:
             await ctx.send(f"{user.name.capitalize()} is not listening to Spotify.")
             return
-        embedspotify = discord.Embed(title=f"{user.name}'s Spotify", color=0x1eba10)
+        embedspotify = discord.Embed(title=f"{user.name}'s Spotify", color=0x1eba10, url=base_url+spot.track_id)
         embedspotify.add_field(name="Song", value=spot.title, inline=False)
         embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
         embedspotify.add_field(name="Album", value=spot.album)
