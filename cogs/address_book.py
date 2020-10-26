@@ -62,12 +62,6 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         self.check_birthday_notification.start()
         self.insert_or_update_contacts_in_database.start()
 
-    async def cog_check(self, ctx):
-        #Check if user has admin role
-        family = get(ctx.guild.roles, name="Family")
-        # if True can execute commands
-        return family in ctx.author.roles
-
     def get_address_book_for_user(self, user_id):
         cur = self.conn.cursor()
         results = cur.execute(self.GET_ADDRESS_BOOK_FOR_USER, (user_id,))
