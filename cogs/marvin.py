@@ -47,8 +47,8 @@ class MarvinBot(commands.Cog):
         embedspotify.add_field(name="Song", value=spot.title, inline=False)
         embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
         embedspotify.add_field(name="Album", value=spot.album)
-        embedspotify.add_field(name="Web Player Link", value=web_url + spot.track_id,inline=False)
         embedspotify.set_thumbnail(url=spot.album_cover_url)
+        embedspotify.add_field(name="Web Player Link", value=web_url + spot.track_id, inline=False)
         await ctx.send(embed=embedspotify)
 
     @commands.command(name='roll', help='Type !roll <max number> to get a random number between 0 and the max!')
