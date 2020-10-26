@@ -20,7 +20,7 @@ class MarvinBot(commands.Cog):
         response = random.choice(holy_grail_quotes)
         await ctx.send(response)
 
-    @commands.command(name='kanye', alies=['yeezy', 'yeezus'],
+    @commands.command(name='kanye', aliases=['yeezy', 'yeezus'],
                       help='Whipped it out she said I never seen snakes on a plane.')
     async def get_kanye_quotes(self, ctx):
         response = random.choice(kanye_quotes)
@@ -269,8 +269,11 @@ class MarvinBot(commands.Cog):
 
     @commands.command(pass_context=True, help='Delete all the messages from this channel.')
     @commands.has_any_role("Admins")
-    async def purge(self, ctx):
-        await ctx.channel.purge()
+    async def purge(self, ctx, count=None):
+        if count is None:
+            await ctx.channel.purge()
+        else:
+            await ctx.channel.purge(limit=int(count))
         
 
 def setup(bot):
