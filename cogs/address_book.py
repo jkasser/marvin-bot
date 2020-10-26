@@ -95,6 +95,25 @@ class AddressBook(commands.Cog, SubscriptionsDB):
     #     user = str(ctx.author)
     #     pass
 
+    @commands.command(name='contactlist',  aliases=['listcontacts'], help='Get one entry from your address book!')
+    async def get_contact_by_name(self, ctx):
+        user = str(ctx.author)
+        if user in self.address_book.keys():
+            channel = await ctx.author.create_dm()
+            contacts = [contact for contact in self.address_book[user]["address_book"]]
+            if len(contacts) > 0:
+                await ctx.send('f{')
+                for x in contacts:
+                    msg = f'{x["name"].capitalize()}\n'
+                    await channel.send(msg)
+            else:
+                # we can't find anyone
+                await ctx.send(f'You have no contacts with me!')
+        else:
+            await ctx.send('Before you can use my address book feature, I need to get your timezone '
+                           '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
+                           'adding a contact with "!contactadd".')
+
     @commands.command(name='contactget',  aliases=['getcontact'], help='Get one entry from your address book!')
     async def get_contact_by_name(self, ctx, * contact_name):
         timeout=60
