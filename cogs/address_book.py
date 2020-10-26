@@ -1,4 +1,5 @@
 from discord.ext import commands, tasks
+from discord.utils import get
 from utils.db import SubscriptionsDB
 from asyncio import TimeoutError
 from utils.helper import parse_string_to_datetime, turn_datetime_into_string
@@ -60,6 +61,12 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     self.address_book[user[1]]["address_book"].append(contact_info)
         self.check_birthday_notification.start()
         self.insert_or_update_contacts_in_database.start()
+
+    async def cog_check(self, ctx):
+        #Check if user has admin role
+        family = get(ctx.guild.roles, name="Family")
+        # if True can execute commands
+        return family in ctx.author.roles
 
     def get_address_book_for_user(self, user_id):
         cur = self.conn.cursor()
