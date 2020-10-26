@@ -97,10 +97,10 @@ class AddressBook(commands.Cog, SubscriptionsDB):
             channel = await ctx.author.create_dm()
             contacts = [contact for contact in self.address_book[user]["address_book"]]
             if len(contacts) > 0:
-                await ctx.send('f{')
+                msg = ""
                 for x in contacts:
-                    msg = f'{x["name"].capitalize()}\n'
-                    await channel.send(msg)
+                    msg += f'{x["name"].capitalize()}\n'
+                await channel.send(msg)
             else:
                 # we can't find anyone
                 await ctx.send(f'You have no contacts with me!')
