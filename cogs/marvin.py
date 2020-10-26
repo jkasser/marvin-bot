@@ -43,7 +43,7 @@ class MarvinBot(commands.Cog):
         if spot is None:
             await ctx.send(f"{user.name.capitalize()} is not listening to Spotify.")
             return
-        embedspotify = discord.Embed(title=f"{user.name}'s Spotify", color=0x1eba10, url=base_url+spot.track_id)
+        embedspotify = discord.Embed(title=f"{user.name.capitalize()}'s Spotify", color=0x1eba10, url=base_url+spot.track_id)
         embedspotify.add_field(name="Song", value=spot.title, inline=False)
         embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
         embedspotify.add_field(name="Album", value=spot.album)
