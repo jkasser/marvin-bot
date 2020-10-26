@@ -95,7 +95,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         user = str(ctx.author)
         if user in self.address_book.keys():
             channel = await ctx.author.create_dm()
-            contacts = [contact for contact in self.address_book[user]["address_book"]]
+            contacts = sorted([contact for contact in self.address_book[user]["address_book"]], key=lambda k: k["name"])
             if len(contacts) > 0:
                 msg = ""
                 for x in contacts:
