@@ -37,16 +37,19 @@ class MarvinBot(commands.Cog):
 
     @commands.command(name='whatsmyvibe', help='What you vibing too right now lil gangsta?')
     async def get_vibe(self, ctx, user: discord.Member = None):
-        base_url = 'https://open.spotify.com/track/'
+        web_url = 'https://open.spotify.com/track/'
+        deep_link = 'spotify:track:'
         user = user or ctx.author  # default to the caller
         spot = next((activity for activity in user.activities if isinstance(activity, discord.Spotify)), None)
         if spot is None:
             await ctx.send(f"{user.name.capitalize()} is not listening to Spotify.")
             return
-        embedspotify = discord.Embed(title=f"{user.name.capitalize()}'s Spotify", color=0x1eba10, url=base_url+spot.track_id)
+        embedspotify = discord.Embed(title=f"{user.name.capitalize()}'s Spotify", color=0x1eba10)
         embedspotify.add_field(name="Song", value=spot.title, inline=False)
         embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
         embedspotify.add_field(name="Album", value=spot.album)
+        embedspotify.add_field(name="Web Player Link", value=web_url + spot.track_id)
+        embedspotify.add_field(name="Open in App", value=deep_link + spot.track_id)
         embedspotify.set_thumbnail(url=spot.album_cover_url)
         await ctx.send(embed=embedspotify)
 
