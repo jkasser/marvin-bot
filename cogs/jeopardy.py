@@ -154,23 +154,24 @@ class Jeopardy(MarvinDB, commands.Cog):
                     }
                     self.question_list.append(question_dict)
             # create a new contestant or welcome someone back
-            await ctx.send('Let\'s play!')
+            msg = ('Let\'s play!\n')
             if len(self.leaderboard) != 0:
                 if current_player in self.leaderboard.keys():
                     worth = self.leaderboard[current_player]
-                    await ctx.send(f'I see you are back for more {current_player}!\nYour current worth is: {worth}')
+                    msg += (f'I see you are back for more {current_player}!\nYour current worth is: {worth}\n')
                 else:
-                    await ctx.send('Welcome new contestant!')
+                    msg += 'Welcome new contestant!\n'
                     self.leaderboard[current_player] = "$0"
             else:
-                await ctx.send('Welcome new contestant!')
+                msg += 'Welcome new contestant!\n'
                 self.leaderboard[current_player] = "$0"
-
+            await ctx.send(msg)
             # now ask a random question
             question_to_ask = random.choice(self.question_list)
-            await ctx.send(f'Category: **{question_to_ask["category"]}**\nValue: **'
-                           f'{question_to_ask["worth"]}**\nQuestion: **{question_to_ask["question"]}**')
-            await ctx.send(f'You have **{timeout}** seconds to answer starting now!')
+            q_msg = f'Category: **{question_to_ask["category"]}**\nValue: ** ' \
+                   f'{question_to_ask["worth"]}**\nQuestion: **{question_to_ask["question"]}**\n'
+            q_msg += f'You have **{timeout}** seconds to answer starting now!'
+            await ctx.send(q_msg)
             # remove the question from the list in memory
             self.question_list.pop(self.question_list.index(question_to_ask))
 
