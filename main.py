@@ -23,7 +23,8 @@ extensions = [
     'cogs.subscriptions',
     'cogs.address_book',
     'cogs.translator',
-    'cogs.poll'
+    'cogs.poll',
+    'cogs.covid'
 ]
 
 
