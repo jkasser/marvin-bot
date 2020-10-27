@@ -109,3 +109,7 @@ def map_active_to_bool(active_or_inactive: str) -> int:
 
 def get_current_hour_of_day():
     return datetime.now().astimezone().hour
+
+
+def parse_num(number):
+    return '{:,}'.format(number)
