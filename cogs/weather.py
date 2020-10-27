@@ -16,7 +16,6 @@ class Weather(commands.Cog):
         cfg = yaml.load(file, Loader=yaml.FullLoader)
         mapquest_token = cfg["mapquest"]["key"]
         self.mapq = Mapquest(mapquest_token)
-        # self.base_url = "https://rapidapi.p.rapidapi.com/weather"
         self.base_url = "https://rapidapi.p.rapidapi.com/forecast/daily"
         self.headers = {
             'x-rapidapi-host': "community-open-weather-map.p.rapidapi.com",
