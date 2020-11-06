@@ -10,9 +10,9 @@ class MarvinBot(commands.Cog):
         self.bot = bot
         self.named_queues = dict(General=[])
 
-    @commands.command(name='Latency', help='Get my latency in ms.')
+    @commands.command(name='latency', aliases=['ping'], help='Get my latency in ms.')
     async def get_latency(self, ctx):
-        await ctx.send(f'My latency is: {round(self.bot.latency * 1000, 1)}ms.')
+        await ctx.send(f'My latency is {round(self.bot.latency * 1000, 1)}ms.')
 
     @commands.command(name='marvin', help='Check in on Marvin the depressed robot!')
     async def marvin_quote(self, ctx):
