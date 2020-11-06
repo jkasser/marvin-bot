@@ -30,6 +30,7 @@ extensions = [
 
 @bot.event
 async def on_ready():  # method expected by client. This runs once when connected
+    await bot.change_presence(status=discord.Status.online, activity=discord.CustomActivity(name='Vibing'))
     print(f'We have logged in as {bot.user}')  # notification of login.
 
 
