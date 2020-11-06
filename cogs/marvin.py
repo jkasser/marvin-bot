@@ -48,12 +48,13 @@ class MarvinBot(commands.Cog):
             await ctx.send(f"{user.name.capitalize()} is not listening to Spotify.")
             return
         embedspotify = discord.Embed(title=f"{user.name.capitalize()}'s Spotify", color=0x1eba10)
-        embedspotify.add_field(name="Song", value=spot.title, inline=False)
+
         embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
         embedspotify.add_field(name="Album", value=spot.album)
         embedspotify.set_thumbnail(url=spot.album_cover_url)
-        embedspotify.add_field(name="Web Player Link", value=web_url + spot.track_id, inline=False)
+        url = web_url + spot.track_id
         await ctx.send(embed=embedspotify)
+        await ctx.send(url)
 
     @commands.command(name='roll', help='Type !roll <max number> to get a random number between 0 and the max!')
     async def roll_dice(self, ctx, max_roll):
