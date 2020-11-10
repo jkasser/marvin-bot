@@ -1,6 +1,5 @@
 from newsapi import NewsApiClient
 from sqlite3 import Error
-from utils.db import MarvinDB
 from utils.helper import get_user_friendly_date_from_string, get_slug_from_url
 from datetime import timedelta, date
 import yaml
@@ -8,7 +7,7 @@ import discord
 from discord.ext import commands, tasks
 
 
-class MarvinNews(MarvinDB, commands.Cog):
+class MarvinNews(commands.Cog):
 
     TABLE_NAME = 'news'
 
@@ -29,24 +28,24 @@ class MarvinNews(MarvinDB, commands.Cog):
         self.key = self.cfg["news"]["key"]
         try:
             self.news = NewsApiClient(api_key=self.key)
-            self.create_table(self.conn, self.NEWS_TABLE)
+            # self.create_table(self.conn, self.NEWS_TABLE)
         except Error as e:
             print(e)
         self.article_tracker = list()
         self.check_the_news.start()
 
-    def add_article_to_db(self, article_slug):
-        self.insert_query(self.INSERT_ARTICLE, (article_slug,))
+    # def add_article_to_db(self, article_slug):
+    #     self.insert_query(self.INSERT_ARTICLE, (article_slug,))
 
-    def check_if_article_exists(self, article_slug):
-        cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_EXISTS, (article_slug,))
-        results = results.fetchone()[0]
-        self.conn.commit()
-        if results == 0:
-            return False
-        else:
-            return True
+    # def check_if_article_exists(self, article_slug):
+    #     cur = self.conn.cursor()
+    #     results = cur.execute(self.CHECK_IF_EXISTS, (article_slug,))
+    #     results = results.fetchone()[0]
+    #     self.conn.commit()
+    #     if results == 0:
+    #         return False
+    #     else:
+    #         return True
 
     def get_news(self, * q, page_size=3, page=1):
         query = " ".join(q)
