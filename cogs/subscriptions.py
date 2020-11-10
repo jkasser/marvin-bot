@@ -1,4 +1,5 @@
 from discord.ext import commands, tasks
+from discord import embeds
 from utils.db import SubscriptionsDB
 from asyncio import TimeoutError
 from utils import timezones, enums
@@ -6,6 +7,7 @@ from utils.helper import check_if_valid_hour, map_active_to_bool
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from cogs.weather import Weather
+from cogs.news import MarvinNews
 import pytz
 
 
@@ -235,6 +237,66 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 await ctx.send('You have taken too long to decide! Good-bye!')
                 return
 
+    @commands.command(name='subnews', help='This will subscribe you to daily news via a private message!')
+    async def subscribe_user_to_weather(self, ctx):
+        timeout = 120
+        user = str(ctx.author)
+        sub_type = 'news'
+        def check(m):
+            return m.author.name == ctx.author.name
+        # user doesnt exist or they haven't set their timezone
+        if user not in self.user_subs.keys() or ("tz" in self.user_subs[user].keys() and self.user_subs[user]["tz"] == ""):
+            await ctx.send('You have not set your timezone! Please call !subsettz first!')
+            # break out user needs to set timezone
+            return
+        # user exists and has set timezone
+        else:
+            # let's get their zip code
+            await ctx.send('What query/topic would you like to subscribe to? E.g. USA, Colorado, Election, '
+                           'League of legends, Economy, etc.')
+            try:
+                user_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
+                sub_details = user_answer.content
+                await ctx.send(f'You have chosen to get news for {sub_details}\n'
+                               f'Is this correct? Y/N')
+                confirm_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
+                # If the location is correct let's move on to what time they want the alert
+                if confirm_answer.content.lower().strip() in ['y', 'yes']:
+                    await ctx.send('What hour of the day would you like me to send you notifications?\n'
+                                   'Please enter a whole number between 1 and 24.')
+                    time_of_day = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    time_of_day = time_of_day.content
+                    if check_if_valid_hour(str(time_of_day)):
+                        # we have finally made it, add the sub details to the list
+                        if "sub_list" not in self.user_subs[user].keys():
+                            sublist = self.user_subs[user]["sub_list"] = []
+                        else:
+                            sublist = self.user_subs[user]["sub_list"]
+                        sublist.append(
+                            {
+                                # leave ID blank since this is coming from memory
+                                # Type, Details, When
+                                "details": sub_details, # location
+                                "type": sub_type, # defaults to news for this command
+                                "when": int(time_of_day),
+                                "active": True,
+                                # set last sent to 1 day ago to get the ball rolling (should run on the next check)
+                                "last_sent": datetime.now(pytz.timezone(self.user_subs[user]["tz"])) - relativedelta(days=1)
+                            }
+                        )
+                        await ctx.send(f'Great! '
+                                       f'I have you scheduled to receive {sub_type} alerts for: {sub_details} '
+                                       f'around {time_of_day}:00 every day.')
+                    else:
+                        await ctx.send('Your supplied value was incorrect! Please pick a number between 1 and 24 and'
+                                       ' try this command again!')
+                else:
+                    await ctx.send('You claimed the query/topic was not correct, please try this command again!')
+                    return
+            except TimeoutError:
+                await ctx.send('You have taken too long to decide! Good-bye!')
+                return
+
     @commands.command(name='subget', help='Get a list of subscriptions for your user!')
     async def return_users_subs(self, ctx):
         user = str(ctx.author)
@@ -350,6 +412,29 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                     # invoke the bot get weather command
                                     weather_embed = Weather(self.bot).get_weather_for_area(sub_details)
                                     await user.dm_channel.send(embed=weather_embed)
+                                    # update the last sent time in memory and in the database
+                                    sub["last_sent"] = datetime.now(user_tz)
+                                    self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
+                                elif sub_type.lower() == 'news':
+                                    # invoke the bot get news command
+                                    articles = MarvinNews(self.bot).get_news(sub_details)
+                                    if isinstance(articles, list):
+                                        for article in articles:
+                                            try:
+                                                news_embed = embeds.Embed(title=article["title"],
+                                                                              description=article["description"],
+                                                                              url=article["url"])
+                                                news_embed.add_field(name="Source", value=article["source"],
+                                                                        inline=True)
+                                                news_embed.add_field(name="Author", value=article["author"],
+                                                                        inline=True)
+                                                news_embed.add_field(name="Published",
+                                                                        value=article["published"], inline=True)
+                                                if article["thumb"] is not "" and article["thumb"] is not None:
+                                                    news_embed.set_thumbnail(url=article["thumb"])
+                                                await user.dm_channel.send(embed=news_embed)
+                                            except Exception:
+                                                continue
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
                                     self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
