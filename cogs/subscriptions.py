@@ -77,7 +77,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         # returns, name, id, etc
         return user
 
-    @commands.command(name='subsettz', help='Set your timezone for your user profile!')
+    @commands.command(name='subsettz', aliases=['settz', 'timezone', 'tz'],
+                      help='Set your timezone for your user profile!')
     async def set_subscription_timezone(self, ctx, supplied_tz=None):
         timeout = 30
         user = str(ctx.author)
@@ -128,7 +129,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                         # bail out since they provided an ambiguous match
                     return
 
-    @commands.command(name='subupdatetz', help='Change your current timezone.')
+    @commands.command(name='subupdatetz', aliases=['updatetz', 'updatetimezone'], help='Change your current timezone.')
     async def update_timezone(self, ctx):
         timeout = 30
         user = str(ctx.author)
