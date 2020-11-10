@@ -57,12 +57,13 @@ class MarvinNews(MarvinDB, commands.Cog):
             if len(response["articles"]) >= 1:
                 for article in response["articles"]:
                     # if self.check_if_article_exists(self.get_article_slug(article["url"])):
-                    if self.get_article_slug(article["article_slug"]) in self.article_tracker:
+                    article_slug = self.get_article_slug(article["url"])
+                    if article_slug in self.article_tracker:
                         continue
                     else:
                         # it doesn't exist so return it to the user and append it to the dict in memory
                         article_list.append(self.get_article_data(article))
-                        self.article_tracker.append(article["article_slug"])
+                        self.article_tracker.append(article_slug)
                 if len(article_list) == 0:
                     page = page + 1
                     # pass in the original tuple since it's expecting a tuple
