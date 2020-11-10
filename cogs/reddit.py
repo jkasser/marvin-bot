@@ -1,4 +1,5 @@
 import praw
+from praw.exceptions import RedditAPIException
 import yaml
 import discord
 from discord.ext import commands, tasks
@@ -60,8 +61,11 @@ class MarvinReddit(MarvinDB, commands.Cog):
         return post_list
 
     def get_lol_stream(self, limit=10):
-        submissions = [submission for submission in
-                       self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit, time_filter="day")]
+        try:
+            submissions = [submission for submission in
+                           self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit, time_filter="day")]
+        except RedditAPIException:
+            submissions = None
         if submissions is not None:
             post_list = self.parse_stream(submissions)
             return post_list
@@ -87,23 +91,26 @@ class MarvinReddit(MarvinDB, commands.Cog):
 
     @tasks.loop(minutes=8)
     async def check_reddit_lol_stream(self):
-        lol_channel = self.bot.get_channel(761291587044376598)
-        post_list = self.get_lol_stream(limit=5)
-        if len(post_list) >= 1:
-            for post in post_list:
-                if post[0] in self.post_tracker["lol_stream"]:
-                    continue
-                else:
-                    try:
-                        embedded_link = discord.Embed(title=post[1], description=post[2], url=post[3], color=0x07f9DA)
-                        embedded_link.add_field(name="subreddit", value=post[5])
-                        if post[4] != 'default' and post[4] != 'self':
-                            embedded_link.set_thumbnail(url=post[4])
-                        await lol_channel.send(embed=embedded_link)
-                        # finally add it to the DB once it has been sent
-                        self.post_tracker["lol_stream"].append(post[0])
-                    except Exception:
+        try:
+            lol_channel = self.bot.get_channel(761291587044376598)
+            post_list = self.get_lol_stream(limit=5)
+            if len(post_list) >= 1:
+                for post in post_list:
+                    if post[0] in self.post_tracker["lol_stream"]:
                         continue
+                    else:
+                        try:
+                            embedded_link = discord.Embed(title=post[1], description=post[2], url=post[3], color=0x07f9DA)
+                            embedded_link.add_field(name="subreddit", value=post[5])
+                            if post[4] != 'default' and post[4] != 'self':
+                                embedded_link.set_thumbnail(url=post[4])
+                            await lol_channel.send(embed=embedded_link)
+                            # finally add it to the DB once it has been sent
+                            self.post_tracker["lol_stream"].append(post[0])
+                        except Exception:
+                            continue
+        except discord.errors.HTTPException:
+            pass
 
     @tasks.loop(hours=1)
     async def clear_post_trackers(self):
