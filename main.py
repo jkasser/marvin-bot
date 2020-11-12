@@ -1,5 +1,6 @@
 import yaml
 import discord
+import random
 from discord.ext import commands
 from data.quotes import *
 
@@ -43,18 +44,19 @@ async def on_message(message):  # event that happens per any message.
     message_text = message.content.strip().lower()
     channel = message.channel
     if message.author != bot.user:
-        if 'hi marvin' in message_text:
-            await channel.send(f'Why bother, {message.author.name}...')
-        elif 'towel' in message_text:
+        if 'towel' in message_text:
             await channel.send(towel_quote)
-        elif 'life' in message_text:
+        elif 'meaning of life' in message_text or 'answer to life' in message_text:
             await channel.send(the_answer_to_life)
-        elif 'thumb' in message_text:
+        elif ' thumb ' in message_text:
             await channel.send(thumb_quote)
         elif 'shut up' in message_text or 'be quiet' in message_text or 'stfu' in message_text:
             await channel.send(file=discord.File('./assets/media/shut_up.gif'))
         elif 'wtf' == message_text or 'what the fuck' == message_text or 'what the hell' == message_text:
             await channel.send(file=discord.File('./assets/media/wtf.gif'))
+        elif '<@!759093184219054120>' in message.content:
+            response = random.choice(marvin_quotes)
+            await channel.send(response)
     await bot.process_commands(message)
 
 
