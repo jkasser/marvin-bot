@@ -50,7 +50,7 @@ class MarvinNews(commands.Cog):
     def get_news(self, * q, page_size=3, page=1):
         query = " ".join(q)
         article_list = []
-        start_date = date.today() - timedelta(days=1)
+        start_date = date.today()
         response = self.news.get_everything(q=query, page_size=page_size, page=page, from_param=str(start_date))
         if response["status"] == 'ok':
             if len(response["articles"]) >= 1:
