@@ -1,6 +1,6 @@
 from newsapi import NewsApiClient
 from sqlite3 import Error
-from utils.helper import get_user_friendly_date_from_string, get_slug_from_url
+from utils.helper import get_user_friendly_date_from_string, get_slug_from_url, get_current_hour_of_day
 from datetime import timedelta, date
 import yaml
 import discord
@@ -150,6 +150,13 @@ class MarvinNews(commands.Cog):
     @check_the_news.before_loop
     async def before_check_the_news(self):
       await self.bot.wait_until_ready()
+
+    @tasks.loop(hours=1)
+    async def clear_post_trackers(self):
+        hour = get_current_hour_of_day()
+        if hour >= 0 and hour < 1:
+            # clear out our lists in memory every 24 hours, check every hour,
+            self.article_tracker.clear()
 
 
 def setup(bot):
