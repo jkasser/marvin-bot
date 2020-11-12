@@ -100,6 +100,7 @@ class MarvinNews(commands.Cog):
 
     @commands.command(name='getnews',  aliases=['checknews', 'news'],  help='Get the top 3 articles for your keyword!')
     async def get_news_for_keyword(self, ctx, * query):
+        query = " ".join(query)
         news_list = self.get_news(query)
         if isinstance(news_list, list):
             for article in news_list:
