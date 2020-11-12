@@ -14,11 +14,6 @@ class MarvinBot(commands.Cog):
     async def get_latency(self, ctx):
         await ctx.send(f'My latency is {round(self.bot.latency * 1000, 1)}ms.')
 
-    @commands.command(name='marvin', help='Check in on Marvin the depressed robot!')
-    async def marvin_quote(self, ctx):
-        response = random.choice(marvin_quotes)
-        await ctx.send(response)
-
     @commands.command(name='grail', help='Tis a silly command')
     async def get_monty_python_quotes(self, ctx):
         response = random.choice(holy_grail_quotes)
