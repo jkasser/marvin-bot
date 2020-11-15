@@ -33,6 +33,7 @@ class MarvinNews(commands.Cog):
             print(e)
         self.article_tracker = list()
         self.check_the_news.start()
+        self.clear_post_trackers.start()
 
     # def add_article_to_db(self, article_slug):
     #     self.insert_query(self.INSERT_ARTICLE, (article_slug,))
@@ -143,6 +144,8 @@ class MarvinNews(commands.Cog):
                         await news_channel.send(embed=embedded_link)
                         # self.add_article_to_db(article["article_slug"])
                         self.article_tracker.append(article["article_slug"])
+                        # remove it just in case it attempts again
+                        news_list.pop(news_list.index(post))
                     except Exception:
                         continue
         else:
@@ -158,6 +161,10 @@ class MarvinNews(commands.Cog):
         if hour >= 0 and hour < 1:
             # clear out our lists in memory every 24 hours, check every hour,
             self.article_tracker.clear()
+
+    @clear_post_trackers.before_loop
+    async def before_clear_post_trackers(self):
+      await self.bot.wait_until_ready()
 
 
 def setup(bot):
