@@ -17,7 +17,7 @@ extensions = [
     'cogs.todo',
     'cogs.riot',
     'cogs.jeopardy',
-    'cogs.news',
+    # 'cogs.news',
     'cogs.reminder',
     'cogs.reddit',
     'cogs.weather',
