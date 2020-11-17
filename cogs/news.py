@@ -80,6 +80,8 @@ class MarvinNews(commands.Cog):
         date_str = article["publishedAt"]
         if isinstance(article["author"], list):
             author = article["author"][0]["name"]
+        elif article["author"] == "":
+            author = "None"
         else:
             author = article["author"]
         article_data = {
@@ -130,10 +132,11 @@ class MarvinNews(commands.Cog):
                 article = self.get_article_data(post)
                 # check if the news has already been posted
                 # if self.check_if_article_exists(self.get_article_slug(article["article_slug"])):
-                if self.get_article_slug(article["article_slug"]) in self.article_tracker:
+                if article["article_slug"] in self.article_tracker:
                     continue
                 else:
                     try:
+                        self.article_tracker.append(article["article_slug"])
                         embedded_link = discord.Embed(title=article["title"], description=article["description"],
                                                       url=article["url"])
                         embedded_link.add_field(name="Source", value=article["source"], inline=True)
@@ -143,10 +146,9 @@ class MarvinNews(commands.Cog):
                             embedded_link.set_thumbnail(url=article["thumb"])
                         await news_channel.send(embed=embedded_link)
                         # self.add_article_to_db(article["article_slug"])
-                        self.article_tracker.append(article["article_slug"])
                         # remove it just in case it attempts again
-                        news_list.pop(news_list.index(post))
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         continue
         else:
             await news_channel.send('I wasn\'t able to find any news!')
