@@ -11,6 +11,17 @@ token = cfg["disc"]["token"]
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"], intents=intents)
 
+
+class UserInfo:
+    USERS = None
+
+    def check_if_users_ready(self):
+        if self.USERS is None:
+            return False
+        else:
+            return True
+
+
 # Get the list of cogs
 extensions = [
     'cogs.marvin',
