@@ -28,7 +28,7 @@ class Weather(commands.Cog):
         arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
         return (arr[(val % 16)])
 
-    def get_daily_weather_for_city(self, lat, long, days=1):
+    def get_daily_weather_for_city(self, lat, long, days=1, tz=None):
         query_string = {"lat": f"{lat}", "lon": f"{long}", "units": "imperial", "cnt": str(days)}
         r = requests.get(self.base_url, headers=self.headers, params=query_string)
         if r.status_code == 200:
@@ -37,9 +37,9 @@ class Weather(commands.Cog):
                 data = data[0]
                 # since we hardcode the count to b 1, this will only ever be a len 1 list
                 weather = dict()
-                date = get_date_from_epoch(data["dt"])
-                sr = get_date_from_epoch(data["sunrise"])
-                ss = get_date_from_epoch(data["sunset"])
+                date = get_date_from_epoch(data["dt"], tz=tz)
+                sr = get_date_from_epoch(data["sunrise"], tz=tz)
+                ss = get_date_from_epoch(data["sunset"], tz=tz)
                 weather["date"] = f'{date}'.split(" ")[0]
                 weather["sunrise"] = f'{sr.hour}:{sr.minute}'
                 weather["sunset"] = f'{ss.hour}:{ss.minute}'
@@ -64,9 +64,9 @@ class Weather(commands.Cog):
                 forecast = []
                 for x in data:
                     weather = dict()
-                    date = get_date_from_epoch(x["dt"])
-                    sr = get_date_from_epoch(x["sunrise"])
-                    ss = get_date_from_epoch(x["sunset"])
+                    date = get_date_from_epoch(x["dt"], tz=tz)
+                    sr = get_date_from_epoch(x["sunrise"], tz=tz)
+                    ss = get_date_from_epoch(x["sunset"], tz=tz)
                     weather["date"] = f'{date}'.split(" ")[0]
                     weather["sunrise"] = f'{sr.hour}:{sr.minute}'
                     weather["sunset"] = f'{ss.hour}:{ss.minute}'
@@ -89,10 +89,10 @@ class Weather(commands.Cog):
                     forecast.append(weather)
                 return forecast
 
-    def get_weather_for_area(self, * location, days=1):
+    def get_weather_for_area(self, * location, days=1, tz=None):
         local = " ".join(location)
         results = self.mapq.get_lat_long_for_location(str(local))
-        forecast = self.get_daily_weather_for_city(lat=results["lat"], long=results["long"], days=days)
+        forecast = self.get_daily_weather_for_city(lat=results["lat"], long=results["long"], days=days, tz=tz)
         if forecast is not None:
             if isinstance(forecast, dict):
                 embed = discord.Embed(title=f"Weather in {local}",
@@ -151,6 +151,7 @@ class Weather(commands.Cog):
     @commands.command(name='getweather', aliases=['weather'],
                       help='Provide city/state/country/zip to get today\'s weather forecast!')
     async def get_todays_weather(self, ctx, * location):
+        #TODO:: ADD TIMEZONE HANDLING
         location = " ".join(location)
         if len(location) > 0:
             embed = self.get_weather_for_area(location, days=1)
@@ -161,6 +162,7 @@ class Weather(commands.Cog):
 
     @commands.command(name='getforecast', aliases=['forecast'],
                       help='Provide city/state/country/zip to get today\'s weather forecast!')
+    # TODO:: ADD TIMEZONE HANDLING
     async def get_todays_forecast(self, ctx, days, * location):
         location = " ".join(location)
         if len(location) > 0:

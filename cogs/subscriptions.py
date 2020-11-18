@@ -410,7 +410,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                 # call some logic here to run the sub
                                 if sub_type.lower() == 'weather':
                                     # invoke the bot get weather command
-                                    weather_embed = Weather(self.bot).get_weather_for_area(sub_details)
+                                    weather_embed = Weather(self.bot).get_weather_for_area(sub_details, tz=info["tz"])
                                     await user.dm_channel.send(embed=weather_embed)
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)

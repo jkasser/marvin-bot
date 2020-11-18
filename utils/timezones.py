@@ -29,6 +29,9 @@ def get_time_in_specified_timezone(user_tz: str):
         print(f'Your timezone: {user_tz}, was not valid! Please try again')
 
 
-def get_date_from_epoch(timestamp: int) -> datetime:
-    ts = datetime.fromtimestamp(int(timestamp))
+def get_date_from_epoch(timestamp: int, tz=None) -> datetime:
+    if tz is None:
+        ts = datetime.fromtimestamp(int(timestamp))
+    else:
+        ts = datetime.fromtimestamp(int(timestamp), pytz.timezone(tz))
     return ts
