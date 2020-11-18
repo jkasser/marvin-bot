@@ -6,6 +6,7 @@ from utils import timezones, enums
 from utils.helper import check_if_valid_hour, map_active_to_bool
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from main import UserInfo
 from cogs.weather import Weather
 from cogs.news import MarvinNews
 import pytz
@@ -50,7 +51,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                         id=sub[0], type=sub[2], details=sub[3], when=sub[4], active=sub[5], last_sent=sub[6]
                     )
                     self.user_subs[user[1]]["sub_list"].append(sub_dict)
-
+            # set this here and inherit it everywhere else so we can start doing shit
+            UserInfo.USERS = self.user_subs
         self.insert_or_update_subs_in_db.start()
         self.check_if_time_to_notify_user_of_sub.start()
 
