@@ -3,9 +3,10 @@ import re
 import yaml
 import discord
 import datetime
+from main import UserInfo
 from utils.mapquest import Mapquest
 from discord.ext import commands
-from utils.timezones import get_date_from_epoch
+from utils.timezones import get_date_from_epoch, pad_time_with_zero
 
 
 class Weather(commands.Cog):
@@ -41,8 +42,8 @@ class Weather(commands.Cog):
                 sr = get_date_from_epoch(data["sunrise"], tz=tz)
                 ss = get_date_from_epoch(data["sunset"], tz=tz)
                 weather["date"] = f'{date}'.split(" ")[0]
-                weather["sunrise"] = f'{sr.hour}:{sr.minute}'
-                weather["sunset"] = f'{ss.hour}:{ss.minute}'
+                weather["sunrise"] = f'{sr.hour}:{pad_time_with_zero(sr.minute)}'
+                weather["sunset"] = f'{ss.hour}:{pad_time_with_zero(ss.minute)}'
                 weather["temp"] = data["temp"]["day"]
                 weather["min"] = data["temp"]["min"]
                 weather["max"] = data["temp"]["max"]
@@ -68,8 +69,8 @@ class Weather(commands.Cog):
                     sr = get_date_from_epoch(x["sunrise"], tz=tz)
                     ss = get_date_from_epoch(x["sunset"], tz=tz)
                     weather["date"] = f'{date}'.split(" ")[0]
-                    weather["sunrise"] = f'{sr.hour}:{sr.minute}'
-                    weather["sunset"] = f'{ss.hour}:{ss.minute}'
+                    weather["sunrise"] = f'{sr.hour}:{pad_time_with_zero(sr.minute)}'
+                    weather["sunset"] = f'{ss.hour}:{pad_time_with_zero(ss.minute)}'
                     weather["temp"] = x["temp"]["day"]
                     weather["min"] = x["temp"]["min"]
                     weather["max"] = x["temp"]["max"]
@@ -151,10 +152,20 @@ class Weather(commands.Cog):
     @commands.command(name='getweather', aliases=['weather'],
                       help='Provide city/state/country/zip to get today\'s weather forecast!')
     async def get_todays_weather(self, ctx, * location):
-        #TODO:: ADD TIMEZONE HANDLING
+        # check if user has a timezone
+        if UserInfo().check_if_users_ready():
+            user = str(ctx.author)
+            if user in UserInfo.USERS.keys() and UserInfo.USERS[user]["tz"] != "":
+                tz = UserInfo.USERS[user]["tz"]
+            else:
+                await ctx.send('You can get better tailored information by setting your timezone with me by typing '
+                               '!settz')
+                tz = None
+        else:
+            tz = None
         location = " ".join(location)
         if len(location) > 0:
-            embed = self.get_weather_for_area(location, days=1)
+            embed = self.get_weather_for_area(location, days=1, tz=tz)
             embed.set_footer(text=f'Requested by: {ctx.message.author.name}')
             await ctx.send(embed=embed)
         else:
@@ -162,11 +173,20 @@ class Weather(commands.Cog):
 
     @commands.command(name='getforecast', aliases=['forecast'],
                       help='Provide city/state/country/zip to get today\'s weather forecast!')
-    # TODO:: ADD TIMEZONE HANDLING
     async def get_todays_forecast(self, ctx, days, * location):
+        if UserInfo().check_if_users_ready():
+            user = str(ctx.author)
+            if user in UserInfo.USERS.keys() and UserInfo.USERS[user]["tz"] != "":
+                tz = UserInfo.USERS[user]["tz"]
+            else:
+                await ctx.send('You can get better tailored information by setting your timezone with me by typing '
+                               '!settz')
+                tz = None
+        else:
+            tz = None
         location = " ".join(location)
         if len(location) > 0:
-            embed_list = self.get_weather_for_area(location, days=days)
+            embed_list = self.get_weather_for_area(location, days=days, tz=tz)
             for embed in embed_list:
                 embed.set_footer(text=f'Requested by: {ctx.message.author.name}')
                 await ctx.send(embed=embed)
