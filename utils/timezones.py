@@ -35,3 +35,11 @@ def get_date_from_epoch(timestamp: int, tz=None) -> datetime:
     else:
         ts = datetime.fromtimestamp(int(timestamp), pytz.timezone(tz))
     return ts
+
+
+def pad_time_with_zero(unit: int):
+    if unit < 10:
+        result = '%02d' % unit
+    else:
+        result = str(unit)
+    return result
