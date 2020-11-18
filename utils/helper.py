@@ -49,7 +49,7 @@ def get_turning_age_from_date_str(date_str: str):
 
 
 def get_slug_from_url(url):
-    return f'{url.strip("/").split("/")[-1]}'
+    return f'{url.strip("/").split("/")[-1]}'.replace('-', '')[:10]
 
 
 def link_grabber(text):
