@@ -24,6 +24,7 @@ class UserInfo:
 
 # Get the list of cogs
 extensions = [
+    'cogs.subscriptions',
     'cogs.marvin',
     'cogs.todo',
     'cogs.riot',
@@ -32,7 +33,6 @@ extensions = [
     'cogs.reminder',
     'cogs.reddit',
     'cogs.weather',
-    'cogs.subscriptions',
     'cogs.address_book',
     'cogs.translator',
     'cogs.poll',
