@@ -61,6 +61,7 @@ class SubscriptionsDB(DB):
         disc_id integer NOT NULL
     );"""
     INSERT_USER = f"""INSERT INTO {SUB_USERS_TABLE_NAME}(user, timezone, disc_id) VALUES(?,?,?)"""
+    UPDATE_TIMEZONE = f"""UPDATE {SUB_USERS_TABLE_NAME} SET timezone=? WHERE user=?"""
     CHECK_IF_EXISTS = f"""SELECT EXISTS(SELECT * FROM {SUB_USERS_TABLE_NAME} WHERE user=? LIMIT 1)"""
     GET_USER = f"""SELECT * FROM {SUB_USERS_TABLE_NAME} WHERE user=? LIMIT 1"""
     GET_ALL_USERS = f"""SELECT * FROM {SUB_USERS_TABLE_NAME}"""
@@ -76,6 +77,9 @@ class SubscriptionsDB(DB):
 
     def insert_user(self, user, timezone, disc_id):
         return self.insert_query(self.INSERT_USER, (user, timezone, disc_id))
+
+    def update_user_tz(self, user, value):
+        return self.update_query(self.UPDATE_TIMEZONE, (value, user))
 
     def get_user(self, user):
         cur = self.conn.cursor()

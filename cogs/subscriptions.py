@@ -40,10 +40,11 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         self.bot = bot
         self.create_table(self.conn, self.SUBSCRIPTION_TABLE)
         # put it all into memory
-        users = self.users
+        users = self.users # inherits t his from the subscriptions db class
         if len(users) > 0:
             for user in users:
-                self.user_subs[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], sub_list=[])
+                self.user_subs[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], sub_list=[],
+                                               update_pending=False)
                 # retrieve the subs for this user by user ID
                 subs = self.get_active_subs(user[0])
                 for sub in subs:
@@ -106,6 +107,9 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                     if timezones.check_if_timezone_match(possible_tz):
                         await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
                                        f'Your timezone has been set successfully!')
+                        self.user_subs[user]["tz"] = possible_tz[0]
+                        # This is the final end state, so update the userinfo table
+                        UserInfo.USERS = self.user_subs
                     else:
                         if len(possible_tz) == 0:
                             await ctx.send(f'Your provided timezone: {user_answer}, does not match any timezones!\n'
@@ -123,6 +127,9 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 if timezones.check_if_timezone_match(possible_tz):
                     await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
                                    f'Your timezone has been set successfully!')
+                    self.user_subs[user]["tz"] = possible_tz[0]
+                    # This is the final end state, so update the userinfo table
+                    UserInfo.USERS = self.user_subs
                 else:
                     if len(possible_tz) == 0:
                         await ctx.send(f'Your provided timezone: {supplied_tz}, does not match any timezones!\n'
@@ -151,9 +158,12 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 if user in self.user_subs.keys():
                     # if the user exists, just set the timezone value
                     self.user_subs[user]["tz"] = possible_tz[0]
+                    self.user_subs[user]["update_pending"] = True
+
                 else:
                     # else create the user and set TZ
                     self.user_subs[user] = dict(tz=possible_tz[0])
+                    self.user_subs[user]["update_pending"] = True
                 await ctx.send('Your timezone has been set!')
             else:
                 if len(possible_tz) == 0:
@@ -355,7 +365,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
             await ctx.send(f'I cannot find a sub by id: {sub_id}. Please try again!')
             return
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=1)
     async def insert_or_update_subs_in_db(self):
         for user, info in self.user_subs.items():
             # if we haven't set the user ID, then we haven't stored it yet
@@ -372,6 +382,9 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
             else:
                 # their id is stored in memory so we can just grab the user id from there
                 user_id = info["user_id"]
+                # we should check if a change is pending and update the record if not:
+                if info["update_pending"]:
+                    self.update_user_tz(user, info["tz"])
             # if sub_list isnt in info.keys then the user has just set their tz, not created any subscriptions yet
             if "sub_list" in info.keys():
                 # now get every sub id in the database that is active, check if id in sub_ids
