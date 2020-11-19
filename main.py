@@ -83,3 +83,8 @@ async def on_member_join(member):
 async def on_command_error(ctx, error):
     await ctx.send(error)
 
+
+if __name__ == '__main__':
+    for extension in extensions:
+        bot.load_extension(extension)
+    bot.run(token)
