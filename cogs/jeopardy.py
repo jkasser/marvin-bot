@@ -52,28 +52,8 @@ class Jeopardy(MarvinDB, commands.Cog):
             self.leaderboard[db_player] = db_worth
         self.update_jep_leaderboard.start()
 
-    def insert_questions(self):
-        json_file = os.path.dirname(os.path.dirname(__file__)) + '/data/questions.json'
-        with open(json_file) as data:
-            questions = json.load(data)
-            cur = self.conn.cursor()
-            """ It goes category, question, value, answer"""
-            for question in questions:
-                if question["value"] is None:
-                    value = '$5000'
-                else:
-                    value = question["value"]
-
-                cur.execute(
-                    self.INSERT_QUESTION,
-                    (question["category"],
-                     self.parse_question(question["question"]),
-                     value,
-                     question["answer"])
-                )
-                self.conn.commit()
-
-    def parse_question(self, question: str):
+    @staticmethod
+    def parse_question(question: str):
         new_q = []
         # check for hrefs
         links = link_grabber(question)
@@ -85,7 +65,6 @@ class Jeopardy(MarvinDB, commands.Cog):
         string_question = strip_tags(question)
         new_q.append(string_question)
         return "\n".join(new_q)
-
 
     def get_questions(self):
         """  returns
