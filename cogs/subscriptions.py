@@ -368,8 +368,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
     @tasks.loop(minutes=1)
     async def insert_or_update_subs_in_db(self):
         for user, info in self.user_subs.items():
-            # if we haven't set the user ID, then we haven't stored it yet
-            if "user_id" not in info.keys():
+            # if we haven't set the user ID, then we haven't stored it yet, only store if they have set their tz
+            if "user_id" not in info.keys() and "tz" in info.keys():
                 # if the user isn't in the database we need to add him first with TZ info and get his user_id for the
                 if not self.check_if_user_exists(user):
                     # insert the user and the timezone
