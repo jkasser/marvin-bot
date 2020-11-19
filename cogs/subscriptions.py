@@ -250,7 +250,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 return
 
     @commands.command(name='subnews', help='This will subscribe you to daily news via a private message!')
-    async def subscribe_user_to_weather(self, ctx):
+    async def subscribe_user_to_news(self, ctx):
         timeout = 120
         user = str(ctx.author)
         sub_type = 'news'
