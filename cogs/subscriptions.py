@@ -383,7 +383,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 # their id is stored in memory so we can just grab the user id from there
                 user_id = info["user_id"]
                 # we should check if a change is pending and update the record if not:
-                if info["update_pending"]:
+                if "update_pending" in info.keys() and info["update_pending"]:
                     self.update_user_tz(user, info["tz"])
             # if sub_list isnt in info.keys then the user has just set their tz, not created any subscriptions yet
             if "sub_list" in info.keys():
