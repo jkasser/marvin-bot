@@ -29,7 +29,7 @@ extensions = [
     'cogs.todo',
     'cogs.riot',
     'cogs.jeopardy',
-    # 'cogs.news',
+    'cogs.news',
     'cogs.reminder',
     'cogs.reddit',
     'cogs.weather',
@@ -88,3 +88,5 @@ if __name__ == '__main__':
     for extension in extensions:
         bot.load_extension(extension)
     bot.run(token)
+    from cogs.jeopardy import Jeopardy
+    Jeopardy(bot).insert_questions()
