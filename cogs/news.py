@@ -157,7 +157,7 @@ class MarvinNews(commands.Cog):
     async def before_check_the_news(self):
       await self.bot.wait_until_ready()
 
-    @tasks.loop(hours=1)
+    @tasks.loop(minutes=35)
     async def clear_post_trackers(self):
         hour = get_current_hour_of_day()
         if hour >= 0 and hour < 1:
