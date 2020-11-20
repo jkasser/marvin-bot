@@ -204,7 +204,10 @@ class Riot(MarvinDB, commands.Cog):
         self.conn.commit()
 
     def download_new_assets(self, url, version_name):
-        file_name = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'{version_name}.tgz'
+        path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR
+        if not os.path.exists(path):
+            os.mkdir(path)
+        file_name = path + f'{version_name}.tgz'
         urllib.request.urlretrieve(url, file_name)
         return file_name
 
