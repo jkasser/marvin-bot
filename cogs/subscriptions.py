@@ -7,8 +7,6 @@ from utils.helper import check_if_valid_hour, map_active_to_bool
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from main import UserInfo
-from cogs.weather import Weather
-from cogs.news import MarvinNews
 import pytz
 
 
@@ -425,14 +423,14 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                 # call some logic here to run the sub
                                 if sub_type.lower() == 'weather':
                                     # invoke the bot get weather command
-                                    weather_embed = Weather(self.bot).get_weather_for_area(sub_details, tz=info["tz"])
+                                    weather_embed = self.bot.get_cog('weather').get_weather_for_area(sub_details, tz=info["tz"])
                                     await user.dm_channel.send(embed=weather_embed)
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
                                     self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
                                 elif sub_type.lower() == 'news':
                                     # invoke the bot get news command
-                                    articles = MarvinNews(self.bot).get_news(sub_details)
+                                    articles = self.bot.get_cog('news').get_news(sub_details)
                                     if isinstance(articles, list):
                                         for article in articles:
                                             try:
