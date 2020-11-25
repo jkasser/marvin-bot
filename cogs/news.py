@@ -129,7 +129,7 @@ class MarvinNews(commands.Cog):
 
     @tasks.loop(hours=1)
     async def check_the_news(self):
-        news_channel = self.bot.get_channel(759196533714976778)
+        news_channel = self.bot.get_channel(761691682383069214)
         sources = ",".join(self.cfg["news"]["sources"])
         news_list = self.get_top_headlines(page_size=3, sources=sources)["articles"]
         if isinstance(news_list, list):
