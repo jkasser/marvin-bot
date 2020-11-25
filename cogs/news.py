@@ -96,6 +96,12 @@ class MarvinNews(commands.Cog):
         }
         return article_data
 
+    def get_top_headlines(
+        self, q=None, qintitle=None, sources=None, language="en", country=None, category=None, page_size=None, page=None
+    ):
+        return self.news.get_top_headlines(q=q, qintitle=qintitle, sources=sources, language="en", country=None,category=category,
+                                      page_size=page_size, page=None)
+
     @commands.command(name='getnewssources', aliases=['getsources'], help='See where I pull my news from!')
     async def get_news_sources(self, ctx):
         await ctx.send(f'I get my news from the following sources: '
@@ -123,20 +129,23 @@ class MarvinNews(commands.Cog):
 
     @tasks.loop(hours=1)
     async def check_the_news(self):
-        news_channel = self.bot.get_channel(761691682383069214)
+        news_channel = self.bot.get_channel(759196533714976778)
         sources = ",".join(self.cfg["news"]["sources"])
-        news_list = self.news.get_top_headlines(page_size=3, sources=sources)["articles"]
+        news_list = self.get_top_headlines(page_size=3, sources=sources)["articles"]
         if isinstance(news_list, list):
+            await news_channel.send(len(news_list))
             for post in news_list:
+                await news_channel.send(news_list.index(post))
                 # parse the article
                 article = self.get_article_data(post)
                 # check if the news has already been posted
                 # if self.check_if_article_exists(self.get_article_slug(article["article_slug"])):
                 if article["article_slug"] in self.article_tracker:
+                    await news_channel.send(f'SKIPPING {article["article_slug"]}')
                     continue
                 else:
+                    self.article_tracker.append(article["article_slug"])
                     try:
-                        self.article_tracker.append(article["article_slug"])
                         embedded_link = discord.Embed(title=article["title"], description=article["description"],
                                                       url=article["url"])
                         embedded_link.add_field(name="Source", value=article["source"], inline=True)
@@ -145,29 +154,38 @@ class MarvinNews(commands.Cog):
                         if article["thumb"] is not "" and article["thumb"] is not None:
                             embedded_link.set_thumbnail(url=article["thumb"])
                         await news_channel.send(embed=embedded_link)
+                        await news_channel.send('We have sent the embed!')
                         # self.add_article_to_db(article["article_slug"])
                         # remove it just in case it attempts again
                     except Exception as e:
-                        print(e)
+                        await news_channel.send(e)
                         continue
+            await news_channel.send('Exiting our for loop!')
         else:
             await news_channel.send('I wasn\'t able to find any news!')
 
     @check_the_news.before_loop
     async def before_check_the_news(self):
-      await self.bot.wait_until_ready()
+        await self.bot.wait_until_ready()
+        news_channel = self.bot.get_channel(759196533714976778)
+        news_channel.send('Bot is ready and before news loop has started!')
 
     @tasks.loop(minutes=35)
     async def clear_post_trackers(self):
+        news_channel = self.bot.get_channel(759196533714976778)
         hour = get_current_hour_of_day()
         if hour >= 0 and hour < 1:
+            await news_channel.send('We are clearing the tracker!')
             # clear out our lists in memory every 24 hours, check every hour,
             self.article_tracker.clear()
+        else:
+            await news_channel.send('It is not time to clear the tracker!')
 
     @clear_post_trackers.before_loop
     async def before_clear_post_trackers(self):
-      await self.bot.wait_until_ready()
-
+        await self.bot.wait_until_ready()
+        news_channel = self.bot.get_channel(759196533714976778)
+        news_channel.send('Bot is ready and before clear tracking has started!')
 
 def setup(bot):
     bot.add_cog(MarvinNews(bot))
