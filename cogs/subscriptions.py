@@ -93,8 +93,6 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                            f'If you would like to update it, please call !subupdatetz')
             return
         else:
-            # add the user to our dict and add their discord ID to the body
-            self.user_subs[user] = dict(disc_id=ctx.author.id)
             if supplied_tz is None:
                 await ctx.send('Please enter your preferred timezone! Here are some examples:\n'
                                'America/Denver, US/Eastern, US/Alaska, Europe/Berlin')
@@ -105,6 +103,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                     if timezones.check_if_timezone_match(possible_tz):
                         await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
                                        f'Your timezone has been set successfully!')
+                        # add the user to our dict and add their discord ID to the body
+                        self.user_subs[user] = dict(disc_id=ctx.author.id)
                         self.user_subs[user]["tz"] = possible_tz[0]
                         # This is the final end state, so update the userinfo table
                         UserInfo.USERS = self.user_subs
@@ -125,6 +125,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                 if timezones.check_if_timezone_match(possible_tz):
                     await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
                                    f'Your timezone has been set successfully!')
+                    # add the user to our dict and add their discord ID to the body
+                    self.user_subs[user] = dict(disc_id=ctx.author.id)
                     self.user_subs[user]["tz"] = possible_tz[0]
                     # This is the final end state, so update the userinfo table
                     UserInfo.USERS = self.user_subs
