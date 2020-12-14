@@ -1,9 +1,27 @@
 disc:
-  token:
-  guild:
   prefix:
-  dev: # store the test token here
-  prod: # store marvin bots token here
+  prod:
+    token:
+    guild:
+    # riot.py channels
+    status_channel:
+    api_updates_channel:
+    # reddit.py channels
+    lol_channel:
+    travel_channel:
+    # covid.py channels
+    us_politics_channel:
+    #news.py channels
+    news_channel:
+  dev:
+    token:
+    guild:
+    travel_channel:
+    status_channel:
+    api_updates_channel:
+    us_politics_channel:
+    news_channel:
+    lol_channel: 
 
 riot:
   key:
