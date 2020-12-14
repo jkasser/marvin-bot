@@ -75,6 +75,7 @@ class Riot(MarvinDB, commands.Cog):
             "Content-Type": "application/json",
             "X-Riot-Token": self.key
         }
+        self.assets_version = None
         self.get_rito_status.start()
         self.check_and_update_latest_assets_version.start()
 
@@ -164,7 +165,7 @@ class Riot(MarvinDB, commands.Cog):
         self.conn.commit()
 
     def get_profile_img_for_id(self, profile_icon_id: int):
-        profile_icon = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'10.20.1/img/profileicon/{str(profile_icon_id)}.png'
+        profile_icon = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'{self.assets_version}/img/profileicon/{str(profile_icon_id)}.png'
         return profile_icon
 
     def get_latest_data_version(self):
@@ -352,6 +353,7 @@ class Riot(MarvinDB, commands.Cog):
                     # Add it to the DB
                     self.insert_assets_current_version(api_current_version)
                     await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
+                self.assets_version = api_current_version
             except Exception as e:
                 await api_updates_channel.send(e)
 
