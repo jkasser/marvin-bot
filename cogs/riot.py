@@ -159,8 +159,8 @@ class Riot(MarvinDB, commands.Cog):
         else:
             return False
 
-        """summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
     def update_summoner_in_db(self, values: tuple):
+        """summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
         cur = self.conn.cursor()
         cur.execute(self.UPDATE_SUMMONER, values)
         self.conn.commit()
@@ -397,7 +397,7 @@ class Riot(MarvinDB, commands.Cog):
 
     @check_and_update_latest_assets_version.before_loop
     async def before_check_and_update_latest_assets_version(self):
-      await self.bot.wait_until_ready()
+        await self.bot.wait_until_ready()
 
     @get_rito_status.before_loop
     async def before_get_rito_status(self):
