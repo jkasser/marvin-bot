@@ -6,6 +6,7 @@ import tarfile
 import urllib.request
 import time
 import discord
+import re
 from discord.ext import commands, tasks
 from datetime import datetime
 from pytz import reference
@@ -165,6 +166,13 @@ class Riot(MarvinDB, commands.Cog):
         self.conn.commit()
 
     def get_profile_img_for_id(self, profile_icon_id: int):
+        parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR
+        # walk the directory and find the assets directory for the current patch based on what is already downloaded
+        for dir in os.listdir(parent_path):
+            if self.find_assets_dir_by_regex(dir):
+                self.assets_version = dir
+                break
+        # otherwise just use whatever we have declared
         profile_icon = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + self.ASSETS_BASE_DIR + f'{self.assets_version}/img/profileicon/{str(profile_icon_id)}.png'
         return profile_icon
 
@@ -178,6 +186,14 @@ class Riot(MarvinDB, commands.Cog):
             return current_version, assets_url
         else:
             return
+
+    def find_assets_dir_by_regex(self, file_name):
+        expr = re.compile('^\d{0,2}\.\d{0,2}\.\d{0,2}$')
+        try:
+            if expr.search(file_name).group() is not None:
+                return True
+        except AttributeError:
+            return False
 
     def check_if_assets_current_version_exists(self):
         cur = self.conn.cursor()
