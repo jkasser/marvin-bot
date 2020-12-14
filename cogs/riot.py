@@ -356,6 +356,10 @@ class Riot(MarvinDB, commands.Cog):
                 self.assets_version = api_current_version
             except Exception as e:
                 await api_updates_channel.send(e)
+        else:
+            if self.check_if_assets_current_version_exists():
+                assets_db_version = self.get_current_assets_version_from_db()[0]
+                self.assets_version = assets_db_version
 
     @tasks.loop(minutes=15)
     async def get_rito_status(self):
