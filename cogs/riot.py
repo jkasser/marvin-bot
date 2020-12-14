@@ -117,7 +117,7 @@ class Riot(MarvinDB, commands.Cog):
                     (summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon_id, revision_date)
                 )
             else:
-                self.update_summoner((summoner_level, profile_icon_id, revision_date, summoner_id))
+                self.update_summoner_in_db((summoner_level, profile_icon_id, revision_date, summoner_id))
             return summoner_name, summoner_level, profile_icon_id
 
     def insert_summoner_into_db(self, values: tuple):
@@ -159,8 +159,8 @@ class Riot(MarvinDB, commands.Cog):
         else:
             return False
 
-    def update_summoner(self, values: tuple):
         """summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
+    def update_summoner_in_db(self, values: tuple):
         cur = self.conn.cursor()
         cur.execute(self.UPDATE_SUMMONER, values)
         self.conn.commit()
