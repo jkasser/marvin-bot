@@ -1,5 +1,6 @@
 import praw
 from praw.exceptions import RedditAPIException
+import os
 import yaml
 import discord
 from discord.ext import commands, tasks
@@ -28,6 +29,9 @@ class MarvinReddit(MarvinDB, commands.Cog):
         cfg = yaml.load(file, Loader=yaml.FullLoader)
         client_id = cfg["reddit"]["client_id"]
         client_secret = cfg["reddit"]["client_secret"]
+        env = os.environ.get('ENV', 'dev')
+        self.lol_channel = cfg["disc"][env]["lol_channel"]
+        self.travel_channel = cfg["disc"][env]["travel_channel"]
         self.reddit = praw.Reddit(
             client_id=client_id,
             client_secret=client_secret,
@@ -73,7 +77,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
     @tasks.loop(minutes=15)
     async def check_reddit_travel_stream(self):
         try:
-            travel_channel =  self.bot.get_channel(758126844708651041)
+            travel_channel =  self.bot.get_channel(int(self.travel_channel))
             post_list = self.get_travel_stream(limit=5)
             if len(post_list) >= 1:
                 for post in post_list:
@@ -92,7 +96,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
     @tasks.loop(minutes=8)
     async def check_reddit_lol_stream(self):
         try:
-            lol_channel = self.bot.get_channel(761291587044376598)
+            lol_channel = self.bot.get_channel(int(self.lol_channel))
             post_list = self.get_lol_stream(limit=5)
             if len(post_list) >= 1:
                 for post in post_list:

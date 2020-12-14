@@ -1,4 +1,5 @@
 import yaml
+import os
 import requests
 import discord
 import datetime
@@ -11,6 +12,8 @@ class Covid(commands.Cog):
         self.bot = bot
         file = open('config.yaml', 'r')
         cfg = yaml.load(file, Loader=yaml.FullLoader)
+        env = os.environ.get('ENV', 'dev')
+        self.us_politics_channel = cfg["disc"][env]["us_politics_channel"]
         self.base_url = "https://covid-19-data.p.rapidapi.com"
         self.headers = {
             'x-rapidapi-host': "covid-19-data.p.rapidapi.com",
@@ -61,7 +64,7 @@ class Covid(commands.Cog):
             # we really only want to alert people on the day of (relative to them)
             if 0 <= now.hour < 1:
                 stats = self.get_covid_stats(location='USA')
-                us_politics = self.bot.get_channel(760672809730572298)
+                us_politics = self.bot.get_channel(self.us_politics_channel)
                 await us_politics.send(embed=stats)
 
     @daily_covid_stats.before_loop

@@ -1,9 +1,10 @@
 from newsapi import NewsApiClient
 from sqlite3 import Error
 from utils.helper import get_user_friendly_date_from_string, get_slug_from_url, get_current_hour_of_day
-from datetime import timedelta, date
+from datetime import date
 import yaml
 import discord
+import os
 from discord.ext import commands, tasks
 
 
@@ -26,6 +27,8 @@ class MarvinNews(commands.Cog):
         file = open('config.yaml', 'r')
         self.cfg = yaml.load(file, Loader=yaml.FullLoader)
         self.key = self.cfg["news"]["key"]
+        env = os.environ.get('ENV', 'dev')
+        self.news_channel = self.cfg["disc"][env]["news_channel"]
         try:
             self.news = NewsApiClient(api_key=self.key)
             # self.create_table(self.conn, self.NEWS_TABLE)
@@ -129,7 +132,7 @@ class MarvinNews(commands.Cog):
 
     @tasks.loop(hours=1)
     async def check_the_news(self):
-        news_channel = self.bot.get_channel(761691682383069214)
+        news_channel = self.bot.get_channel(self.news_channel)
         sources = ",".join(self.cfg["news"]["sources"])
         news_list = self.get_top_headlines(page_size=3, sources=sources)["articles"]
         if isinstance(news_list, list):

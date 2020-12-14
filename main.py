@@ -1,4 +1,6 @@
 import yaml
+import os
+import sys
 import discord
 import random
 from discord.ext import commands
@@ -7,7 +9,12 @@ from data.quotes import *
 # discord config
 file = open('config.yaml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
-token = cfg["disc"]["token"]
+env = os.environ.get('ENV', 'NOT SET')
+if env == 'NOT SET':
+    sys.exit('Set your environment first. E.g.:\n'
+             'Windows: set ENV=dev\n'
+             'Linux: export ENV=dev')
+token = cfg["disc"][env]["token"]
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"], intents=intents)
 

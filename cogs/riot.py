@@ -69,6 +69,9 @@ class Riot(MarvinDB, commands.Cog):
         # Riot API Stuff
         file = open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r')
         cfg = yaml.load(file, Loader=yaml.FullLoader)
+        env = os.environ.get('ENV', 'dev')
+        self.api_updates_channel = self.lol_channel = cfg["disc"][env]["api_updates_channel"]
+        self.status_channel = self.lol_channel = cfg["disc"][env]["status_channel"]
         region = cfg["riot"]["region"]
         self.key = cfg["riot"]["key"]
         self.base_url = f'https://{region}.api.riotgames.com/lol/'
@@ -335,7 +338,7 @@ class Riot(MarvinDB, commands.Cog):
     async def check_and_update_latest_assets_version(self):
         hour = get_current_hour_of_day()
         if hour >= 23 or hour <= 5:
-            api_updates_channel = self.bot.get_channel(763088226860138576)
+            api_updates_channel = self.bot.get_channel(self.api_updates_channel)
             api_current_version, cdn = self.get_latest_data_version()
             try:
                 if self.check_if_assets_current_version_exists():
@@ -379,7 +382,7 @@ class Riot(MarvinDB, commands.Cog):
 
     @tasks.loop(minutes=15)
     async def get_rito_status(self):
-        status_channel = self.bot.get_channel(763153164798394378)
+        status_channel = self.bot.get_channel(self.status_channel)
         issues = self.get_and_parse_riot_status_issues()
         if len(issues) > 0:
             for x in issues:
