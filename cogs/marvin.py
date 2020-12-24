@@ -1,7 +1,10 @@
 import discord
 import random
+import requests
 from data.quotes import *
 from discord.ext import commands
+import asyncio
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class MarvinBot(commands.Cog):
@@ -277,6 +280,12 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.channel.purge(limit=int(count))
 
+    @commands.command(name='ip', aliases=['getip'], help='Returns external XP')
+    @commands.has_role("Owner")
+    async def get_external_ip(self, ctx):
+        loop = asyncio.get_event_loop()
+        r = await loop.run_in_executor(ThreadPoolExecutor(), requests.get, 'http://api.hostip.info/get_json.php')
+        await ctx.send(str(r.json()["ip"]))
 
 def setup(bot):
     bot.add_cog(MarvinBot(bot))
