@@ -433,7 +433,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                 # call some logic here to run the sub
                                 if sub_type.lower() == 'weather':
                                     # invoke the bot get weather command
-                                    keyword_blocking_function = functools.partial(self.bot.get_cog('Weather').get_weather_for_area, location=sub_details, tz=info["tz"])
+                                    keyword_blocking_function = functools.partial(self.bot.get_cog('Weather').get_weather_for_area, sub_details, days=1, tz=info["tz"])
                                     weather_embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
                                     await user.dm_channel.send(embed=weather_embed)
                                     # update the last sent time in memory and in the database
