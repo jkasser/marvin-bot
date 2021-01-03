@@ -3,10 +3,12 @@ from praw.exceptions import RedditAPIException
 import os
 import yaml
 import discord
+import asyncio
 from discord.ext import commands, tasks
 from sqlite3 import Error
 from utils.db import MarvinDB
 from utils.helper import get_current_hour_of_day
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class MarvinReddit(MarvinDB, commands.Cog):
@@ -45,7 +47,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
         self.check_reddit_travel_stream.start()
         self.check_reddit_lol_stream.start()
 
-    def get_travel_stream(self, limit=10):
+    def get_travel_stream(self, limit=5):
         submissions = [
             submission for submission in self.reddit.multireddit("OneBagOneWorld",
                                                                  "OneBagOneWorld").top(limit=limit, time_filter="day")
@@ -64,7 +66,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
                                   submission.thumbnail, submission.subreddit))
         return post_list
 
-    def get_lol_stream(self, limit=10):
+    def get_lol_stream(self, limit=5):
         try:
             submissions = [submission for submission in
                            self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit, time_filter="day")]
@@ -77,8 +79,9 @@ class MarvinReddit(MarvinDB, commands.Cog):
     @tasks.loop(minutes=15)
     async def check_reddit_travel_stream(self):
         try:
+            loop = asyncio.get_event_loop()
             travel_channel =  self.bot.get_channel(int(self.travel_channel))
-            post_list = self.get_travel_stream(limit=5)
+            post_list = await loop.run_in_executor(ThreadPoolExecutor(), self.get_travel_stream)
             if len(post_list) >= 1:
                 for post in post_list:
                     if post[0] in self.post_tracker["travel_stream"]:
@@ -96,8 +99,9 @@ class MarvinReddit(MarvinDB, commands.Cog):
     @tasks.loop(minutes=8)
     async def check_reddit_lol_stream(self):
         try:
+            loop = asyncio.get_event_loop()
             lol_channel = self.bot.get_channel(int(self.lol_channel))
-            post_list = self.get_lol_stream(limit=5)
+            post_list = await loop.run_in_executor(ThreadPoolExecutor(), self.get_lol_stream)
             if len(post_list) >= 1:
                 for post in post_list:
                     if post[0] in self.post_tracker["lol_stream"]:

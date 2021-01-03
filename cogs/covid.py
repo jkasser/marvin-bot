@@ -5,6 +5,9 @@ import discord
 import datetime
 from utils.helper import get_user_friendly_date_from_string, parse_num
 from discord.ext import commands, tasks
+import asyncio
+import functools
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class Covid(commands.Cog):
@@ -55,15 +58,19 @@ class Covid(commands.Cog):
                       help='Get the latest statistics on covid 19 by country name!. If no country is supplied '
                            'I will return global status')
     async def get_latest_global(self, ctx, location=None):
-            embed = self.get_covid_stats(location=location)
-            await ctx.send(embed=embed)
+        loop = asyncio.get_event_loop()
+        keyword_blocking_function = functools.partial(self.get_covid_stats, location=location)
+        embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
+        await ctx.send(embed=embed)
 
     @tasks.loop(hours=1)
     async def daily_covid_stats(self):
             now = datetime.datetime.now().astimezone()
             # we really only want to alert people on the day of (relative to them)
             if 0 <= now.hour < 1:
-                stats = self.get_covid_stats(location='USA')
+                loop = asyncio.get_event_loop()
+                keyword_blocking_function = functools.partial(self.get_covid_stats, location='USA')
+                stats = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
                 us_politics = self.bot.get_channel(self.us_politics_channel)
                 await us_politics.send(embed=stats)
 

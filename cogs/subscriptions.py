@@ -8,6 +8,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from main import UserInfo
 import pytz
+import asyncio
+import functools
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class Subscriptions(commands.Cog, SubscriptionsDB):
@@ -85,6 +88,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
     async def set_subscription_timezone(self, ctx, supplied_tz=None):
         timeout = 30
         user = str(ctx.author)
+
         def check(m):
             return m.author.name == ctx.author.name
         if user in self.user_subs.keys() and self.user_subs[user]["tz"] != "":
@@ -144,6 +148,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
     async def update_timezone(self, ctx):
         timeout = 30
         user = str(ctx.author)
+
         def check(m):
             return m.author.name == ctx.author.name
         await ctx.send(f'Your current timezone is set to: {self.user_subs[user]["tz"]}\n'
@@ -194,6 +199,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         timeout = 120
         user = str(ctx.author)
         sub_type = 'weather'
+
         def check(m):
             return m.author.name == ctx.author.name
         # user doesnt exist or they haven't set their timezone
@@ -228,8 +234,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                             {
                                 # leave ID blank since this is coming from memory
                                 # Type, Details, When
-                                "details": sub_details, # location
-                                "type": sub_type, # defaults to weather for this command
+                                "details": sub_details,  # location
+                                "type": sub_type,  # defaults to weather for this command
                                 "when": int(time_of_day),
                                 "active": True,
                                 # set last sent to 1 day ago to get the ball rolling (should run on the next check)
@@ -254,6 +260,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         timeout = 120
         user = str(ctx.author)
         sub_type = 'news'
+
         def check(m):
             return m.author.name == ctx.author.name
         # user doesnt exist or they haven't set their timezone
@@ -288,8 +295,8 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                             {
                                 # leave ID blank since this is coming from memory
                                 # Type, Details, When
-                                "details": sub_details, # location
-                                "type": sub_type, # defaults to news for this command
+                                "details": sub_details,  # location
+                                "type": sub_type,  # defaults to news for this command
                                 "when": int(time_of_day),
                                 "active": True,
                                 # set last sent to 1 day ago to get the ball rolling (should run on the next check)
@@ -399,10 +406,11 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
 
     @insert_or_update_subs_in_db.before_loop
     async def before_insert_or_update_subs_in_db(self):
-      await self.bot.wait_until_ready()
+        await self.bot.wait_until_ready()
 
     @tasks.loop(minutes=15)
     async def check_if_time_to_notify_user_of_sub(self):
+        loop = asyncio.get_event_loop()
         for user, info in self.user_subs.items():
             user_tz = pytz.timezone(info["tz"])
             now = datetime.now(user_tz)
@@ -425,14 +433,15 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                 # call some logic here to run the sub
                                 if sub_type.lower() == 'weather':
                                     # invoke the bot get weather command
-                                    weather_embed = self.bot.get_cog('Weather').get_weather_for_area(sub_details, tz=info["tz"])
+                                    keyword_blocking_function = functools.partial(self.bot.get_cog('Weather').get_weather_for_area, sub_details, days=1, tz=info["tz"])
+                                    weather_embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
                                     await user.dm_channel.send(embed=weather_embed)
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
                                     self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
                                 elif sub_type.lower() == 'news':
                                     # invoke the bot get news command
-                                    articles = self.bot.get_cog('MarvinNews').get_news(sub_details)
+                                    articles = await loop.run_in_executor(ThreadPoolExecutor(), self.bot.get_cog('MarvinNews').get_news, sub_details)
                                     if isinstance(articles, list):
                                         for article in articles:
                                             try:

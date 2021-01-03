@@ -6,6 +6,7 @@ import random
 from discord.ext import commands
 from data.quotes import *
 
+
 # discord config
 file = open('config.yaml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)

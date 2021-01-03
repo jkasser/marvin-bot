@@ -12,6 +12,8 @@ from datetime import datetime
 from pytz import reference
 from utils.db import MarvinDB
 from utils.helper import get_user_friendly_date_from_string, get_current_hour_of_day
+import asyncio
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class Riot(MarvinDB, commands.Cog):
@@ -299,10 +301,11 @@ class Riot(MarvinDB, commands.Cog):
     @commands.command(name='getsummoner', help='Pass in a summoner name and to get their info!')
     async def get_summoner(self, ctx, summoner_name):
         summoner_name = summoner_name.lower()
-        results = self.get_summoner_by_name(summoner_name)
+        loop = asyncio.get_event_loop()
+        results = await loop.run_in_executor(ThreadPoolExecutor(), self.get_summoner_by_name, summoner_name)
         if results is None:
             try:
-                name, summoner_level, profile_icon_id = self.get_and_update_summoner_from_riot_by_name(summoner_name)
+                name, summoner_level, profile_icon_id = await loop.run_in_executor(ThreadPoolExecutor(),self.get_and_update_summoner_from_riot_by_name, summoner_name)
             # this will return None if no results are found which raises a type error
             except TypeError:
                 await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
@@ -311,7 +314,7 @@ class Riot(MarvinDB, commands.Cog):
             one_day_ago = int(str(time.time()).replace('.', '')[:len(str(results[7]))]) - 86400
             if results[7] <= one_day_ago:
                 # its been awhile, let's get new info
-                name, summoner_level, profile_icon_id = self.get_and_update_summoner_from_riot_by_name(summoner_name)
+                name, summoner_level, profile_icon_id = await loop.run_in_executor(ThreadPoolExecutor(),self.get_and_update_summoner_from_riot_by_name, summoner_name)
             else:
                 name, summoner_level, profile_icon_id = results[1], results[5], results[6]
         embedded_link = discord.Embed(title=name, description=summoner_level, color=0x8b0000)
@@ -323,8 +326,9 @@ class Riot(MarvinDB, commands.Cog):
     @commands.command(name='updatesummoner', help='Pass in a summoner name to update them in the databse')
     async def update_summoner(self, ctx, summoner_name):
         summoner_name = summoner_name.lower()
+        loop = asyncio.get_event_loop()
         try:
-            name, summoner_level, profile_icon_id = self.get_and_update_summoner_from_riot_by_name(summoner_name)
+            name, summoner_level, profile_icon_id = await loop.run_in_executor(ThreadPoolExecutor(), self.get_and_update_summoner_from_riot_by_name, summoner_name)
         except TypeError:
             await ctx.send(f'Summoner: {summoner_name} was not found! Make sure you have the spelling correct!')
             return
@@ -337,9 +341,10 @@ class Riot(MarvinDB, commands.Cog):
     @tasks.loop(hours=2)
     async def check_and_update_latest_assets_version(self):
         hour = get_current_hour_of_day()
+        loop = asyncio.get_event_loop()
         if hour >= 23 or hour <= 5:
             api_updates_channel = self.bot.get_channel(self.api_updates_channel)
-            api_current_version, cdn = self.get_latest_data_version()
+            api_current_version, cdn = await loop.run_in_executor(ThreadPoolExecutor(), self.get_latest_data_version)
             try:
                 if self.check_if_assets_current_version_exists():
                     assets_db_version = self.get_current_assets_version_from_db()[0]
@@ -348,7 +353,7 @@ class Riot(MarvinDB, commands.Cog):
                         await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
                                                        f'\nDownloading latest version: {api_current_version}')
                         # Update our local assets
-                        new_assets = self.download_new_assets(cdn, api_current_version)
+                        new_assets = await loop.run_in_executor(ThreadPoolExecutor(), self.download_new_assets, cdn, api_current_version)
                         # Delete our local copy
                         self.delete_existing_asset()
                         # Extract the new one
@@ -364,7 +369,8 @@ class Riot(MarvinDB, commands.Cog):
                 else:
                     # If the field doesn't exist then download the latest version
                     # Update our local assets
-                    new_assets = self.download_new_assets(cdn, api_current_version)
+                    new_assets = await loop.run_in_executor(ThreadPoolExecutor(), self.download_new_assets, cdn,
+                                                            api_current_version)
                     # Delete our local copy
                     self.delete_existing_asset()
                     # Extract the new one
@@ -383,7 +389,8 @@ class Riot(MarvinDB, commands.Cog):
     @tasks.loop(minutes=15)
     async def get_rito_status(self):
         status_channel = self.bot.get_channel(self.status_channel)
-        issues = self.get_and_parse_riot_status_issues()
+        loop = asyncio.get_event_loop()
+        issues = await loop.run_in_executor(ThreadPoolExecutor(), self.get_and_parse_riot_status_issues)
         if len(issues) > 0:
             for x in issues:
                 if self.check_if_issue_hash_exists(x["hash"]):

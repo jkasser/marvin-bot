@@ -7,6 +7,9 @@ from main import UserInfo
 from utils.mapquest import Mapquest
 from discord.ext import commands
 from utils.timezones import get_date_from_epoch, pad_time_with_zero
+import asyncio
+import functools
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class Weather(commands.Cog):
@@ -165,7 +168,9 @@ class Weather(commands.Cog):
             tz = None
         location = " ".join(location)
         if len(location) > 0:
-            embed = self.get_weather_for_area(location, days=1, tz=tz)
+            loop = asyncio.get_event_loop()
+            keyword_blocking_function = functools.partial(self.get_weather_for_area, location, days=1, tz=tz)
+            embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
             embed.set_footer(text=f'Requested by: {ctx.message.author.name}')
             await ctx.send(embed=embed)
         else:
@@ -186,12 +191,14 @@ class Weather(commands.Cog):
             tz = None
         location = " ".join(location)
         if len(location) > 0:
-            embed_list = self.get_weather_for_area(location, days=days, tz=tz)
+            loop = asyncio.get_event_loop()
+            keyword_blocking_function = functools.partial(self.get_weather_for_area, location, days=days, tz=tz)
+            embed_list = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
             for embed in embed_list:
                 embed.set_footer(text=f'Requested by: {ctx.message.author.name}')
                 await ctx.send(embed=embed)
         else:
-            await ctx.send('Error: Please type: !getforecase <# of days> <location>')
+            await ctx.send('Error: Please type: !getforecast <# of days> <location>')
 
 
 def setup(bot):

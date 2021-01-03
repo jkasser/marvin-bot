@@ -1,11 +1,13 @@
 import requests
-import discord
 import os
 import yaml
 import uuid
 import json
-from assets.language_codes import translate_dict, transliteration_dict
-from discord.ext import commands, tasks
+from assets.language_codes import translate_dict
+from discord.ext import commands
+import asyncio
+import functools
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class MarvinTranslator(commands.Cog):
@@ -76,7 +78,8 @@ class MarvinTranslator(commands.Cog):
                 lang_codes = [translate_dict[code] for code in possible_langs]
                 await ctx.send(f'I will attempt to translate your supplied text to: {", ".join(lang_strings)}')
                 # now translate!
-                translated_result = self.translate_text(lang_codes, text)
+                loop = asyncio.get_event_loop()
+                translated_result = await loop.run_in_executor(ThreadPoolExecutor(), self.translate_text, lang_codes, text)
                 await ctx.send(translated_result)
             else:
                 await ctx.send('I was unable to find a matching language. Please call !gettranslatecodes to get a list'

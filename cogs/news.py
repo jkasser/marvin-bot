@@ -2,10 +2,13 @@ from newsapi import NewsApiClient
 from sqlite3 import Error
 from utils.helper import get_user_friendly_date_from_string, get_slug_from_url, get_current_hour_of_day
 from datetime import date
+import os
 import yaml
 import discord
-import os
 from discord.ext import commands, tasks
+import asyncio
+import functools
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class MarvinNews(commands.Cog):
@@ -102,8 +105,8 @@ class MarvinNews(commands.Cog):
     def get_top_headlines(
         self, q=None, qintitle=None, sources=None, language="en", country=None, category=None, page_size=None, page=None
     ):
-        return self.news.get_top_headlines(q=q, qintitle=qintitle, sources=sources, language="en", country=None,category=category,
-                                      page_size=page_size, page=None)
+        return self.news.get_top_headlines(q=q, qintitle=qintitle, sources=sources, language=language, country=country,
+                                           category=category, page_size=page_size, page=page)
 
     @commands.command(name='getnewssources', aliases=['getsources'], help='See where I pull my news from!')
     async def get_news_sources(self, ctx):
@@ -113,7 +116,8 @@ class MarvinNews(commands.Cog):
     @commands.command(name='getnews',  aliases=['checknews', 'news'],  help='Get the top 3 articles for your keyword!')
     async def get_news_for_keyword(self, ctx, * query):
         query = " ".join(query)
-        news_list = self.get_news(query)
+        loop = asyncio.get_event_loop()
+        news_list = await loop.run_in_executor(ThreadPoolExecutor(), self.get_news, query)
         if isinstance(news_list, list):
             for article in news_list:
                 try:
@@ -134,7 +138,10 @@ class MarvinNews(commands.Cog):
     async def check_the_news(self):
         news_channel = self.bot.get_channel(self.news_channel)
         sources = ",".join(self.cfg["news"]["sources"])
-        news_list = self.get_top_headlines(page_size=3, sources=sources)["articles"]
+        loop = asyncio.get_event_loop()
+        keyword_blocking_function = functools.partial(self.get_top_headlines, page_size=3, sources=sources)
+        news_list = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
+        news_list = news_list["articles"]
         if isinstance(news_list, list):
             for post in news_list:
                 # parse the article
