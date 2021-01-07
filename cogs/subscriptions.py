@@ -423,7 +423,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                     last_sent = sub["last_sent"]
                     if isinstance(last_sent, datetime):
                         # compare now vs last_sent with timezone
-                        if now.month > last_sent.month or now.day > last_sent.day:
+                        if now.year > last_sent.year or now.month > last_sent.month or now.day > last_sent.day:
                             # compare the hours
                             if now.hour >= int(sub_hour):
                                 # create the dm channel
