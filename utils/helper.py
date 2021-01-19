@@ -112,4 +112,7 @@ def get_current_hour_of_day():
 
 
 def parse_num(number):
-    return '{:,}'.format(number)
+    if number != None:
+        return '{:,}'.format(number)
+    else:
+        return 'None'
