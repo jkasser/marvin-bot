@@ -287,5 +287,6 @@ class MarvinBot(commands.Cog):
         r = await loop.run_in_executor(ThreadPoolExecutor(), requests.get, 'http://api.hostip.info/get_json.php')
         await ctx.send(str(r.json()["ip"]))
 
+
 def setup(bot):
     bot.add_cog(MarvinBot(bot))
