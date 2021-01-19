@@ -17,49 +17,46 @@ class Covid(commands.Cog):
         cfg = yaml.load(file, Loader=yaml.FullLoader)
         env = os.environ.get('ENV', 'dev')
         self.us_politics_channel = cfg["disc"][env]["us_politics_channel"]
-        self.base_url = "https://covid-19-data.p.rapidapi.com"
+        self.base_url = "http://covidtracking.com/api/"
         self.headers = {
-            'x-rapidapi-host': "covid-19-data.p.rapidapi.com",
-            'x-rapidapi-key': cfg["rapidAPI"]["key"],
-            'Accept': "application/json"
+            'Content-Type': "application/json"
         }
         self.daily_covid_stats.start()
 
-    def parse_covid_response(self, data: dict, location):
+    def parse_covid_response(self, data: dict):
         # if province is in the dictionary, then we need to dig a bit deeper
-        embed = discord.Embed(title=f"Covid Stats for {location}",
+        embed = discord.Embed(title="USA Covid Stats",
                               color=0x900C3F,
                               timestamp=datetime.datetime.now().astimezone())
 
-        embed.add_field(name='Last Updated', value=f'**{get_user_friendly_date_from_string(data["lastUpdate"])}**',
+        embed.add_field(name='Last Updated', value=f'**{get_user_friendly_date_from_string(data["lastModified"])}**',
                             inline=False)
-        embed.add_field(name='Critical', value=f'**{parse_num(data["critical"])}**', inline=False)
-        embed.add_field(name='Confirmed', value=f'**{parse_num(data["confirmed"])}**', inline=False)
+        embed.add_field(name='Positive Tests', value=f'**{parse_num(data["positive"])}**',
+                        inline=False)
+        embed.add_field(name='Current Hospitalized', value=f'**{parse_num(data["hospitalizedCurrently"])}**', inline=False)
+        embed.add_field(name='Current ICU', value=f'**{parse_num(data["inIcuCurrently"])}**', inline=False)
+        embed.add_field(name='Current Ventilator', value=f'**{parse_num(data["onVentilatorCurrently"])}**', inline=False)
         embed.add_field(name='Recovered', value=f'**{parse_num(data["recovered"])}**', inline=False)
-        embed.add_field(name='Deaths', value=f'**{parse_num(data["deaths"])}**', inline=False)
+        embed.add_field(name='Deaths', value=f'**{parse_num(data["death"])}**', inline=False)
+
+        embed.add_field(name='Death Increase', value=f'**{parse_num(data["deathIncrease"])}**', inline=False)
+        embed.add_field(name='Hospitalized Increase', value=f'**{parse_num(data["hospitalizedIncrease"])}**', inline=False)
+        embed.add_field(name='Positive Test Increase', value=f'**{parse_num(data["positiveIncrease"])}**', inline=False)
         return embed
 
-    def get_covid_stats(self, location=None):
-        if location is None:
-            endpoint = '/totals?format=json'
-            url = self.base_url + endpoint
-            title = 'the World'
-        else:
-            endpoint = f'/country?name={location}&format=json'
-            url = self.base_url + endpoint
-            title = location.capitalize()
-
+    def get_covid_stats(self):
+        endpoint = '/us'
+        url = self.base_url + endpoint
         r = requests.get(url, headers=self.headers)
         if r.status_code == 200:
-            embed = self.parse_covid_response(r.json()[0], title)
+            embed = self.parse_covid_response(r.json()[0])
             return embed
 
     @commands.command(name='getcovidstats', aliases=['covidcases', 'covidstats', 'getcovidcases', 'covid'],
-                      help='Get the latest statistics on covid 19 by country name!. If no country is supplied '
-                           'I will return global status')
-    async def get_latest_global(self, ctx, location=None):
+                      help='Get the latest statistics on covid 19 for the USA (56 states and territories included)')
+    async def get_latest_global(self, ctx):
         loop = asyncio.get_event_loop()
-        keyword_blocking_function = functools.partial(self.get_covid_stats, location=location)
+        keyword_blocking_function = functools.partial(self.get_covid_stats)
         embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
         await ctx.send(embed=embed)
 
