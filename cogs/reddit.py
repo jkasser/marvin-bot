@@ -1,5 +1,5 @@
 import praw
-from praw.exceptions import RedditAPIException
+from prawcore.exceptions import ServerError
 import os
 import yaml
 import discord
@@ -70,7 +70,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
         try:
             submissions = [submission for submission in
                            self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit, time_filter="day")]
-        except RedditAPIException:
+        except ServerError:
             submissions = None
         if submissions is not None:
             post_list = self.parse_stream(submissions)
