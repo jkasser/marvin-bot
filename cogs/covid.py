@@ -56,8 +56,7 @@ class Covid(commands.Cog):
                       help='Get the latest statistics on covid 19 for the USA (56 states and territories included)')
     async def get_latest_global(self, ctx):
         loop = asyncio.get_event_loop()
-        keyword_blocking_function = functools.partial(self.get_covid_stats)
-        embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
+        embed = await loop.run_in_executor(ThreadPoolExecutor(), self.get_covid_stats)
         await ctx.send(embed=embed)
 
     @tasks.loop(hours=1)
@@ -66,8 +65,7 @@ class Covid(commands.Cog):
             # we really only want to alert people on the day of (relative to them)
             if 0 <= now.hour < 1:
                 loop = asyncio.get_event_loop()
-                keyword_blocking_function = functools.partial(self.get_covid_stats, location='USA')
-                stats = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
+                stats = await loop.run_in_executor(ThreadPoolExecutor(), self.get_covid_stats)
                 us_politics = self.bot.get_channel(self.us_politics_channel)
                 await us_politics.send(embed=stats)
 
