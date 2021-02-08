@@ -85,8 +85,11 @@ class ReminderBot(MarvinDB, commands.Cog):
         # when = when_pattern.search(string).group()
         # what = what_pattern.search(string).group()
         name = name_pattern.search(string).group()
-        when = string.split('\"')[2]
-        what = string.split('\"')[1]
+        try:
+            when = string.split('\'')[2]
+            what = string.split('\'')[1]
+        except IndexError:
+            raise Error('I was unable to parse your request, please make sure you are using single quotes!')
         try:
             str_to_check = when.split()[1]
             converted_when = str(self.convert_num_to_int_or_string(str_to_check))
@@ -122,10 +125,10 @@ class ReminderBot(MarvinDB, commands.Cog):
             return num
 
     @commands.command(name='remind',  aliases=['rem'],
-                 help='Let me remind you of something! Just type \"!remind <who> in <when> to'
-                      ' <what>\" NOTE: There is a minimum polling interval of 10 seconds.')
+                 help='Let me remind you of something! Just type \"!remind <who> \'<what you want in single quotes\' <when>\"'
+                        '\nNOTE: There is a minimum polling interval of 10 seconds.')
     async def create_reminder(self, ctx, *text, user: discord.Member = None):
-        text = f'!remind {" ".join(text)}'
+        text = f"!remind {' '.join(text)}"
         now = datetime.datetime.now()
         user = user or ctx.author
         channel_id = ctx.message.channel.id
@@ -142,9 +145,9 @@ class ReminderBot(MarvinDB, commands.Cog):
                            f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M:%S, %Z")}')
         except ValueError:
             await ctx.send('ERROR: Reminder was in an invalid format! '
-                           'Please use: !remind <who> "<what you want in double quotes" <when>'
+                           'Please use: !remind <who> \'<what you want in single quotes\' <when>'
                            '\nDo not spell out numbers. Years and Months must be whole numbers.'
-                           '\nWho must come first, you must use double quotes for the what!')
+                           '\nWho must come first, you must use SINGLE quotes for the what!')
 
     @tasks.loop(seconds=10)
     async def check_for_reminders(self):
