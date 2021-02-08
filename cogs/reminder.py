@@ -50,38 +50,76 @@ class ReminderBot(MarvinDB, commands.Cog):
         self.conn.commit()
         return results
 
-    def parse_reminder_text(self, string):
-        name_pattern = re.compile(r'(?<=^!remind\s)[\S]{1,}')
-        when_pattern = re.compile(r'(?<=in\s|on\s).*(?=\sto|\sthat)|(?<=in\s)\d{1,}.+$|(?<=\son\s).+')
-        what_pattern = re.compile(r'(?<=that\s|..to\s).*(?=\son)|(?<=that\s|..to\s).*(?=\sin\s\d)|(?<=that\s|..to\s).*')
-
-        name = name_pattern.search(string).group()
-        when = when_pattern.search(string).group()
-        what = what_pattern.search(string).group()
-        return name, when, what
-
     def get_when_remind_date(self, date_string, start_time):
-        if 'day' in date_string:
+        if 'day' in date_string.lower():
             delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(days=delta)
-        elif 'month' in date_string:
+        elif 'week' in date_string.lower():
+            delta = float(date_string.split()[0].rstrip())
+            when_remind = start_time + datetime.timedelta(weeks=delta)
+        elif 'month' in date_string.lower():
             delta = int(date_string.split(' ')[0].strip())
             when_remind = start_time + relativedelta(months=+delta)
-        elif 'minute' in date_string:
+        elif 'minute' in date_string.lower():
             delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(minutes=delta)
-        elif 'second' in date_string:
+        elif 'second' in date_string.lower():
             delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(seconds=delta)
-        elif 'hour' in date_string:
+        elif 'hour' in date_string.lower():
             delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(hours=delta)
-        elif 'year' in date_string:
+        elif 'year' in date_string.lower():
             delta = int(date_string.split(' ')[0].strip())
             when_remind = start_time + relativedelta(years=+delta)
+        elif 'tomorrow' in date_string.lower():
+            when_remind = start_time + datetime.timedelta(days=1)
         else:
             when_remind = parser.parse(date_string)
         return when_remind
+
+    def parse_reminder_text(self, string):
+        name_pattern = re.compile(r'(?<=^!remind\s)[\S]{1,}')
+        # when_pattern = re.compile(r'(?<=in\s|on\s).*(?=\sto|\sthat)|(?<=in\s)\d{1,}.+$|(?<=\son\s).+')
+        # what_pattern = re.compile(r'(?<=that\s|..to\s).*(?=\son)|(?<=that\s|..to\s).*(?=\sin\s\d)|(?<=that\s|..to\s).*')
+        # when = when_pattern.search(string).group()
+        # what = what_pattern.search(string).group()
+        name = name_pattern.search(string).group()
+        when = string.split('\"')[2]
+        what = string.split('\"')[1]
+        try:
+            str_to_check = when.split()[1]
+            converted_when = str(self.convert_num_to_int_or_string(str_to_check))
+            converted_when += f' {str(when.split()[2])}'
+            when = converted_when
+        except Exception as e:
+            print(e)
+
+        return name, when, what
+
+    def convert_num_to_int_or_string(self, num, string=True):
+        int_dict = {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "4",
+            "five": "5",
+            "six": "6",
+            "seven": "7",
+            "eight": "8",
+            "nine": "9",
+            "ten": "10",
+            "eleven": "11",
+            "twelve": "12",
+            "thirteen": "13",
+        }
+        if num.lower() in int_dict.keys():
+            if str:
+                return str(int_dict.get(num.lower()))
+            else:
+                return int(int_dict.get(num.lower()))
+        else:
+            return num
 
     @commands.command(name='remind',  aliases=['rem'],
                  help='Let me remind you of something! Just type \"!remind <who> in <when> to'
@@ -104,9 +142,9 @@ class ReminderBot(MarvinDB, commands.Cog):
                            f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M:%S, %Z")}')
         except ValueError:
             await ctx.send('ERROR: Reminder was in an invalid format! '
-                           'Please use: !remind <who> in|on <when> to|that <what>.'
+                           'Please use: !remind <who> "<what you want in double quotes" <when>'
                            '\nDo not spell out numbers. Years and Months must be whole numbers.'
-                           '\nWho must come first, when/what can come in either order.')
+                           '\nWho must come first, you must use double quotes for the what!')
 
     @tasks.loop(seconds=10)
     async def check_for_reminders(self):
