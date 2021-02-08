@@ -82,7 +82,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
             loop = asyncio.get_event_loop()
             travel_channel =  self.bot.get_channel(int(self.travel_channel))
             post_list = await loop.run_in_executor(ThreadPoolExecutor(), self.get_travel_stream)
-            if len(post_list) >= 1:
+            if post_list is not None and len(post_list) >= 1:
                 for post in post_list:
                     if post[0] in self.post_tracker["travel_stream"]:
                         continue
@@ -102,7 +102,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
             loop = asyncio.get_event_loop()
             lol_channel = self.bot.get_channel(int(self.lol_channel))
             post_list = await loop.run_in_executor(ThreadPoolExecutor(), self.get_lol_stream)
-            if len(post_list) >= 1:
+            if post_list is not None and len(post_list) >= 1:
                 for post in post_list:
                     if post[0] in self.post_tracker["lol_stream"]:
                         continue
