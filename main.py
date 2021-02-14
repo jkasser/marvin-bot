@@ -32,19 +32,19 @@ class UserInfo:
 
 # Get the list of cogs
 extensions = [
-    # 'cogs.subscriptions',
-    # 'cogs.marvin',
-    # 'cogs.todo',
+    'cogs.subscriptions',
+    'cogs.marvin',
+    'cogs.todo',
     'cogs.riot',
-    # 'cogs.jeopardy',
-    # 'cogs.news',
-    # 'cogs.reminder',
-    # 'cogs.reddit',
-    # 'cogs.weather',
-    # 'cogs.address_book',
-    # 'cogs.translator',
-    # 'cogs.poll',
-    # 'cogs.covid'
+    'cogs.jeopardy',
+    'cogs.news',
+    'cogs.reminder',
+    'cogs.reddit',
+    'cogs.weather',
+    'cogs.address_book',
+    'cogs.translator',
+    'cogs.poll',
+    'cogs.covid'
 ]
 
 
