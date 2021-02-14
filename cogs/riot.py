@@ -352,6 +352,8 @@ class Riot(MarvinDB, commands.Cog):
                     assets_db_version = self.get_current_assets_version_from_db()[0]
                     await api_updates_channel.send(f'current assets version is {assets_db_version}')
                     # See if the api version is greater than our current one
+                    await api_updates_channel.send(f"api current version:{int(''.join(api_current_version.split('.')))}")
+                    await api_updates_channel.send(f"db current version: {int(''.join(assets_db_version.split('.')))}")
                     if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
                         await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
                                                        f'\nDownloading latest version: {api_current_version}')
