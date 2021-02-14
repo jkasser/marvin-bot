@@ -342,12 +342,15 @@ class Riot(MarvinDB, commands.Cog):
     async def check_and_update_latest_assets_version(self):
         hour = get_current_hour_of_day()
         loop = asyncio.get_event_loop()
-        if hour >= 23 or hour <= 5:
+        if hour >= 23 or hour <= 11:
             api_updates_channel = self.bot.get_channel(self.api_updates_channel)
             api_current_version, cdn = await loop.run_in_executor(ThreadPoolExecutor(), self.get_latest_data_version)
+            await api_updates_channel.send('in the loop')
             try:
                 if self.check_if_assets_current_version_exists():
+                    await api_updates_channel.send('current version exists')
                     assets_db_version = self.get_current_assets_version_from_db()[0]
+                    await api_updates_channel.send(f'current assets version is {assets_db_version}')
                     # See if the api version is greater than our current one
                     if int(''.join(api_current_version.split('.'))) > int(''.join(assets_db_version.split('.'))):
                         await api_updates_channel.send(f'Our current version: {assets_db_version} is out of date!'
@@ -364,18 +367,22 @@ class Riot(MarvinDB, commands.Cog):
                         await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
                     # otherwise if they are equal then just say we are on the most current version
                     elif int(''.join(api_current_version.split('.'))) == int(''.join(assets_db_version.split('.'))):
-                        # await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
+                        await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
                         return
                 else:
                     # If the field doesn't exist then download the latest version
                     # Update our local assets
+                    await api_updates_channel.send(f'it doesnt exist!')
                     new_assets = await loop.run_in_executor(ThreadPoolExecutor(), self.download_new_assets, cdn,
                                                             api_current_version)
                     # Delete our local copy
+                    await api_updates_channel.send(f'deleting local assets')
                     self.delete_existing_asset()
                     # Extract the new one
+                    await api_updates_channel.send(f'extracting assets')
                     self.extract_assets(file_to_extract=new_assets)
                     # Add it to the DB
+                    await api_updates_channel.send('inserting current version into db')
                     self.insert_assets_current_version(api_current_version)
                     await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
                 self.assets_version = api_current_version
