@@ -363,7 +363,8 @@ class Riot(MarvinDB, commands.Cog):
                         await api_updates_channel.send(f'We are now using LoL assets version: {api_current_version}')
                     # otherwise if they are equal then just say we are on the most current version
                     elif api_current_version == assets_db_version:
-                        await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
+                        # this gets spammy as it prints every time the loop does, comment it out
+                        # await api_updates_channel.send(f'We are on the most current LoL assets version: {assets_db_version}')
                         return
                 else:
                     # If the field doesn't exist then download the latest version
