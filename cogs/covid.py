@@ -6,7 +6,6 @@ import datetime
 from utils.helper import get_user_friendly_date_from_string, parse_num
 from discord.ext import commands, tasks
 import asyncio
-import functools
 from concurrent.futures.thread import ThreadPoolExecutor
 
 
