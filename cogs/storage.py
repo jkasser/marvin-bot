@@ -1,6 +1,8 @@
 import yaml
 import fabric
+import requests
 from discord.ext import commands, tasks
+import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
 
 
@@ -72,23 +74,35 @@ class Storage(commands.Cog):
     @commands.command(name='store', help="Store an item on marvin's server.")
     async def marvin_store_item(self, ctx):
         if self.check_if_bucket_exists(ctx.author.id):
-            await ctx.send(self.size_check(ctx.author.id))
+            await ctx.send('Please attach the file you would like me to store.')
+            def check(m):
+                return m.author.name == ctx.author.name
+
+            message = await self.bot.wait_for("message", check=check, timeout=120)
+            message = message.content
+            if message.attachments:
+                for attachment in message.attachments:
+                    await ctx.send(f'Attempting to save {attachment.filename}')
+                    await attachment.save(attachment.filename)
         else:
             await ctx.send('You do not currently have a bucket, let me create one for you.')
             await ctx.invoke(self.bot.get_command('makebucket'))
-        # figure how the fuck to do this
-        pass
+
 
     @commands.has_any_role("Admins", "Family")
-    @commands.command(name='retrieve', help="Store an item on marvin's server.")
-    async def marvin_store_item(self, ctx):
+    @commands.command(name='retrieve', help="Retrieve an item on marvin's server.")
+    async def marvin_retrieve_item(self, ctx):
         if self.check_if_bucket_exists(ctx.author.id):
             await ctx.send(self.size_check(ctx.author.id))
+            contents = self.get_bucket_contents(ctx.author.id)
+            if contents == "":
+                await ctx.send('Your bucket is empty!')
+            else:
+                enumerate(contents)
+                # TODO::: finish this
         else:
             await ctx.send('You do not currently have a bucket, let me create one for you.')
             await ctx.invoke(self.bot.get_command('makebucket'))
-        # figure how the fuck to do this
-        pass
 
     @commands.has_any_role("Admins", "Family")
     @commands.command(name='storesize', help="See how much size you have left with marvin!")
