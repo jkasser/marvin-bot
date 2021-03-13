@@ -6,7 +6,6 @@ import json
 from assets.language_codes import translate_dict
 from discord.ext import commands
 import asyncio
-import functools
 from concurrent.futures.thread import ThreadPoolExecutor
 
 
