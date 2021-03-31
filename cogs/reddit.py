@@ -37,7 +37,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
         self.reddit = praw.Reddit(
             client_id=client_id,
             client_secret=client_secret,
-            user_agent="Marvin Bot 1.0 by /u/onebagoneworld",
+            user_agent="Marvin Bot 1.0",
         )
         try:
             self.create_table(self.conn, self.REDDIT_TABLE)
