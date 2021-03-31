@@ -90,7 +90,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
     def delete_contact_by_id(self, contact_id):
         self.delete_query(self.DELETE_CONTACT, (contact_id,))
 
-    @commands.command(name='contactlist',  aliases=['listcontacts'], help='Get one entry from your address book!')
+    @commands.command(name='contactlist',  aliases=['listcontacts'], help='List all of your contacts!')
     async def list_all_contact_names(self, ctx):
         user = str(ctx.author)
         if user in self.address_book.keys():
@@ -231,7 +231,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     if email_response.lower().strip() == 'skip':
                         email_response = ""
                         await channel.send('Skipping email!')
-                    # email
+                    # birthday
                     await channel.send('Contact\'s birthday? (MM/DD/YYYY)\nIf year isn\'t provided I will default '
                                        'to the current year')
                     bday_response = await self.bot.wait_for("message", check=check, timeout=timeout)
