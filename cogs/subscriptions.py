@@ -37,11 +37,11 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
 
     def __init__(self, bot):
         super(Subscriptions, self).__init__()
-        self.user_subs = dict()
+        self.user_subs = {}
         self.bot = bot
         self.create_table(self.conn, self.SUBSCRIPTION_TABLE)
         # put it all into memory
-        users = self.users # inherits t his from the subscriptions db class
+        users = self.users # inherits this from the subscriptions db class
         if len(users) > 0:
             for user in users:
                 self.user_subs[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], sub_list=[],
