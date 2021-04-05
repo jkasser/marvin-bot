@@ -317,16 +317,27 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
 
     @tasks.loop(seconds=10)
     async def check_for_reminders(self):
-        results = self.check_reminders()
-        if len(results):
-            # results are a tuple of index, name, when, what, channel_id, and sent
-            for result in results:
-                # check the when date to see if its => now
-                if datetime.datetime.now() >= result[2]:
-                    channel = self.bot.get_channel(result[4])
-                    await channel.send(f'{result[1]}! This is your reminder to: {result[3]}!')
-                    # set it as sent
-                    self.mark_reminder_sent(result[0])
+        for user, reminders in self.reminder_dict.items():
+            for reminder in reminders:
+                if reminder["active"] == 1:
+                    # check if its a repeat
+                    if reminder["repeat"] == 0:
+                        # if it's not just do a datetime check and send
+                        if datetime.datetime.now() >= reminder["when"]:
+                            channel = self.bot.get_channel(reminder["channel"])
+                            await channel.send(f'{reminder["name"]}! This is your reminder to: {reminder["what"]}!')
+                            # since it isnt a repeat reminder, mark it inactive, in memory and in the db
+                            self._mark_reminder_inactive(reminder["id"])
+                            reminder["active"] = 0
+                    else:
+                        # if it is a repeat reminder, check to see if frequency + last sent are < datetime now
+                        if datetime.datetime.now() >= reminder["last_sent"] + datetime.timedelta(
+                                minutes=reminder["frequency"]):
+                            last_sent = datetime.datetime.now()
+                            channel = self.bot.get_channel(reminder["channel"])
+                            await channel.send(f'{reminder["name"]}! This is your reminder to: {reminder["what"]}!')
+                            self._update_last_sent_time_for_reminder_by_id(reminder["id"], last_sent)
+                            reminder["last_sent"] = last_sent
 
     @check_for_reminders.before_loop
     async def before_check_for_reminders(self):
