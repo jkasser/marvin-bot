@@ -47,6 +47,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
             self.create_table(self.conn, self.REMINDERS_TABLE)
             self.reminder_dict = {}
             reminders = self._get_active_reminders()
+            self._load_reminders_into_mem(reminders)
         except Error as e:
             print(e)
         self.check_for_reminders.start()
@@ -160,6 +161,35 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                         '\nNOTE: There is a minimum polling interval of 10 seconds.')
     async def create_reminder(self, ctx, *text, user: discord.Member = None):
         text = f"!remind {' '.join(text)}"
+    def _load_reminders_into_mem(self, results: list):
+        for x in results:
+            if x[1] not in self.reminder_dict.keys():
+                # set the user id as the parent key
+                self.reminder_dict[x[1]] = [{
+                    "id": x[0],
+                    "name": x[2],
+                    "when": x[3],
+                    "what": x[4],
+                    "channel": x[5],
+                    "active": x[6],
+                    "repeat": x[7],
+                    "frequency": x[8],
+                    "last_sent": x[9]
+                }]
+            else:
+                # if the user key exists, just append the reminder
+                self.reminder_dict[x[1]].append({
+                    "id": x[0],
+                    "name": x[2],
+                    "when": x[3],
+                    "what": x[4],
+                    "channel": x[5],
+                    "active": x[6],
+                    "repeat": x[7],
+                    "frequency": x[8],
+                    "last_sent": x[9]
+                })
+
         now = datetime.datetime.now()
         user = user or ctx.author
         channel_id = ctx.message.channel.id
