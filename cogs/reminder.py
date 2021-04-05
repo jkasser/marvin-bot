@@ -360,7 +360,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                     else:
                         # if it is a repeat reminder, check to see if frequency + last sent are < datetime now
                         if datetime.datetime.now() >= reminder["last_sent"] + datetime.timedelta(
-                                minutes=reminder["frequency"]):
+                                minutes=int(reminder["frequency"])):
                             last_sent = datetime.datetime.now()
                             channel = self.bot.get_channel(reminder["channel"])
                             await channel.send(f'{reminder["name"]}! This is your reminder to: {reminder["what"]}!')
