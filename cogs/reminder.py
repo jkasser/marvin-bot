@@ -262,7 +262,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                                f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M, %Z")}. This'
                                f' reminder will occur every {frequency} minute(s)!')
         except TimeoutError:
-            await ctx.send('You ran out of time! Please try calling this comamnd again! Goodbye.')
+            await ctx.send('You ran out of time! Please try calling this command again! Goodbye.')
 
     @commands.command(name='updatereminder', aliases=['deactivatereminder', 'updaterem', 'remupdate', 'remdeactivate'],
                       help='Let me remind you of something! call !remind and let me guide you through setting one up!')
