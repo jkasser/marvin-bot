@@ -264,6 +264,29 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         except TimeoutError:
             await ctx.send('You ran out of time! Please try calling this command again! Goodbye.')
 
+    @commands.command(name='deactivatereminder', help='Call this instead of updatereminder if you know the ID of the '
+                                                      'reminder you wihs to deactivate')
+    async def delete_reminder(self, ctx, reminder_id):
+        user = ctx.author.id
+        if reminder_id is None:
+            await ctx.send('Please try again provide a reminder ID to remove. Goodbye')
+            return
+        try:
+            user_reminders = self.reminder_dict[user]
+        except KeyError:
+            await ctx.send('You have no reminders with me!')
+            return
+
+        for reminder in user_reminders:
+            if str(reminder_id) == str(reminder["id"]):
+                await ctx.send(f'Setting reminder id: {reminder_id} to inactive!')
+                reminder["active"] = 0
+                self._mark_reminder_inactive(reminder_id)
+                return
+        # if we made it this far then we never found a matching reminder ID, send a message and bail
+        await ctx.send('I was unable to find a reminder by that ID #!')
+
+
     @commands.command(name='updatereminder', aliases=['deactivatereminder', 'updaterem', 'remupdate', 'remdeactivate'],
                       help='Let me remind you of something! call !remind and let me guide you through setting one up!')
     async def update_reminder(self, ctx):
