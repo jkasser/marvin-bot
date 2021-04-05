@@ -260,7 +260,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
             else:
                 await ctx.send(f'I will remind {name} - "{what}" at '
                                f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M, %Z")}. This'
-                               f' reminder will occur every {frequency} minutes!')
+                               f' reminder will occur every {frequency} minute(s)!')
         except TimeoutError:
             await ctx.send('You ran out of time! Please try calling this comamnd again! Goodbye.')
 
