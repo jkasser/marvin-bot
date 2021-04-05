@@ -45,6 +45,8 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         super().__init__()
         try:
             self.create_table(self.conn, self.REMINDERS_TABLE)
+            self.reminder_dict = {}
+            reminders = self._get_active_reminders()
         except Error as e:
             print(e)
         self.check_for_reminders.start()
@@ -59,6 +61,22 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         """ Returns an array of id, name, reminder time, reminder text, channel_id, has sent """
         cur = self.conn.cursor()
         results = cur.execute(self.FIND_PENDING_REMINDERS)
+
+    def _get_active_reminders(self):
+        """ Returns an array of:
+        0 id,
+        1 name,
+        2 user_id,
+        3 when_remind,
+        4 what,
+        5 channel_id,
+        6 active,
+        7 repeat,
+        8 frequency_minutes,
+        9 last_sent """
+
+        cur = self.conn.cursor()
+        results = cur.execute(self.GET_ACTIVE_REMINDERS)
         results = results.fetchall()
         self.conn.commit()
         return results
