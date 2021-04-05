@@ -264,9 +264,9 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         except TimeoutError:
             await ctx.send('You ran out of time! Please try calling this command again! Goodbye.')
 
-    @commands.command(name='deactivatereminder', help='Call this instead of updatereminder if you know the ID of the '
-                                                      'reminder you wihs to deactivate')
-    async def delete_reminder(self, ctx, reminder_id):
+    @commands.command(name='deletereminder', aliases=['deleterem'], help='Call this instead of '
+                       'updatereminder if you know the ID of the reminder you wihs to deactivate')
+    async def deactivate_reminder(self, ctx, reminder_id):
         user = ctx.author.id
         if reminder_id is None:
             await ctx.send('Please try again provide a reminder ID to remove. Goodbye')
