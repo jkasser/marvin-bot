@@ -259,6 +259,62 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         except TimeoutError:
             await ctx.send('You ran out of time! Please try calling this comamnd again! Goodbye.')
 
+    @commands.command(name='updatereminder', aliases=['deactivatereminder', 'updaterem', 'remupdate', 'remdeactivate'],
+                      help='Let me remind you of something! call !remind and let me guide you through setting one up!')
+    async def update_reminder(self, ctx):
+        timeout = 60
+        user = ctx.author.id
+        try:
+            user_reminders = self.reminder_dict[user]
+        except KeyError:
+            await ctx.send('You have no reminders with me!')
+            return
+
+        def check(m):
+            return m.author.name == ctx.author.name
+
+        await self.get_reminders(ctx)
+        await ctx.send('Which reminder would you like to remove? Please supply the ID of the reminder.\n')
+
+        reminder_id = await self.bot.wait_for("message", check=check, timeout=timeout)
+        reminder_id = reminder_id.content
+
+        for reminder in user_reminders:
+            if str(reminder_id) == str(reminder["id"]):
+                await ctx.send(f'Setting reminder id: {reminder_id} to inactive!')
+                reminder["active"] = 0
+                self._mark_reminder_inactive(reminder_id)
+                return
+        # if we made it this far then we never found a matching reminder ID, send a message and bail
+        await ctx.send('I was unable to find a reminder by that ID #!')
+
+    @commands.command(name="getreminders", aliases=['remget', 'getrem', 'reminderget', 'getreminder'],
+                      help='Retrieve your current reminders!')
+    async def get_reminders(self, ctx):
+        new_line = '\n'
+        user = ctx.author.id
+        try:
+            user_reminders = self.reminder_dict[user]
+        except KeyError:
+            await ctx.send('You have no reminders with me!')
+            return
+        msg = ""
+        for x in user_reminders:
+            for k, v in x.items():
+                if x["active"] == 1:
+                    if k == "frequency":
+                        msg += f'{k}: {v} minute(s){new_line}'
+                    elif k == "active":
+                        msg += f'{k}: {ACTIVE_ENUM[v]}{new_line}'
+                    elif k not in ["channel", "name"]:
+                        msg += f'{k}: {v}{new_line}'
+            msg += new_line
+        if msg == "":
+            await ctx.send('You have no active reminders with me!')
+        else:
+            await ctx.send(f'Here are your current active reminders:{new_line}'
+                       f'{msg}')
+
     @tasks.loop(seconds=10)
     async def check_for_reminders(self):
         results = self.check_reminders()
