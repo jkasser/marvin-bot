@@ -51,6 +51,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         except Error as e:
             print(e)
         self.check_for_reminders.start()
+        self.delete_inactive_reminders.start()
 
     def _insert_reminder(self, values):
         return self.insert_query(self.INSERT_REMINDER, values)
@@ -196,6 +197,14 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
 
     @check_for_reminders.before_loop
     async def before_check_for_reminders(self):
+      await self.bot.wait_until_ready()
+
+    @tasks.loop(hours=1)
+    async def delete_inactive_reminders(self):
+        self._delete_reminders()
+
+    @delete_inactive_reminders.before_loop
+    async def before_delete_inactive_reminders(self):
       await self.bot.wait_until_ready()
 
 
