@@ -52,16 +52,22 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
             print(e)
         self.check_for_reminders.start()
 
-    def insert_reminder(self, values):
+    def _insert_reminder(self, values):
         return self.insert_query(self.INSERT_REMINDER, values)
 
-    def mark_reminder_sent(self, reminder_id):
-        self.update_query(self.MARK_REMINDER_SENT, (reminder_id,))
+    def _mark_reminder_inactive(self, reminder_id):
+        self.update_query(self.MARK_REMINDER_INACTIVE, (reminder_id,))
 
-    def check_reminders(self):
-        """ Returns an array of id, name, reminder time, reminder text, channel_id, has sent """
+    def _update_last_sent_time_for_reminder_by_id(self, sub_id, last_sent):
+        self.update_query(self.UPDATE_REMINDER_LAST_SENT, (last_sent, sub_id,))
+
+    def _get_all_reminders(self):
+        return self.get_query(self.GET_ALL_REMINDERS)
+
+    def _delete_reminders(self):
         cur = self.conn.cursor()
-        results = cur.execute(self.FIND_PENDING_REMINDERS)
+        cur.execute(self.DELETE_INACTIVE_REMINDERS)
+        self.conn.commit()
 
     def _get_active_reminders(self):
         """ Returns an array of:
