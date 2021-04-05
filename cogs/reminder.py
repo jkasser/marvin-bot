@@ -82,7 +82,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         self.conn.commit()
         return results
 
-    def get_when_remind_date(self, date_string, start_time):
+    def _get_when_remind_date(self, date_string, start_time):
         if 'day' in date_string.lower():
             delta = float(date_string.split(' ')[0].strip())
             when_remind = start_time + datetime.timedelta(days=delta)
@@ -106,6 +106,8 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
             when_remind = start_time + relativedelta(years=+delta)
         elif 'tomorrow' in date_string.lower():
             when_remind = start_time + datetime.timedelta(days=1)
+        elif 'now' in date_string.lower():
+            when_remind = start_time
         else:
             when_remind = parser.parse(date_string)
         return when_remind
