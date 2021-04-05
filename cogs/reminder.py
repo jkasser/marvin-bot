@@ -286,7 +286,6 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         # if we made it this far then we never found a matching reminder ID, send a message and bail
         await ctx.send('I was unable to find a reminder by that ID #!')
 
-
     @commands.command(name='updatereminder', aliases=['deactivatereminder', 'updaterem', 'remupdate', 'remdeactivate'],
                       help='Let me remind you of something! call !remind and let me guide you through setting one up!')
     async def update_reminder(self, ctx):
@@ -317,7 +316,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         await ctx.send('I was unable to find a reminder by that ID #!')
 
     @commands.command(name="getreminders", aliases=['remget', 'getrem', 'reminderget', 'getreminder'],
-                      help='Retrieve your current reminders!')
+                      help='Retrieve your current reminders in a DM!')
     async def get_reminders(self, ctx):
         new_line = '\n'
         user = ctx.author.id
@@ -340,7 +339,8 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         if msg == "":
             await ctx.send('You have no active reminders with me!')
         else:
-            await ctx.send(f'Here are your current active reminders:{new_line}'
+            channel = await ctx.author.create_dm()
+            await channel.send(f'Here are your current active reminders:{new_line}'
                        f'{msg}')
 
     @tasks.loop(seconds=10)
