@@ -11,20 +11,33 @@ from utils.db import MarvinDB
 class ReminderBot(MarvinDB, commands.Cog):
 
     TABLE_NAME = 'reminders'
+
     REMINDERS_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
         id integer PRIMARY KEY,
+        user_id integer NOT NULL,
         name text NOT NULL,
         when_remind timestamp NOT NULL,
         what text NOT NULL,
         channel_id integer NOT NULL,
-        sent integer NOT NULL
+        active integer NOT NULL,
+        repeat integer NOT NULL,
+        frequency integer,
+        last_sent timestamp
     );"""
 
-    INSERT_REMINDER = f"""INSERT INTO {TABLE_NAME}(name,when_remind,what,channel_id,sent) VALUES(?,?,?,?,0)"""
+    INSERT_REMINDER = f"""INSERT INTO {TABLE_NAME}(user_id,name,when_remind,what,channel_id,active,repeat,frequency,
+last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
+    MARK_REMINDER_INACTIVE = f"""UPDATE {TABLE_NAME} SET active = 0 WHERE id = ?"""
+    UPDATE_REMINDER_LAST_SENT = f"""UPDATE {TABLE_NAME} SET last_sent = ? where id = ?"""
+    GET_ACTIVE_REMINDERS = f"""SELECT * FROM {TABLE_NAME} WHERE active = 1"""
+    GET_ALL_REMINDERS = f"""SELECT * FROM {TABLE_NAME} GROUP BY user_id"""
+    DELETE_INACTIVE_REMINDERS = f"""DELETE FROM {TABLE_NAME} WHERE active = 0"""
 
-    MARK_REMINDER_SENT = f"""UPDATE {TABLE_NAME} SET sent = 1 WHERE id = ?"""
+    # constants
+    TIME_UNITS = [
+        'hours', 'days', 'minutes', 'seconds', 'weeks', 'months', 'years',
+    ]
 
-    FIND_PENDING_REMINDERS = f"""SELECT * FROM {TABLE_NAME} WHERE sent=0"""
 
     def __init__(self, bot):
         self.bot = bot
