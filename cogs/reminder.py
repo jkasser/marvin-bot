@@ -227,13 +227,18 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
             # Alright! if we have made it this far then we have a valid frequency and unit, and have calculated the
             # appropriate time in minutes as an int for the database, as well as weather this repeats
             # Now we move on to actually getting when they want to be reminded
-            await ctx.send('Now, in how long would you like to be reminded? If this is a repeat reminder, '
+            await ctx.send('In how long would you like to be reminded? If this is a repeat reminder, '
                            'this will be the time from which I calculate all subsequent reminders. '
-                           'E.g. 2 days, 4 hours, now')
+                           '\nE.g. 2 days, 4 hours, September 25, now')
             # wait for the user to reply
             start_reminder = await self.bot.wait_for("message", check=check, timeout=timeout)
             start_reminder = start_reminder.content
-            when_datetime = self._get_when_remind_date(start_reminder, start_time=now)
+            try:
+                when_datetime = self._get_when_remind_date(start_reminder, start_time=now)
+            except ValueError:
+                await ctx.send(f'I was unable to parse your provided value of: {start_reminder.content}. Please'
+                               f' try this command again. Goodbye.')
+                return
 
             # ok insert it into the database and into memory
             id = self._insert_reminder((author_id, name, when_datetime, what, channel_id, active, repeat, frequency,
