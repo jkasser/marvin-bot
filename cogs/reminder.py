@@ -110,28 +110,6 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
             when_remind = parser.parse(date_string)
         return when_remind
 
-    def parse_reminder_text(self, string):
-        name_pattern = re.compile(r'(?<=^!remind\s)[\S]{1,}')
-        # when_pattern = re.compile(r'(?<=in\s|on\s).*(?=\sto|\sthat)|(?<=in\s)\d{1,}.+$|(?<=\son\s).+')
-        # what_pattern = re.compile(r'(?<=that\s|..to\s).*(?=\son)|(?<=that\s|..to\s).*(?=\sin\s\d)|(?<=that\s|..to\s).*')
-        # when = when_pattern.search(string).group()
-        # what = what_pattern.search(string).group()
-        name = name_pattern.search(string).group()
-        try:
-            when = string.split('\'')[2]
-            what = string.split('\'')[1]
-        except IndexError:
-            raise Error('I was unable to parse your request, please make sure you are using single quotes!')
-        try:
-            str_to_check = when.split()[1]
-            converted_when = str(self.convert_num_to_int_or_string(str_to_check))
-            converted_when += f' {str(when.split()[2])}'
-            when = converted_when
-        except Exception as e:
-            print(e)
-
-        return name, when, what
-
     def convert_num_to_int_or_string(self, num, string=True):
         int_dict = {
             "one": "1",
