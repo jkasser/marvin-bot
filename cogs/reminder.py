@@ -110,27 +110,12 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
             when_remind = parser.parse(date_string)
         return when_remind
 
-    def convert_num_to_int_or_string(self, num, string=True):
-        int_dict = {
-            "one": "1",
-            "two": "2",
-            "three": "3",
-            "four": "4",
-            "five": "5",
-            "six": "6",
-            "seven": "7",
-            "eight": "8",
-            "nine": "9",
-            "ten": "10",
-            "eleven": "11",
-            "twelve": "12",
-            "thirteen": "13",
-        }
-        if num.lower() in int_dict.keys():
+    def _convert_num_to_string(self, num):
+        if num.lower() in STR_TO_INT.keys():
             if str:
-                return str(int_dict.get(num.lower()))
+                return str(STR_TO_INT.get(num.lower()))
             else:
-                return int(int_dict.get(num.lower()))
+                return int(STR_TO_INT.get(num.lower()))
         else:
             return num
 
