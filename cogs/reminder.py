@@ -203,7 +203,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                 try:
                     frequency, unit = frequency.split()
                     # make sure they provided a unit we support
-                    if unit in self.TIME_UNITS:
+                    if any([unit in x for x in self.TIME_UNITS]):
                         for k,v in TIME_IN_MINUTES.items():
                             if k in unit.lower():
                                 frequency = self._convert_num_to_string(frequency)
