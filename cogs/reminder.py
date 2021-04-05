@@ -128,11 +128,6 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
         else:
             return num
 
-    @commands.command(name='remind',  aliases=['rem'],
-                 help='Let me remind you of something! Just type \"!remind <who> \'<what you want in single quotes\' <when>\"'
-                        '\nNOTE: There is a minimum polling interval of 10 seconds.')
-    async def create_reminder(self, ctx, *text, user: discord.Member = None):
-        text = f"!remind {' '.join(text)}"
     def _load_reminders_into_mem(self, results: list):
         for x in results:
             if x[1] not in self.reminder_dict.keys():
@@ -162,25 +157,107 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                     "last_sent": x[9]
                 })
 
+
+    @commands.command(name='remind',  aliases=['rem', 'setreminder', 'createreminder'],
+                 help='Let me remind you of something! call !remind and let me guide you through setting one up!')
+    async def create_reminder(self, ctx):
+        timeout = 60
         now = datetime.datetime.now()
-        user = user or ctx.author
+        active = 1
+        author_id = ctx.author.id
         channel_id = ctx.message.channel.id
+        # if the author hasn't created any reminders, add them to memory
+        if author_id not in self.reminder_dict.keys():
+            self.reminder_dict[author_id] = []
+
+        def check(m):
+            return m.author.name == ctx.author.name
         try:
-            # parse the string into 3 fields to insert into the database
-            name, when, what = self.parse_reminder_text(text)
-            if name.lower() == 'me':
-                name = user.mention
-            # get the date as a datetime object
-            when_datetime = self.get_when_remind_date(when, start_time=now)
-            # now insert it into the db
-            self.insert_reminder((name, when_datetime, what, channel_id))
-            await ctx.send(f'I will remind {name} - "{what}" at '
-                           f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M:%S, %Z")}')
-        except ValueError:
-            await ctx.send('ERROR: Reminder was in an invalid format! '
-                           'Please use: !remind <who> \'<what you want in single quotes\' <when>'
-                           '\nDo not spell out numbers. Years and Months must be whole numbers.'
-                           '\nWho must come first, you must use SINGLE quotes for the what!')
+            await ctx.send('Who would you like to remind?')
+            name = await self.bot.wait_for("message", check=check, timeout=timeout)
+            if name.content.lower() == 'me':
+                name = ctx.author.mention
+            else:
+                name = name.content
+
+            await ctx.send('What would you like me to remind you of?')
+            # get the reminder text they want here
+            what = await self.bot.wait_for("message", check=check, timeout=timeout)
+            what = what.content
+            if len(what.split()) == 0:
+                await ctx.send('Please try this command again and provide me with something to remind you of!')
+                return
+
+            #move on to the next step - figure out if this is a repeat reminder or not?
+            await ctx.send('Is this a repeat reminder? Y/N?')
+            repeat_check = await self.bot.wait_for("message", check=check, timeout=timeout)
+            repeat_check = repeat_check.content
+            if 'y' == str(repeat_check).strip().lower() or 'yes' == str(repeat_check).strip().lower():
+                repeat = 1
+
+                # If it's a reminder that needs repeating, get the frequency and convert it to minutes
+                await ctx.send('Great! How often would you like to repeat this reminder? Please include the unit of'
+                               'time, e.g. 1 month, 2 weeks, 4 hours.')
+                frequency = await self.bot.wait_for("message", check=check, timeout=timeout)
+                frequency = frequency.content
+                try:
+                    frequency, unit = frequency.split()
+                    # make sure they provided a unit we support
+                    if unit in self.TIME_UNITS:
+                        for k,v in TIME_IN_MINUTES.items():
+                            if k in unit.lower():
+                                frequency = self._convert_num_to_string(frequency)
+                                frequency = int(frequency) * v
+                    # if we didn't find it in our list of units, tell the user
+                    else:
+                        await ctx.send(f'I was unable to find your provided measurement of time: {unit}. I accept'
+                                       f': {", ".join(self.TIME_UNITS)}. Please try calling this command again! '
+                                       f'Goodbye.')
+                        return
+                except ValueError:
+                    await ctx.send(f'I ran into an issue processing your request. I was unable to parse {frequency} '
+                                   f'Please try calling this command again and provide a frequency as well as a unit!')
+                    return
+
+            # if repeat was false, then we don't need to collect frequency
+            else:
+                repeat = 0
+                frequency = 0
+            last_sent = datetime.datetime.min
+            # Alright! if we have made it this far then we have a valid frequency and unit, and have calculated the
+            # appropriate time in minutes as an int for the database, as well as weather this repeats
+            # Now we move on to actually getting when they want to be reminded
+            await ctx.send('Now, in how long would you like to be reminded? If this is a repeat reminder, '
+                           'this will be the time from which I calculate all subsequent reminders. '
+                           'E.g. 2 days, 4 hours, now')
+            # wait for the user to reply
+            start_reminder = await self.bot.wait_for("message", check=check, timeout=timeout)
+            start_reminder = start_reminder.content
+            when_datetime = self._get_when_remind_date(start_reminder, start_time=now)
+
+            # ok insert it into the database and into memory
+            id = self._insert_reminder((author_id, name, when_datetime, what, channel_id, active, repeat, frequency,
+                                        last_sent))
+            self.reminder_dict[author_id].append({
+                "id": id,
+                "name": name,
+                "when": when_datetime,
+                "what": what,
+                "channel": channel_id,
+                "active": active,
+                "repeat": repeat,
+                "frequency": frequency,
+                "last_sent": last_sent
+            })
+            if not repeat:
+                await ctx.send(f'I will remind {name} - "{what}" at '
+                           f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M, %Z")}')
+            else:
+                await ctx.send(f'I will remind {name} - "{what}" at '
+                               f'{when_datetime.astimezone().strftime("%a, %b %d, %Y %I:%M, %Z")}. This'
+                               f' reminder will occur every {frequency} minutes!')
+        except TimeoutError:
+            await ctx.send('You ran out of time! Please try calling this comamnd again! Goodbye.')
 
     @tasks.loop(seconds=10)
     async def check_for_reminders(self):
