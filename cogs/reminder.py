@@ -162,7 +162,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                  help='Let me remind you of something! call !remind and let me guide you through setting one up!')
     async def create_reminder(self, ctx):
         timeout = 60
-        now = datetime.datetime.now().astimezone()
+        now = datetime.datetime.now()
         active = 1
         author_id = ctx.author.id
         channel_id = ctx.message.channel.id
@@ -351,7 +351,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                     # check if its a repeat
                     if reminder["repeat"] == 0:
                         # if it's not just do a datetime check and send
-                        if datetime.datetime.now().astimezone() >= reminder["when"]:
+                        if datetime.datetime.now() >= reminder["when"]:
                             channel = self.bot.get_channel(reminder["channel"])
                             await channel.send(f'{reminder["name"]}! This is your reminder to: {reminder["what"]}!')
                             # since it isnt a repeat reminder, mark it inactive, in memory and in the db
@@ -359,9 +359,9 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                             reminder["active"] = 0
                     else:
                         # if it is a repeat reminder, check to see if frequency + last sent are < datetime now
-                        if datetime.datetime.now().astimezone() >= reminder["when"] + datetime.timedelta(
+                        if datetime.datetime.now() >= reminder["when"] + datetime.timedelta(
                                 minutes=int(reminder["frequency"])):
-                            last_sent = datetime.datetime.now().astimezone()
+                            last_sent = datetime.datetime.now()
                             channel = self.bot.get_channel(reminder["channel"])
                             await channel.send(f'{reminder["name"]}! This is your reminder to: {reminder["what"]}!')
                             self._update_last_sent_time_for_reminder_by_id(reminder["id"], last_sent)
