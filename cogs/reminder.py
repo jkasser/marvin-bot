@@ -359,7 +359,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                             reminder["active"] = 0
                     else:
                         # if it is a repeat reminder, check to see if frequency + last sent are < datetime now
-                        if datetime.datetime.now() >= reminder["last_sent"] + datetime.timedelta(
+                        if datetime.datetime.now() >= reminder["when"] + datetime.timedelta(
                                 minutes=int(reminder["frequency"])):
                             last_sent = datetime.datetime.now()
                             channel = self.bot.get_channel(reminder["channel"])
