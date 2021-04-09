@@ -358,12 +358,23 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                             self._mark_reminder_inactive(reminder["id"])
                             reminder["active"] = 0
                     else:
-                        # if it is a repeat reminder, check to see if frequency + last sent are < datetime now
-                        if datetime.datetime.now() >= reminder["when"] + datetime.timedelta(
+                        # if it is a repeat reminder then first check the last sent, if its min we havent sent it before
+                        # in this case we just need to do the when compare same as above
+                        if reminder["last_sent"] == datetime.datetime.min:
+                            # if now is greater then when remind, send and update last sent
+                            if datetime.datetime.now() >= reminder["when"]:
+                                channel = self.bot.get_channel(reminder["channel"])
+                                await channel.send(f'{reminder["name"]}! This is your reminder to: {reminder["what"]}!')
+                                last_sent = datetime.datetime.now()
+                                self._update_last_sent_time_for_reminder_by_id(reminder["id"], last_sent)
+                                reminder["last_sent"] = last_sent
+                        # if last sent does not equal datetime.datetime.min and datetime.datetime.now() is greater or
+                        # equal to the reminder when time + the frequency
+                        elif datetime.datetime.now() >= reminder["last_sent"] + datetime.timedelta(
                                 minutes=int(reminder["frequency"])):
-                            last_sent = datetime.datetime.now()
                             channel = self.bot.get_channel(reminder["channel"])
                             await channel.send(f'{reminder["name"]}! This is your reminder to: {reminder["what"]}!')
+                            last_sent = datetime.datetime.now()
                             self._update_last_sent_time_for_reminder_by_id(reminder["id"], last_sent)
                             reminder["last_sent"] = last_sent
 
