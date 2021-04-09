@@ -378,7 +378,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
 
     @check_for_reminders.before_loop
     async def before_check_for_reminders(self):
-      await self.bot.wait_until_ready()
+        await self.bot.wait_until_ready()
 
     @tasks.loop(hours=1)
     async def delete_inactive_reminders(self):
@@ -386,7 +386,7 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
 
     @delete_inactive_reminders.before_loop
     async def before_delete_inactive_reminders(self):
-      await self.bot.wait_until_ready()
+        await self.bot.wait_until_ready()
 
 
 def setup(bot):
