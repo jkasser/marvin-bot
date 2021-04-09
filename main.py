@@ -44,7 +44,6 @@ extensions = [
     'cogs.address_book',
     'cogs.translator',
     'cogs.poll',
-    'cogs.covid'
     # 'cogs.covid'
 ]
 

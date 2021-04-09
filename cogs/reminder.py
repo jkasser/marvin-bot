@@ -335,13 +335,11 @@ last_sent) VALUES(?,?,?,?,?,?,?,?,?)"""
                         msg += f'{k}: {ACTIVE_ENUM[v]}{new_line}'
                     elif k not in ["channel", "name"]:
                         msg += f'{k}: {v}{new_line}'
-            msg += new_line
         if msg == "":
             await ctx.send('You have no active reminders with me!')
         else:
             channel = await ctx.author.create_dm()
-            await channel.send(f'Here are your current active reminders:{new_line}'
-                       f'{msg}')
+            await channel.send(f'Here are your current active reminders:{new_line}{msg}')
 
     @tasks.loop(seconds=10)
     async def check_for_reminders(self):
