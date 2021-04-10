@@ -273,7 +273,7 @@ class MarvinBot(commands.Cog):
         await ctx.send(f'Your user ID is: {ctx.message.author.id}')
 
     @commands.command(pass_context=True, help='Delete all the messages from this channel.')
-    @commands.has_any_role("Admins")
+    @commands.has_role("Admins")
     async def purge(self, ctx, count=None):
         if count is None:
             await ctx.channel.purge()
