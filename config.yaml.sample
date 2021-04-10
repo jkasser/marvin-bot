@@ -51,3 +51,7 @@ microsoft:
   translator:
     key:
     endpoint:
+
+usps:
+  un:
+  pw:
