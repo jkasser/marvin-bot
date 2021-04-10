@@ -2,6 +2,7 @@ import requests
 import yaml
 import asyncio
 from asyncio import TimeoutError
+import functools
 from concurrent.futures.thread import ThreadPoolExecutor
 from utils.helper import validate_phone_number
 from discord.ext import commands, tasks
@@ -26,7 +27,7 @@ class MarvinPhone(commands.Cog):
         self.message_list = {}
         # TODO::: start task loop
 
-    def send_sms(self, recipient, message):
+    def _send_sms(self, recipient, message):
         # send an sms and return the twilio response
         sent_message = self.client.messages.create(
             to=recipient,
@@ -35,7 +36,7 @@ class MarvinPhone(commands.Cog):
         )
         return sent_message
 
-    def send_mms(self, recipient, message="", media=None):
+    def _send_mms(self, recipient, message="", media=None):
         # send an mms and return the twilio response
         sent_message = self.client.messages.create(
             to=str(recipient),
@@ -77,7 +78,6 @@ class MarvinPhone(commands.Cog):
         def check(m):
             return m.author.name == ctx.author.name
         try:
-            loop = asyncio.get_event_loop()
             await ctx.send('Do you want to attach media to this message? (Yes/Y?)')
             is_mms = await self.bot.wait_for("message", check=check, timeout=timeout)
             if is_mms.content.lower() in ('y', 'yes'):
@@ -86,7 +86,7 @@ class MarvinPhone(commands.Cog):
                     mms_content = await self.bot.wait_for("message", check=check, timeout=timeout)
                     if any([mms_content.endswith(ext) for ext in self.SUPPORTED_MEDIA_TYPES]):
                         media_url = mms_content.attachments["url"]
-                        message_content = self.send_mms(recipient, msg, media_url)
+                        message_content = self._send_mms(recipient, msg, media_url)
                     else:
                         await ctx.send(f'Sorry! I only support media with the following extensions: '
                                        f'{",".join([ext for ext in self.SUPPORTED_MEDIA_TYPES])}')
@@ -95,7 +95,7 @@ class MarvinPhone(commands.Cog):
                     await ctx.send('I was unable to parse your attached media, please try this command again! Goodbye!')
                     return
             else:
-                message_content = self.send_sms(recipient, msg)
+                message_content = self._send_sms(recipient, msg)
             await ctx.send(f'I have attempted to send your message.\nStatus: {message_content.status}'
                            f'\nID: {message_content.sid}\nPrice: {message_content.price}')
             message_tracking = {
