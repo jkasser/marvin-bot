@@ -159,6 +159,28 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
                            'adding a contact with "!contactadd".')
 
+    def retrieve_contacts_number(self, user,  contact_name):
+        results = {
+            "contact_found": False,
+            "contact_number": None,
+            "error_msg": ""
+        }
+        if user in self.address_book.keys():
+            potential_hits = [contact for contact in self.address_book[user]["address_book"]
+                              if contact_name.lower() == contact["name"].lower()]
+            if len(potential_hits) == 1:
+                results["contact_found"] = True
+                results["contact_number"] = potential_hits[0]["phone"]
+            else:
+                # we can't find anyone, or found too many results
+                results["error_msg"] = f'Sorry! I was unable to find a contact by the name of {contact_name}.'
+        else:
+            results["error_msg"] = 'Before you can use my address book feature, I need to get your timezone '\
+                                   '(for reminders)! Please type "!subsettz" to set your timezone with me, and then ' \
+                                   'try adding a contact with "!contactadd".'
+        return results
+
+
     @commands.command(name='contactadd', aliases=['addcontact'], help='Add an entry to your address book!')
     async def add_contact(self, ctx, * contact_name):
         timeout = 60
