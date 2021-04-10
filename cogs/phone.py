@@ -104,6 +104,19 @@ class MarvinPhone(commands.Cog):
         except TimeoutError:
             await ctx.send('You have taken too long! Please try again.')
 
+    @tasks.loop(seconds=5)
+    async def check_message_status(self):
+        for user, messages in self.message_list.items():
+            for message in messages:
+                for id, results in message.items():
+                    if results["status"] != 'delivered':
+                        # TODO::: get status of message here?
+                        continue
+                    else:
+                        # if it's been delivered, remove it
+                        del message[id]
+
+
 
 def setup(bot):
     bot.add_cog(MarvinPhone(bot))
