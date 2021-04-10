@@ -163,14 +163,22 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         results = {
             "contact_found": False,
             "contact_number": None,
-            "error_msg": ""
+            "error_msg": "",
+            "potential_contacts": []
         }
         if user in self.address_book.keys():
             potential_hits = [contact for contact in self.address_book[user]["address_book"]
-                              if contact_name.lower() == contact["name"].lower()]
+                              if contact_name.lower() == contact["name"].split()[0].lower()]
             if len(potential_hits) == 1:
                 results["contact_found"] = True
                 results["contact_number"] = potential_hits[0]["phone"]
+            elif len(potential_hits) > 1:
+                new_line = '\n'
+                enumerated_contact_list = f'{new_line.join([str(result) for result in results["potential_contacts"]])}'
+                results["contact_found"] = True
+                results["potential_contacts"] = [(hit["name"], hit["phone"]) for hit in potential_hits]
+                results["error_msg"] = 'We have found multiple contacts! Which contact would you like to use? Provide' \
+                                       ' the number of the contact below.'
             else:
                 # we can't find anyone, or found too many results
                 results["error_msg"] = f'Sorry! I was unable to find a contact by the name of {contact_name}.'
