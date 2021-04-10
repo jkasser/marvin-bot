@@ -116,3 +116,12 @@ def parse_num(number):
         return '{:,}'.format(number)
     else:
         return 'None'
+
+
+def validate_phone_number(number):
+    number_check = re.compile(r'^\+\d{11}$')
+    try:
+        number_check.search(number).group()
+        return True
+    except AttributeError:
+        return False

@@ -17,6 +17,7 @@ fuzzywuzzy = "*"
 python-levenshtein-wheels = "*"
 python-levenshtein = "*"
 fabric = "*"
+twilio = "*"
 
 [requires]
 python_version = "3.8"

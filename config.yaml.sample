@@ -51,3 +51,8 @@ microsoft:
   translator:
     key:
     endpoint:
+
+twilio:
+  account_sid:
+  auth_token:
+  number:
