@@ -110,24 +110,24 @@ class MarvinPhone(commands.Cog):
         def check(m):
             return m.author.name == ctx.author.name
         try:
-            await ctx.send('Do you want to attach media to this message? (Yes/Y?)')
-            is_mms = await self.bot.wait_for("message", check=check, timeout=timeout)
-            if is_mms.content.lower() in ('y', 'yes'):
-                await ctx.send('Please upload or paste a url to the message now!')
-                try:
-                    mms_content = await self.bot.wait_for("message", check=check, timeout=timeout)
-                    if any([mms_content.endswith(ext) for ext in self.SUPPORTED_MEDIA_TYPES]):
-                        media_url = mms_content.attachments["url"]
-                        message_content = self._send_mms(recipient, msg, media_url)
-                    else:
-                        await ctx.send(f'Sorry! I only support media with the following extensions: '
-                                       f'{",".join([ext for ext in self.SUPPORTED_MEDIA_TYPES])}')
-                        return
-                except AttributeError:
-                    await ctx.send('I was unable to parse your attached media, please try this command again! Goodbye!')
-                    return
-            else:
-                message_content = self._send_sms(recipient, msg)
+        #     await ctx.send('Do you want to attach media to this message? (Yes/Y?)')
+        #     is_mms = await self.bot.wait_for("message", check=check, timeout=timeout)
+        #     if is_mms.content.lower() in ('y', 'yes'):
+        #         await ctx.send('Please upload or paste a url to the message now!')
+        #         try:
+        #             mms_content = await self.bot.wait_for("message", check=check, timeout=timeout)
+        #             if any([mms_content.endswith(ext) for ext in self.SUPPORTED_MEDIA_TYPES]):
+        #                 media_url = mms_content.content
+        #                 message_content = self._send_mms(recipient, msg, media_url)
+        #             else:
+        #                 await ctx.send(f'Sorry! I only support media with the following extensions: '
+        #                                f'{",".join([ext for ext in self.SUPPORTED_MEDIA_TYPES])}')
+        #                 return
+        #         except AttributeError:
+        #             await ctx.send('I was unable to parse your attached media, please try this command again! Goodbye!')
+        #             return
+        #     else:
+            message_content = self._send_sms(recipient, msg)
             await ctx.send(f'I have attempted to send your message.\nStatus: {message_content.status}'
                            f'\nID: {message_content.sid}\nPrice: {message_content.price}')
             message_tracking = {
