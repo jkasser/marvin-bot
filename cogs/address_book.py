@@ -46,7 +46,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         if len(users) > 0:
             for user in users:
                 self.address_book[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], address_book=[])
-                addresses = self.get_address_book_for_user(user[0])
+                addresses = self._get_address_book_for_user(user[0])
                 for address in addresses:
                     # the info will be stored encoded
                     contact_info = dict(
@@ -62,14 +62,14 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         self.check_birthday_notification.start()
         self.insert_or_update_contacts_in_database.start()
 
-    def get_address_book_for_user(self, user_id):
+    def _get_address_book_for_user(self, user_id):
         cur = self.conn.cursor()
         results = cur.execute(self.GET_ADDRESS_BOOK_FOR_USER, (user_id,))
         results = results.fetchall()
         self.conn.commit()
         return results
 
-    def insert_contact_into_db(self, user_id, name, address, phone, email, birthday, birthday_reminder):
+    def _insert_contact_into_db(self, user_id, name, address, phone, email, birthday, birthday_reminder):
         values = (
             user_id, name, encode_value(address), encode_value(phone), encode_value(email),
             birthday, birthday_reminder,
@@ -77,8 +77,8 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         contact_id = self.insert_query(self.INSERT_CONTACT, values)
         return contact_id
 
-    def update_contact_by_user_id_and_contact_id(self, user_id, name, address, phone, email, birthday,
-                                                 birthday_reminder, contact_id):
+    def _update_contact_by_user_id_and_contact_id(self, user_id, name, address, phone, email, birthday,
+                                                  birthday_reminder, contact_id):
         # this needs to go in the order of:
         # name, address, phone, email, birthday, birthday_reminder
         # then the where clause of name and user_id. name needs to be wrapped in %% for a like clause
@@ -87,7 +87,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
             birthday, birthday_reminder, contact_id, user_id,)
         self.update_query(self.UPDATE_ENTRY_FOR_USER, values)
 
-    def delete_contact_by_id(self, contact_id):
+    def _delete_contact_by_id(self, contact_id):
         self.delete_query(self.DELETE_CONTACT, (contact_id,))
 
     @commands.command(name='contactlist',  aliases=['listcontacts'], help='List all of your contacts!')
@@ -109,7 +109,8 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                            '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
                            'adding a contact with "!contactadd".')
 
-    @commands.command(name='contactget',  aliases=['getcontact'], help='Get one entry from your address book!')
+    @commands.command(name='getcontact',  aliases=['searchcontact', 'searchcontacts', 'contactsearch', 'contactget'],
+                      help='Search for a contact in your address book! I will return all matching results.')
     async def get_contact_by_name(self, ctx, * contact_name):
         timeout=60
         user = str(ctx.author)
@@ -324,7 +325,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     await ctx.send(f'Deleting entry for {contact["name"]}!')
                     del self.address_book[user]["address_book"][self.address_book[user]["address_book"].index(contact)]
                     # now delete from the database as well
-                    self.delete_contact_by_id(int(contact_id))
+                    self._delete_contact_by_id(int(contact_id))
                     await ctx.send('Contact deleted!')
 
     @commands.command(name='contactupdate', aliases=['updatecontact'], help='Update a contact by their name.')
@@ -441,7 +442,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                         # then we know we have to insert into the database
                         # expects: user_id, name, address, phone, email, birthday, birthday_reminder
                         # encoding happens within the insert contact method, so leave them as strings here
-                        contact_id = self.insert_contact_into_db(
+                        contact_id = self._insert_contact_into_db(
                             user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
                             contact["birthday"], int(contact["birthday_reminder"])
                         )
@@ -450,7 +451,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
                     elif "update_pending" in contact.keys() and contact["update_pending"]:
                         # if id is in keys then lets try to update the contact
                         # expects: user_id, name, address, phone, email, birthday, birthday_reminder
-                        self.update_contact_by_user_id_and_contact_id(
+                        self._update_contact_by_user_id_and_contact_id(
                             user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
                             contact["birthday"], int(contact["birthday_reminder"]), contact["id"]
                         )
