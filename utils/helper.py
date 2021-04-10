@@ -118,8 +118,8 @@ def parse_num(number):
         return 'None'
 
 
-def validate_phone_number(number="+17277935127"):
-    number_check = re.compile(r'^\+\d{10}$')
+def validate_phone_number(number):
+    number_check = re.compile(r'^\+\d{11}$')
     try:
         number_check.search(number).group()
         return True
