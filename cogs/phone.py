@@ -53,6 +53,9 @@ class MarvinPhone(commands.Cog):
     async def text(self, ctx, recipient: str, *msg):
         timeout = 60
         user = str(ctx.author)
+
+        def check(m):
+            return m.author.name == ctx.author.name
         # search results returns a dict of contact_found: bool, contact_number: str (if found) otherwise None,
         # and error_msg to print out the error
         if recipient.isalpha():
@@ -60,7 +63,28 @@ class MarvinPhone(commands.Cog):
             search_results = await loop.run_in_executor(
                 ThreadPoolExecutor(), self.bot.get_cog('AddressBook').retrieve_contacts_number, user, recipient)
             if search_results["contact_found"]:
-                recipient = f'{self.DEFAULT_COUNTRY_CODE}{search_results["contact_number"]}'
+                if len(search_results["potential_contacts"]) > 1:
+                    await ctx.send(search_results["error_msg"])
+                    contact_dict = {}
+                    for ind, cont in enumerate(search_results["potential_contacts"]):
+                        # put this into a dict we can access by key
+                        contact_dict[ind] = {"name": cont[0], "number": cont[1]}
+
+                    # print them out for the user so they can specify the index
+                    for k,v in contact_dict.items():
+                        await ctx.send(f'{k}: {v["name"]}')
+
+                    contact_index = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    contact_index = contact_index.content
+                    try:
+                        recipient = f'{self.DEFAULT_COUNTRY_CODE}{contact_dict[int(contact_index)]["number"].replace(" ", "")}'
+                    except KeyError:
+                        await ctx.send(f'Your selection of: {contact_index} - was not valid. Please try this command '
+                                       f'again. Goodbye.s')
+
+                else:
+                    # we only received one potential contact at this point so just create the number
+                    recipient = f'{self.DEFAULT_COUNTRY_CODE}{search_results["contact_number"].replace(" ", "")}'
             # if the contact wasnt found then send the error message
             else:
                 await ctx.send(f'{search_results["error_msg"]}')
