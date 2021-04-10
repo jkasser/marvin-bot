@@ -52,18 +52,26 @@ class MarvinPhone(commands.Cog):
     @commands.command(name='text', help='Send a text to someone! You must get owner approval to use this command.')
     async def text(self, ctx, recipient: str, *msg):
         timeout = 60
-
-        # probably don't use a try catch, we just want to see if the value returned is none
-        # try:
-        #     # TODO::: convert a contact name to a number via the address book
-        #     number = f'{self.DEFAULT_COUNTRY_CODE}'
-        # except:
-        if not recipient.startswith('+'):
-            recipient = f'{self.DEFAULT_COUNTRY_CODE}{recipient}'
-        if not validate_phone_number(recipient):
-            await ctx.send('Your phone number was not in a valid format! The number needs to be in a 10 digit '
-                           'international format with no spaces. E.g. +12345678910\nPlease try again. Goodbye.')
-            return
+        user = str(ctx.author)
+        # search results returns a dict of contact_found: bool, contact_number: str (if found) otherwise None,
+        # and error_msg to print out the error
+        if recipient.isalpha():
+            loop = asyncio.get_event_loop()
+            search_results = await loop.run_in_executor(
+                ThreadPoolExecutor(), self.bot.get_cog('AddressBook').retrieve_contacts_number, user, recipient)
+            if search_results["contact_found"]:
+                recipient = f'{self.DEFAULT_COUNTRY_CODE}{search_results["contact_number"]}'
+            # if the contact wasnt found then send the error message
+            else:
+                await ctx.send(f'{search_results["error_msg"]}')
+                return
+        else:
+            if not recipient.startswith('+'):
+                recipient = f'{self.DEFAULT_COUNTRY_CODE}{recipient}'
+            if not validate_phone_number(recipient):
+                await ctx.send('Your phone number was not in a valid format! The number needs to be in a 10 digit '
+                               'international format with no spaces. E.g. +12345678910\nPlease try again. Goodbye.')
+                return
 
         msg = ' '.join(msg)
         if msg == '':
