@@ -24,6 +24,7 @@ class MarvinPhone(commands.Cog):
         self.from_number = cfg["twilio"]["number"]
         self.client = Client(account_sid, auth_token)
         self.message_list = {}
+        # TODO::: start task loop
 
     def send_sms(self, recipient, message):
         # send an sms and return the twilio response
@@ -43,6 +44,8 @@ class MarvinPhone(commands.Cog):
             media_url=[media]
         )
         return sent_message
+
+    # TODO::: STUB OUT THE FOLLOWING COMMANDS: get usage, get phone number, delete phone number, marvin text feed
 
     @commands.has_role('Texters')
     @commands.command(name='text', help='Send a text to someone! You must get owner approval to use this command.')
@@ -116,6 +119,7 @@ class MarvinPhone(commands.Cog):
                         # if it's been delivered, remove it
                         del message[id]
 
+# TODO::: add before loop start bot ready check
 
 
 def setup(bot):
