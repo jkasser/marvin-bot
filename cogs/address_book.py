@@ -123,6 +123,9 @@ class AddressBook(commands.Cog, SubscriptionsDB):
             try:
                 contact_name = await self.bot.wait_for("message", check=check, timeout=timeout)
                 contact_name = contact_name.content
+                if contact_name.lower() == 'cancel':
+                    await ctx.send('This command has been cancelled! Goodbye.')
+                    return
             except TimeoutError:
                 await ctx.send('Error: Please try again with !contactadd <name>')
                 return
