@@ -18,6 +18,7 @@ python-levenshtein-wheels = "*"
 python-levenshtein = "*"
 fabric = "*"
 twilio = "*"
+typing-extensions = "*"
 
 [requires]
 python_version = "3.8"
