@@ -77,7 +77,7 @@ class MarvinPhone(commands.Cog):
                     contact_index = contact_index.content
                     num = contact_dict[int(contact_index)]["number"].replace(" ", "")
                     try:
-                        if num.statswith('+'):
+                        if num.startswith('+'):
                             recipient = num
                         else:
                             recipient = f'{self.DEFAULT_COUNTRY_CODE}{num}'
@@ -88,7 +88,7 @@ class MarvinPhone(commands.Cog):
                 else:
                     num = search_results["contact_number"].replace(" ", "")
                     # we only received one potential contact at this point so just create the number
-                    if num.statswith('+'):
+                    if num.startswith('+'):
                         recipient = num
                     else:
                         recipient = f'{self.DEFAULT_COUNTRY_CODE}{num}'
