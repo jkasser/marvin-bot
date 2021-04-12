@@ -1,12 +1,16 @@
-import requests
+import discord
+import os
 import yaml
 import asyncio
+from flask import Flask, request
 from asyncio import TimeoutError
 from concurrent.futures.thread import ThreadPoolExecutor
 from utils.helper import validate_phone_number
 from discord.ext import commands, tasks
 from twilio.rest import Client
 
+
+app = Flask(__name__)
 
 class MarvinPhone(commands.Cog):
 
@@ -22,9 +26,23 @@ class MarvinPhone(commands.Cog):
         account_sid = cfg["twilio"]["account_sid"]
         auth_token = cfg["twilio"]["auth_token"]
         self.from_number = cfg["twilio"]["number"]
+        env = os.environ.get('ENV', 'dev')
+        self.sms_channel = cfg["disc"][env]["sms_channel"]
         self.client = Client(account_sid, auth_token)
         self.message_list = {}
+        self.received_messages = []
+        # start the app in the init
         # TODO::: start task loop
+
+    @app.route('/sms', methods=['GET', 'POST'])
+    def _retrieve_sms(self):
+        # append them to the dictionary
+        message = {}
+        message["id"] = request.form["sid"]
+        message["from"] = request.form["From"]
+        message["to"] = request.form["To"]
+        message["msg"] = request.form["Body"]
+        self.received_messages.append(message)
 
     def _send_sms(self, recipient, message):
         # send an sms and return the twilio response
@@ -160,6 +178,23 @@ class MarvinPhone(commands.Cog):
                         del message[id]
 
 # TODO::: add before loop start bot ready check
+
+    @tasks.loop(seconds=10)
+    async def retrieve_incoming_sms(self):
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(ThreadPoolExecutor(), self._retrieve_sms)
+        for message in self.received_messages:
+            """embedspotify = discord.Embed(title=f"{user.name.capitalize()}'s Spotify", color=0x1eba10)
+
+        embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
+        embedspotify.add_field(name="Album", value=spot.album)
+        embedspotify.set_thumbnail(url=spot.album_cover_url)"""
+            msg_embed = discord.Embed(title=f'New Message From: {message["from"]}', color=0x82eefd)
+            msg_embed.add_field(name="Content", value=message["msg"])
+            msg_embed.add_field(name="Recipient", value=message["to"])
+            msg_embed.add_field(name="Message ID", value=message["id"])
+            await self.sms_channel.send(embed=msg_embed)
+            self.received_messages.pop(message)
 
 
 def setup(bot):
