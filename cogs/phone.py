@@ -97,6 +97,7 @@ class MarvinPhone(commands.Cog):
                 await ctx.send(f'{search_results["error_msg"]}')
                 return
         else:
+            recipient = recipient.replace(" ", "")
             if not recipient.startswith('+'):
                 recipient = f'{self.DEFAULT_COUNTRY_CODE}{recipient}'
             if not validate_phone_number(recipient):
