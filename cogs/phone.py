@@ -160,7 +160,7 @@ class MarvinPhone(commands.Cog):
                             # we are in a final delivery state, update the message id
                             channel = self.bot.get_channel(int(results["channel_id"]))
                             message = await channel.fetch_message(results["message_id"])
-                            await message.edit(content=f'**YOUR MESSAGE HAS BEEN DELIVERED TO: {response.to}.**\n'
+                            await message.edit(content=f'**UPDATE FOR YOUR MESSAGE TO: {response.to}.**\n'
                                                        f'Status: **{results["status"].upper()}**\nID: {id}'
                                                        f'\nPrice: {response.price} ({response.price_unit})\n'
                                                        f'This message will be deleted in '
