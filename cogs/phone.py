@@ -150,12 +150,6 @@ class MarvinPhone(commands.Cog):
 
     @tasks.loop(seconds=5)
     async def check_message_status(self):
-        for user, messages in self.message_list.items():
-            for message in messages:
-                for id, results in message.items():
-                    if results["status"] != 'delivered':
-                        # TODO::: get status of message here?
-                        continue
         for user, messages in self.sent_messages.items():
             for text in messages:
                 for id, results in text.items():
