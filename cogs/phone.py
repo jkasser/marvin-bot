@@ -13,6 +13,7 @@ class MarvinPhone(commands.Cog):
     MESSAGE_LENGTH = 160
     DEFAULT_COUNTRY_CODE = '+1'
     SUPPORTED_MEDIA_TYPES = ('.jpg', '.gif', '.png', '.jpeg')
+    FINAL_DELIVERY_STATUSES = ['delivery_unknown', 'delivered', 'undelivered', 'failed']
 
     def __init__(self, bot):
         self.bot = bot
