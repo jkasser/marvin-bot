@@ -126,7 +126,7 @@ class MarvinNews(commands.Cog):
                     embedded_link.add_field(name="Source", value=article["source"], inline=True)
                     embedded_link.add_field(name="Author", value=article["author"], inline=True)
                     embedded_link.add_field(name="Published", value=article["published"], inline=True)
-                    if article["thumb"] is not "" and article["thumb"] is not None:
+                    if article["thumb"] != "" and article["thumb"] is not None:
                         embedded_link.set_thumbnail(url=article["thumb"])
                     await ctx.send(embed=embedded_link)
                 except Exception:
@@ -158,7 +158,7 @@ class MarvinNews(commands.Cog):
                         embedded_link.add_field(name="Source", value=article["source"], inline=True)
                         embedded_link.add_field(name="Author", value=article["author"], inline=True)
                         embedded_link.add_field(name="Published", value=article["published"], inline=True)
-                        if article["thumb"] is not "" and article["thumb"] is not None:
+                        if article["thumb"] != "" and article["thumb"] is not None:
                             embedded_link.set_thumbnail(url=article["thumb"])
                         await news_channel.send(embed=embedded_link)
                     except Exception as e:

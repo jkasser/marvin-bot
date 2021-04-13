@@ -454,7 +454,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
                                                                         inline=True)
                                                 news_embed.add_field(name="Published",
                                                                         value=article["published"], inline=True)
-                                                if article["thumb"] is not "" and article["thumb"] is not None:
+                                                if article["thumb"] != "" and article["thumb"] is not None:
                                                     news_embed.set_thumbnail(url=article["thumb"])
                                                 await user.dm_channel.send(embed=news_embed)
                                             except Exception:
