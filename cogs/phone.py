@@ -102,8 +102,7 @@ class MarvinPhone(commands.Cog):
             if not recipient.startswith('+'):
                 recipient = f'{self.DEFAULT_COUNTRY_CODE}{recipient}'
             if not validate_phone_number(recipient):
-                await ctx.send('Your phone number was not in a valid format! The number needs to be in a 10 digit '
-                               'international format with no spaces. E.g. +12345678910\nPlease try again. Goodbye.')
+                await ctx.send('Your phone number was not in a valid format! Please try again. Goodbye.')
                 return
 
         msg = ' '.join(msg)
@@ -116,9 +115,7 @@ class MarvinPhone(commands.Cog):
         if message_count > self.MAX_MESSAGES:
             await ctx.send('Your message is too long for me to send. I am limited to 5 messages of 160 characters each')
 
-        def check(m):
-            return m.author.name == ctx.author.name
-        try:
+        # try:
         #     await ctx.send('Do you want to attach media to this message? (Yes/Y?)')
         #     is_mms = await self.bot.wait_for("message", check=check, timeout=timeout)
         #     if is_mms.content.lower() in ('y', 'yes'):
@@ -136,17 +133,20 @@ class MarvinPhone(commands.Cog):
         #             await ctx.send('I was unable to parse your attached media, please try this command again! Goodbye!')
         #             return
         #     else:
-            message_content = self._send_sms(recipient, msg)
-            await ctx.send(f'I have attempted to send your message.\nStatus: {message_content.status}'
-                           f'\nID: {message_content.sid}\nPrice: {message_content.price}')
-            message_tracking = {
-                message_content.sid: {"status": message_content.status, "channel_id": ctx.message.channel.id}
-            }
-            if ctx.author.mention not in self.message_list.keys():
-                self.message_list[ctx.author.mention] = []
-            self.message_list[ctx.author.mention].append(message_tracking)
-        except TimeoutError:
-            await ctx.send('You have taken too long! Please try again.')
+        message_content = self._send_sms(recipient, msg)
+        # store what we need in a dict so we can edit the message later
+        sent_message = await ctx.send(f'I have attempted to send your message.\nStatus: {message_content.status}'
+                                      f'\nID: {message_content.sid}\nPrice: {message_content.price}')
+        message_tracking = {message_content.sid: {
+            "status": message_content.status,
+            "channel_id": ctx.message.channel.id,
+            "message_id": sent_message.id,
+            "price": message_content.price}}
+        if ctx.author.mention not in self.sent_messages.keys():
+            self.sent_messages[ctx.author.mention] = []
+        self.sent_messages[ctx.author.mention].append(message_tracking)
+        # except TimeoutError:
+        #     await ctx.send('You have taken too long! Please try again.')
 
     @tasks.loop(seconds=5)
     async def check_message_status(self):
