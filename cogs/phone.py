@@ -24,6 +24,8 @@ class MarvinPhone(commands.Cog):
         self.client = Client(account_sid, auth_token)
         self.message_list = {}
         # TODO::: start task loop
+        self.sent_messages = {}
+        self.check_message_status.start()
 
     def _send_sms(self, recipient, message):
         # send an sms and return the twilio response
@@ -154,11 +156,32 @@ class MarvinPhone(commands.Cog):
                     if results["status"] != 'delivered':
                         # TODO::: get status of message here?
                         continue
+        for user, messages in self.sent_messages.items():
+            for text in messages:
+                for id, results in text.items():
+                    if results["status"] not in self.FINAL_DELIVERY_STATUSES:
+                        response = self.client.messages(id).fetch()
+                        print(response)
+                        results["status"] = response.status
+                        if response.status in self.FINAL_DELIVERY_STATUSES:
+                            # we are in a final delivery state, update the message id
+                            channel = self.bot.get_channel(int(results["channel_id"]))
+                            message = await channel.fetch_message(results["message_id"])
+                            await message.edit(content=f'**YOUR MESSAGE HAS BEEN DELIVERED TO: {response.to}.**\n'
+                                                       f'Status: **{results["status"].upper()}**\nID: {id}'
+                                                       f'\nPrice: {response.price} ({response.price_unit})\n'
+                                                       f'This message will be deleted in '
+                                                       f'{int(float(self.DELETE_MESSAGES_AFTER/3600))} hour.',
+                                               delete_after=self.DELETE_MESSAGES_AFTER)
+                            messages.remove(text)
                     else:
-                        # if it's been delivered, remove it
-                        del message[id]
+                        # if we somehow made it this far
+                        messages.remove(text)
+                        continue
 
-# TODO::: add before loop start bot ready check
+    @check_message_status.before_loop
+    async def before_check_message_status(self):
+        await self.bot.wait_until_ready()
 
 
 def setup(bot):
