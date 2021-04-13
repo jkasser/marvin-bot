@@ -1,6 +1,6 @@
 from discord.ext import commands, tasks
 from discord import embeds
-from utils.db import SubscriptionsDB
+from utils.db import MarvinDB
 from asyncio import TimeoutError
 from utils import timezones, enums
 from utils.helper import check_if_valid_hour, map_active_to_bool
@@ -13,7 +13,7 @@ import functools
 from concurrent.futures.thread import ThreadPoolExecutor
 
 
-class Subscriptions(commands.Cog, SubscriptionsDB):
+class Subscriptions(commands.Cog, MarvinDB):
 
     SUBSCRIPTION_TABLE_NAME = "subs"
     SUBSCRIPTION_TABLE = f"""CREATE TABLE IF NOT EXISTS {SUBSCRIPTION_TABLE_NAME} (
@@ -24,7 +24,7 @@ class Subscriptions(commands.Cog, SubscriptionsDB):
         when_send integer NOT NULL,
         active integer NOT NULL,
         last_sent timestamp,
-        FOREIGN KEY(user_id) REFERENCES {SubscriptionsDB.SUB_USERS_TABLE_NAME}(id)
+        FOREIGN KEY(user_id) REFERENCES {MarvinDB.SUB_USERS_TABLE_NAME}(id)
     );"""
     INSERT_SUB = f"""INSERT INTO {SUBSCRIPTION_TABLE_NAME}(user_id, sub_type, sub_details, when_send, active, last_sent) 
     VALUES(?,?,?,?,?,?)"""

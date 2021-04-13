@@ -43,16 +43,6 @@ class DB:
 
 class MarvinDB(DB):
 
-    def __init__(self):
-        super(MarvinDB, self).__init__()
-        try:
-            self.conn = sqlite3.connect('marvin.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30, check_same_thread=False)
-        except Error as e:
-            print(e)
-
-
-class SubscriptionsDB(DB):
-
     SUB_USERS_TABLE_NAME = "users"
     SUB_USERS_TABLE = f"""CREATE TABLE IF NOT EXISTS {SUB_USERS_TABLE_NAME} (
         id integer PRIMARY KEY,
@@ -67,9 +57,9 @@ class SubscriptionsDB(DB):
     GET_ALL_USERS = f"""SELECT * FROM {SUB_USERS_TABLE_NAME}"""
 
     def __init__(self):
-        super(SubscriptionsDB, self).__init__()
+        super(MarvinDB, self).__init__()
         try:
-            self.conn = sqlite3.connect('subscriptions.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30)
+            self.conn = sqlite3.connect('marvin.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, timeout=30, check_same_thread=False)
             self.create_table(self.conn, self.SUB_USERS_TABLE)
             self.users = self.get_users()  # returns id, user, timezone
         except Error as e:

@@ -1,6 +1,6 @@
 from discord.ext import commands, tasks
 from discord.utils import get
-from utils.db import SubscriptionsDB
+from utils.db import MarvinDB
 from asyncio import TimeoutError
 from utils.helper import parse_string_to_datetime, turn_datetime_into_string
 from utils.helper import decode_value, encode_value, map_active_to_bool, map_bool_to_active
@@ -9,7 +9,7 @@ from datetime import datetime
 import pytz
 
 
-class AddressBook(commands.Cog, SubscriptionsDB):
+class AddressBook(commands.Cog, MarvinDB):
 
     ADDRESS_TABLE_NAME = "address_book"
     ADDRESS_TABLE = f"""CREATE TABLE IF NOT EXISTS {ADDRESS_TABLE_NAME} (
@@ -21,7 +21,7 @@ class AddressBook(commands.Cog, SubscriptionsDB):
         email text,
         birthday timestamp,
         birthday_reminder integer,
-        FOREIGN KEY(user_id) REFERENCES {SubscriptionsDB.SUB_USERS_TABLE_NAME}(id)
+        FOREIGN KEY(user_id) REFERENCES {MarvinDB.SUB_USERS_TABLE_NAME}(id)
     );"""
     GET_ADDRESS_BOOK_FOR_USER = f"""SELECT * FROM {ADDRESS_TABLE_NAME} where user_id = ?"""
     DELETE_ENTRY_FOR_USER = f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ? AND user_id = ?"""
