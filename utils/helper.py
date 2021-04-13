@@ -41,7 +41,6 @@ def turn_datetime_into_string(datetime_object) -> str:
 
 def get_turning_age_from_date_str(date_str: str):
     split_date = date_str.split('/')
-    print(split_date)
     if len(split_date) == 3:
         current_year = 2021
         age = current_year - int(split_date[2])

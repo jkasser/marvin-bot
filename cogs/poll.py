@@ -35,7 +35,6 @@ class QuickPoll(commands.Cog):
         poll_message = await ctx.channel.fetch_message(id)
         embed = poll_message.embeds[0]
         unformatted_options = [x.strip() for x in embed.description.split('\n')]
-        print(f'unformatted{unformatted_options}')
         opt_dict = {x[:2]: x[3:] for x in unformatted_options} if unformatted_options[0][0] == '1' \
             else {x[:1]: x[2:] for x in unformatted_options}
         # check if we're using numbers for the poll, or x/checkmark, parse accordingly

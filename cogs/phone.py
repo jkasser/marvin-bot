@@ -155,7 +155,6 @@ class MarvinPhone(commands.Cog):
                 for id, results in text.items():
                     if results["status"] not in self.FINAL_DELIVERY_STATUSES:
                         response = self.client.messages(id).fetch()
-                        print(response)
                         results["status"] = response.status
                         if response.status in self.FINAL_DELIVERY_STATUSES:
                             # we are in a final delivery state, update the message id
