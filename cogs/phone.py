@@ -11,6 +11,7 @@ class MarvinPhone(commands.Cog):
 
     MAX_MESSAGES = 5
     MESSAGE_LENGTH = 160
+    DELETE_MESSAGES_AFTER = 3600 # 1 hour
     DEFAULT_COUNTRY_CODE = '+1'
     SUPPORTED_MEDIA_TYPES = ('.jpg', '.gif', '.png', '.jpeg')
     FINAL_DELIVERY_STATUSES = ['delivery_unknown', 'delivered', 'undelivered', 'failed']
