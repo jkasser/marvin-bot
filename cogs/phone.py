@@ -22,8 +22,6 @@ class MarvinPhone(commands.Cog):
         auth_token = cfg["twilio"]["auth_token"]
         self.from_number = cfg["twilio"]["number"]
         self.client = Client(account_sid, auth_token)
-        self.message_list = {}
-        # TODO::: start task loop
         self.sent_messages = {}
         self.check_message_status.start()
 
