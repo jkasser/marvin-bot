@@ -1,4 +1,3 @@
-import requests
 import yaml
 import asyncio
 from asyncio import TimeoutError
