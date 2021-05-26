@@ -3,9 +3,9 @@ import os
 import yaml
 import uuid
 import json
+import asyncio
 from assets.language_codes import translate_dict
 from discord.ext import commands
-import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
 
 

@@ -164,24 +164,28 @@ class Jeopardy(MarvinDB, commands.Cog):
             await ctx.send('BZZZZ! You have run out of time!')
             user_answer = ""
         correctness = fuzz_compare_answers(question_to_ask["answer"], user_answer)
-        await ctx.send(f'The correct answer is: **{question_to_ask["answer"]}**\nYou answered: **{user_answer}**')
-        await ctx.send(f'Your answer is: **{correctness}%** correct.')
+        msg = ''
+        msg += f'The correct answer is: **{question_to_ask["answer"]}**\nYou answered: **{user_answer}**\n'
+        msg += f'Your answer is: **{correctness}%** correct.\n'
         # determine correctness and update leaderboard, polling task will update scores in the DB every 5 minutes
         if correctness >= 60:
-            await ctx.send(f'We will consider that a valid answer, you have just earned {question_to_ask["worth"]}')
+            msg += f'We will consider that a valid answer, you have just earned {question_to_ask["worth"]}\n'
             new_worth = update_current_worth(self.leaderboard, current_player, question_to_ask["worth"])
-            await ctx.send(f'Your worth is now: {new_worth}')
+            msg += f'Your worth is now: **{new_worth}**'
         else:
-            await ctx.send(f'That was not correct!')
+            msg += f'That was not correct!\n'
             lost_worth = f'$-{question_to_ask["worth"].split("$")[1]}'
             new_worth = update_current_worth(self.leaderboard, current_player, lost_worth)
-            await ctx.send(f'Your worth is now: {new_worth}')
+            msg += f'Your worth is now: **{new_worth}**'
+        await ctx.send(msg)
 
     @commands.command('jepstandings', help='See the current standings!')
     async def get_jep_standings(self, ctx):
         await ctx.send(f'**Player**: **Worth**')
+        msg = ''
         for current_player, current_worth in self.leaderboard.items():
-            await ctx.send(f'{current_player}: {current_worth}')
+            msg += f'{current_player}: {current_worth}' + '\n'
+        await ctx.send(msg)
 
     @tasks.loop(minutes=10)
     async def update_jep_leaderboard(self):
