@@ -1,5 +1,6 @@
 from discord.ext import commands, tasks
 from discord import embeds
+from discord.errors import HTTPException
 from utils.db import MarvinDB
 from asyncio import TimeoutError
 from utils import timezones, enums
@@ -435,7 +436,12 @@ class Subscriptions(commands.Cog, MarvinDB):
                                     # invoke the bot get weather command
                                     keyword_blocking_function = functools.partial(self.bot.get_cog('Weather').get_weather_for_area, sub_details, days=1, tz=info["tz"])
                                     weather_embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
-                                    await user.dm_channel.send(embed=weather_embed)
+                                    try:
+                                        await user.dm_channel.send(embed=weather_embed)
+                                    except HTTPException as e:
+                                        await user.dm_channel.send('I ran into an issue sending your weather '
+                                                                   'subscription. Please send this error to your admin.'
+                                                                   f' {e}')
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
                                     self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
@@ -456,7 +462,13 @@ class Subscriptions(commands.Cog, MarvinDB):
                                                                         value=article["published"], inline=True)
                                                 if article["thumb"] != "" and article["thumb"] is not None:
                                                     news_embed.set_thumbnail(url=article["thumb"])
-                                                await user.dm_channel.send(embed=news_embed)
+                                                try:
+                                                    await user.dm_channel.send(embed=news_embed)
+                                                except HTTPException as e:
+                                                    await user.dm_channel.send(
+                                                        'I ran into an issue sending your news '
+                                                        'subscription. Please send this error to your admin.'
+                                                        f' {e}')
                                             except Exception:
                                                 continue
                                     # update the last sent time in memory and in the database
