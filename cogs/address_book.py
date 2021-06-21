@@ -1,5 +1,4 @@
 from discord.ext import commands, tasks
-from discord.utils import get
 from utils.db import MarvinDB
 from asyncio import TimeoutError
 from utils.helper import parse_string_to_datetime, turn_datetime_into_string
