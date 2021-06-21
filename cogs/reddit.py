@@ -1,5 +1,5 @@
 import praw
-from prawcore.exceptions import ServerError
+from prawcore.exceptions import ServerError, ResponseException
 import os
 import yaml
 import discord
@@ -48,10 +48,13 @@ class MarvinReddit(MarvinDB, commands.Cog):
         self.check_reddit_lol_stream.start()
 
     def get_travel_stream(self, limit=5):
-        submissions = [
-            submission for submission in self.reddit.multireddit("OneBagOneWorld",
-                                                                 "OneBagOneWorld").top(limit=limit, time_filter="day")
-        ]
+        try:
+            submissions = [
+                submission for submission in self.reddit.multireddit("OneBagOneWorld",
+                                                                     "OneBagOneWorld").top(limit=limit, time_filter="day")
+            ]
+        except (ServerError, ResponseException):
+            submissions = None
         if submissions is not None:
             post_list = self.parse_stream(submissions)
             return post_list
@@ -70,7 +73,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
         try:
             submissions = [submission for submission in
                            self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit, time_filter="day")]
-        except ServerError:
+        except (ServerError, ResponseException):
             submissions = None
         if submissions is not None:
             post_list = self.parse_stream(submissions)
