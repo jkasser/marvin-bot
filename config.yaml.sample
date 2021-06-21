@@ -56,3 +56,9 @@ twilio:
   account_sid:
   auth_token:
   number:
+
+iot:
+  channel:
+
+giphy:
+  key:
