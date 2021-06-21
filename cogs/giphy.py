@@ -1,5 +1,5 @@
 import aiohttp
-import json
+import random
 import yaml
 import discord
 from discord.ext import commands
@@ -14,7 +14,7 @@ class Giphy(commands.Cog):
         self.key = cfg["giphy"]["key"]
         scheme = 'https'
         self.base_url = f'{scheme}://api.giphy.com/v1/gifs'
-        self.endpoint = '/trending'
+        self.gif_results_limit = 25
 
     @commands.command(name='gif', help='Sends the top trending gif for the provided keyword(s). If no search term is '
                                        'provided then I will send a random gif', pass_context=True)
@@ -29,10 +29,10 @@ class Giphy(commands.Cog):
             else:
                 search = '+'.join(search)
                 response = await session.get(
-                    f'{self.base_url}/search?q={search}&api_key={self.key}&limit=1')
+                    f'{self.base_url}/search?q={search}&api_key={self.key}&limit={self.gif_results_limit}')
                 data = await response.json()
-                print(data)
-                embed.set_image(url=data['data'][0]['images']['original']['url'])
+                choice = random.choice(range(0, self.gif_results_limit))
+                embed.set_image(url=data['data'][int(choice)]['images']['original']['url'])
         await ctx.send(embed=embed)
 
 
