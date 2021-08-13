@@ -1,5 +1,5 @@
 import praw
-from prawcore.exceptions import ServerError, ResponseException
+from prawcore.exceptions import ServerError, ResponseException, RequestException, PrawcoreException
 import os
 import yaml
 import discord
@@ -53,7 +53,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
                 submission for submission in self.reddit.multireddit("OneBagOneWorld",
                                                                      "OneBagOneWorld").top(limit=limit, time_filter="day")
             ]
-        except (ServerError, ResponseException):
+        except (ServerError, ResponseException, RequestException, PrawcoreException):
             submissions = None
         if submissions is not None:
             post_list = self.parse_stream(submissions)
@@ -73,7 +73,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
         try:
             submissions = [submission for submission in
                            self.reddit.subreddit("summonerschool+leagueoflegends").top(limit=limit, time_filter="day")]
-        except (ServerError, ResponseException):
+        except (ServerError, ResponseException, RequestException, PrawcoreException):
             submissions = None
         if submissions is not None:
             post_list = self.parse_stream(submissions)
