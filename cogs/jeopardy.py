@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import yaml
 from discord.ext import commands, tasks
 from asyncio import TimeoutError
 from sqlite3 import Error
@@ -37,6 +38,10 @@ class Jeopardy(MarvinDB, commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
+        file = open('config.yaml', 'r')
+        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        env = os.environ.get('ENV', 'NOT SET')
+        self.jep_channel_category = cfg["disc"][env]["jep_channel_category"]
         self.question_list = []
         self.leaderboard = {}
         try:
@@ -115,7 +120,7 @@ class Jeopardy(MarvinDB, commands.Cog):
     @commands.command(name='playjep', aliases=['jep'], help='Play a round of jeopardy!')
     async def play_jeopardy(self, ctx):
         current_player = ctx.author.name
-        if ctx.channel.category_id != 764524003075031050:
+        if ctx.channel.category_id != self.jep_channel_category:
             await ctx.send(f'Please use this over in any of the channels in the Jeopardy category!')
             return
         else:
