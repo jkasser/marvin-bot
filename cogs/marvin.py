@@ -1,6 +1,7 @@
 import discord
 import random
 import requests
+import os
 from data.quotes import *
 from discord.ext import commands
 import asyncio
@@ -286,6 +287,35 @@ class MarvinBot(commands.Cog):
         loop = asyncio.get_event_loop()
         r = await loop.run_in_executor(ThreadPoolExecutor(), requests.get, 'http://api.hostip.info/get_json.php')
         await ctx.send(str(r.json()["ip"]))
+
+    @commands.command(name='troll', help='Boosters only!')
+    @commands.has_role("Server Booster")
+    async def get_voice_channels(self, ctx):
+        voice_channel_list = ctx.guild.voice_channels
+        active_channels = [active_channel for active_channel in voice_channel_list
+                           if 'Marvin' not in [member.name for member in active_channel.members]
+                           and len([member.name for member in active_channel.members]) > 0]
+
+        # prioritize joining an active channel otherwise join any channel and wait for someone to join
+        if len(active_channels) > 0:
+            channel_to_join = random.choice(active_channels)
+        else:
+            channel_to_join = random.choice(voice_channel_list)
+
+        # now that we have a channel to join, see if we are already in one that we need to disconnect from
+        voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+        if voice_client:
+            await ctx.send(f'Disconnecting from current voice channel and switching to: {channel_to_join.name}')
+            await voice_client.disconnect()
+            new_channel = await channel_to_join.connect()
+        else:
+            await ctx.send(f'Attempting to join: {channel_to_join.name}')
+            new_channel = await channel_to_join.connect()
+        media_file = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/assets/media/rroll.mp3'
+        new_channel.play(discord.FFmpegPCMAudio(media_file))
+        while new_channel.is_playing():
+            await asyncio.sleep(1)
+        await new_channel.disconnect()
 
 
 def setup(bot):
