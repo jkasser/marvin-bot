@@ -21,7 +21,7 @@ class MarvinTranslator(commands.Cog):
             'Ocp-Apim-Subscription-Key': self.key,
             'Content-type': 'application/json',
             'X-ClientTraceId': str(uuid.uuid4()),
-            'Ocp-Apim-Subscription-Region': 'westus2'
+            'Ocp-Apim-Subscription-Region': 'eastus2'
         }
 
     def check_translate_text_validity(self, text):
