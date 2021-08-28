@@ -45,7 +45,8 @@ extensions = [
     'cogs.poll',
     # 'cogs.covid'
     'cogs.phone',
-    'cogs.giphy'
+    'cogs.giphy',
+    'cogs.jokes'
 ]
 
 
