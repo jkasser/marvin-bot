@@ -131,7 +131,7 @@ dmypy.json
 /marvin.db
 test.py
 /assets/riot_games/
-data/questions.json
+assets/data/questions.json
 config.yaml
-data/matches.py
+assets/data/matches.py
 *.db

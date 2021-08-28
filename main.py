@@ -4,8 +4,7 @@ import sys
 import discord
 import random
 from discord.ext import commands
-from data.quotes import *
-
+from assets.data.quotes import *
 
 # discord config
 file = open('config.yaml', 'r')

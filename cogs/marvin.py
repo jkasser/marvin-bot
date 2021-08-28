@@ -2,10 +2,10 @@ import discord
 import random
 import requests
 import os
-from data.quotes import *
-from discord.ext import commands
 import asyncio
 import yaml
+from assets.data.quotes import *
+from discord.ext import commands
 from concurrent.futures.thread import ThreadPoolExecutor
 
 
