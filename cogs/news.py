@@ -8,6 +8,7 @@ import discord
 from discord.ext import commands, tasks
 import asyncio
 import functools
+import json.decoder
 from concurrent.futures.thread import ThreadPoolExecutor
 
 
@@ -55,29 +56,32 @@ class MarvinNews(commands.Cog):
     #         return True
 
     def get_news(self, * q, page_size=3, page=1):
-        query = " ".join(q)
-        article_list = []
-        start_date = date.today()
-        response = self.news.get_everything(q=query, page_size=page_size, page=page, from_param=str(start_date))
-        if response["status"] == 'ok':
-            if len(response["articles"]) >= 1:
-                for article in response["articles"]:
-                    # if self.check_if_article_exists(self.get_article_slug(article["url"])):
-                    article_slug = self.get_article_slug(article["url"])
-                    if article_slug in self.article_tracker:
-                        continue
+        try:
+            query = " ".join(q)
+            article_list = []
+            start_date = date.today()
+            response = self.news.get_everything(q=query, page_size=page_size, page=page, from_param=str(start_date))
+            if response["status"] == 'ok':
+                if len(response["articles"]) >= 1:
+                    for article in response["articles"]:
+                        # if self.check_if_article_exists(self.get_article_slug(article["url"])):
+                        article_slug = self.get_article_slug(article["url"])
+                        if article_slug in self.article_tracker:
+                            continue
+                        else:
+                            # it doesn't exist so return it to the user and append it to the dict in memory
+                            article_list.append(self.get_article_data(article))
+                            self.article_tracker.append(article_slug)
+                    if len(article_list) == 0:
+                        page = page + 1
+                        # pass in the original tuple since it's expecting a tuple
+                        return self.get_news(q, page_size=page_size, page=page)
                     else:
-                        # it doesn't exist so return it to the user and append it to the dict in memory
-                        article_list.append(self.get_article_data(article))
-                        self.article_tracker.append(article_slug)
-                if len(article_list) == 0:
-                    page = page + 1
-                    # pass in the original tuple since it's expecting a tuple
-                    return self.get_news(q, page_size=page_size, page=page)
-                else:
-                    return article_list
-        else:
-            return f'I have encountered the following error: {response["code"]}\n{response["message"]}'
+                        return article_list
+            else:
+                return f'I have encountered the following error: {response["code"]}\n{response["message"]}'
+        except json.decoder.JSONDecodeError as e:
+            return f'I have encountered the following error: {e}'
 
     def get_article_slug(self, url):
         return get_slug_from_url(url)
@@ -138,34 +142,37 @@ class MarvinNews(commands.Cog):
     async def check_the_news(self):
         news_channel = self.bot.get_channel(self.news_channel)
         sources = ",".join(self.cfg["news"]["sources"])
-        loop = asyncio.get_event_loop()
-        keyword_blocking_function = functools.partial(self.get_top_headlines, page_size=3, sources=sources)
-        news_list = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
-        news_list = news_list["articles"]
-        if isinstance(news_list, list):
-            for post in news_list:
-                # parse the article
-                article = self.get_article_data(post)
-                # check if the news has already been posted
-                # if self.check_if_article_exists(self.get_article_slug(article["article_slug"])):
-                if article["article_slug"] in self.article_tracker:
-                    continue
-                else:
-                    self.article_tracker.append(article["article_slug"])
-                    try:
-                        embedded_link = discord.Embed(title=article["title"], description=article["description"],
-                                                      url=article["url"])
-                        embedded_link.add_field(name="Source", value=article["source"], inline=True)
-                        embedded_link.add_field(name="Author", value=article["author"], inline=True)
-                        embedded_link.add_field(name="Published", value=article["published"], inline=True)
-                        if article["thumb"] != "" and article["thumb"] is not None:
-                            embedded_link.set_thumbnail(url=article["thumb"])
-                        await news_channel.send(embed=embedded_link)
-                    except Exception as e:
-                        await news_channel.send(e)
+        try:
+            loop = asyncio.get_event_loop()
+            keyword_blocking_function = functools.partial(self.get_top_headlines, page_size=3, sources=sources)
+            news_list = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
+            news_list = news_list["articles"]
+            if isinstance(news_list, list):
+                for post in news_list:
+                    # parse the article
+                    article = self.get_article_data(post)
+                    # check if the news has already been posted
+                    # if self.check_if_article_exists(self.get_article_slug(article["article_slug"])):
+                    if article["article_slug"] in self.article_tracker:
                         continue
-        else:
-            await news_channel.send('I wasn\'t able to find any news!')
+                    else:
+                        self.article_tracker.append(article["article_slug"])
+                        try:
+                            embedded_link = discord.Embed(title=article["title"], description=article["description"],
+                                                          url=article["url"])
+                            embedded_link.add_field(name="Source", value=article["source"], inline=True)
+                            embedded_link.add_field(name="Author", value=article["author"], inline=True)
+                            embedded_link.add_field(name="Published", value=article["published"], inline=True)
+                            if article["thumb"] != "" and article["thumb"] is not None:
+                                embedded_link.set_thumbnail(url=article["thumb"])
+                            await news_channel.send(embed=embedded_link)
+                        except Exception as e:
+                            await news_channel.send(e)
+                            continue
+            else:
+                await news_channel.send('I wasn\'t able to find any news!')
+        except json.decoder.JSONDecodeError as e:
+            await news_channel.send(f'I have encountered the following error!: {e}')
 
     @check_the_news.before_loop
     async def before_check_the_news(self):
