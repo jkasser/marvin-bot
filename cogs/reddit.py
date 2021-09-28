@@ -27,8 +27,8 @@ class MarvinReddit(MarvinDB, commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         super().__init__()
-        file = open('config.yaml', 'r')
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open('config.yaml', 'r') as file:
+            cfg = yaml.safe_load(file)
         client_id = cfg["reddit"]["client_id"]
         client_secret = cfg["reddit"]["client_secret"]
         env = os.environ.get('ENV', 'dev')

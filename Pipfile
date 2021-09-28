@@ -7,7 +7,6 @@ verify_ssl = true
 
 [packages]
 discord = "*"
-pyyaml = "*"
 requests = "*"
 pytz = "*"
 python-dateutil = "*"
@@ -19,6 +18,8 @@ python-levenshtein = "*"
 fabric = "*"
 twilio = "*"
 typing-extensions = "*"
+chatterbot-corpus = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.8"

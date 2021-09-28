@@ -18,8 +18,8 @@ class MarvinPhone(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        file = open('config.yaml', 'r')
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open('config.yaml', 'r') as file:
+            cfg = yaml.safe_load(file)
         account_sid = cfg["twilio"]["account_sid"]
         auth_token = cfg["twilio"]["auth_token"]
         self.from_number = cfg["twilio"]["number"]

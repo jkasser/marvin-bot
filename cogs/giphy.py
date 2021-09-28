@@ -9,8 +9,8 @@ class Giphy(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        file = open('config.yaml', 'r')
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open('config.yaml', 'r') as file:
+            cfg = yaml.safe_load(file)
         self.key = cfg["giphy"]["key"]
         scheme = 'https'
         self.base_url = f'{scheme}://api.giphy.com/v1/gifs'

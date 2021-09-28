@@ -30,8 +30,8 @@ class InsertQuestions(Jeopardy):
                 self.conn.commit()
 
 if __name__ == '__main__':
-    file = open('./config.yaml', 'r')
-    cfg = yaml.load(file, Loader=yaml.FullLoader)
+    with open('config.yaml', 'r') as file:
+        cfg = yaml.safe_load(file)
     token = cfg["disc"]["token"]
     intents = discord.Intents().all()
     bot = commands.Bot(command_prefix=cfg["disc"]["prefix"], intents=intents)

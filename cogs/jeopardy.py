@@ -38,8 +38,8 @@ class Jeopardy(MarvinDB, commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
-        file = open('config.yaml', 'r')
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open('config.yaml', 'r') as file:
+            cfg = yaml.safe_load(file)
         env = os.environ.get('ENV', 'NOT SET')
         self.jep_channel_category = cfg["disc"][env]["jep_channel_category"]
         self.question_list = []

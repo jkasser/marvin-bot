@@ -69,8 +69,8 @@ class Riot(MarvinDB, commands.Cog):
         self.data_version_table = self.create_table(self.conn, self.ASSETS_VER_TABLE)
         self.issue_table = self.create_table(self.conn, self.LOL_STATUS_TABLE)
         # Riot API Stuff
-        file = open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r')
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r') as file:
+            cfg = yaml.safe_load(file)
         env = os.environ.get('ENV', 'dev')
         self.api_updates_channel = self.lol_channel = cfg["disc"][env]["api_updates_channel"]
         self.status_channel = self.lol_channel = cfg["disc"][env]["status_channel"]
