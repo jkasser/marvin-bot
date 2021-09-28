@@ -57,22 +57,22 @@ class UserInfo:
 
 # Get the list of cogs
 extensions = [
-    # 'cogs.subscriptions',
-    # 'cogs.marvin',
-    # 'cogs.todo',
-    # 'cogs.riot',
-    # 'cogs.jeopardy',
-    # 'cogs.news',
-    # 'cogs.reminder',
-    # 'cogs.reddit',
-    # 'cogs.weather',
-    # 'cogs.address_book',
-    # 'cogs.translator',
-    # 'cogs.poll',
-    # # 'cogs.covid'
-    # 'cogs.phone',
-    # 'cogs.giphy',
-    # 'cogs.jokes'
+    'cogs.subscriptions',
+    'cogs.marvin',
+    'cogs.todo',
+    'cogs.riot',
+    'cogs.jeopardy',
+    'cogs.news',
+    'cogs.reminder',
+    'cogs.reddit',
+    'cogs.weather',
+    'cogs.address_book',
+    'cogs.translator',
+    'cogs.poll',
+    # 'cogs.covid'
+    'cogs.phone',
+    'cogs.giphy',
+    'cogs.jokes'
 ]
 
 
@@ -101,7 +101,7 @@ async def on_message(message):  # event that happens per any message.
             await channel.send(file=discord.File('./assets/media/shut_up.gif'))
         elif 'wtf' == message_text or 'what the fuck' == message_text or 'what the hell' == message_text:
             await channel.send(file=discord.File('./assets/media/wtf.gif'))
-        elif message.channel.id == 776134801601593376:
+        elif message.channel.id == 870327217756962877:
             await channel.send(chatbot.get_response(message.content.capitalize()))
         elif '<@!759093184219054120>' in message.content:
             response = random.choice(marvin_quotes)
