@@ -20,6 +20,10 @@ twilio = "*"
 typing-extensions = "*"
 chatterbot-corpus = "*"
 pyyaml = "*"
+nltk = "*"
+numpy = "*"
+tflearn = "*"
+keras = "*"
 
 [requires]
 python_version = "3.8"
