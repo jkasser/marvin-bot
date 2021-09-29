@@ -23,29 +23,6 @@ token = cfg["disc"][env]["token"]
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=cfg["disc"]["prefix"], intents=intents)
 
-# Instantiate our Chat Bot
-# chatbot = ChatBot(
-#     'Marvin',
-#     storage_adapter='chatterbot.storage.SQLStorageAdapter',
-#     database_uri='sqlite:///marvin.db',
-#     logic_adapters=
-#     [
-#         {
-#             "import_path": "chatterbot.logic.BestMatch",
-#             "statement_comparison_function": "chatterbot.comparisons.levenshtein_distance",
-#             "response_selection_method": get_random_response,
-#             "default_response": "I am sorry, but I do not understand.",
-#         },
-#     ]
-# )
-# trainer = ChatterBotCorpusTrainer(chatbot)
-# trainer.train("chatterbot.corpus.english")
-# trainer.train("chatterbot.corpus.french")
-# trainer.train("chatterbot.corpus.german")
-# trainer.train("chatterbot.corpus.russian")
-# trainer.train("./assets/data/custom.yml")
-
-
 
 class UserInfo:
     USERS = None
@@ -59,22 +36,22 @@ class UserInfo:
 
 # Get the list of cogs
 extensions = [
-    # 'cogs.subscriptions',
-    # 'cogs.marvin',
-    # 'cogs.todo',
-    # 'cogs.riot',
-    # 'cogs.jeopardy',
-    # 'cogs.news',
-    # 'cogs.reminder',
-    # 'cogs.reddit',
-    # 'cogs.weather',
-    # 'cogs.address_book',
-    # 'cogs.translator',
-    # 'cogs.poll',
-    # # 'cogs.covid'
-    # 'cogs.phone',
-    # 'cogs.giphy',
-    # 'cogs.jokes'
+    'cogs.subscriptions',
+    'cogs.marvin',
+    'cogs.todo',
+    'cogs.riot',
+    'cogs.jeopardy',
+    'cogs.news',
+    'cogs.reminder',
+    'cogs.reddit',
+    'cogs.weather',
+    'cogs.address_book',
+    'cogs.translator',
+    'cogs.poll',
+    # 'cogs.covid'
+    'cogs.phone',
+    'cogs.giphy',
+    'cogs.jokes'
     'cogs.chat'
 ]
 
