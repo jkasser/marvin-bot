@@ -51,7 +51,7 @@ extensions = [
     # 'cogs.covid'
     'cogs.phone',
     'cogs.giphy',
-    'cogs.jokes'
+    'cogs.jokes',
     'cogs.chat'
 ]
 
