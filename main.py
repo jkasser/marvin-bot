@@ -52,7 +52,7 @@ extensions = [
     'cogs.phone',
     'cogs.giphy',
     'cogs.jokes',
-    'cogs.chat'
+    # 'cogs.chat'
 ]
 
 
@@ -81,10 +81,11 @@ async def on_message(message):  # event that happens per any message.
             await channel.send(file=discord.File('./assets/media/shut_up.gif'))
         elif 'wtf' == message_text or 'what the fuck' == message_text or 'what the hell' == message_text:
             await channel.send(file=discord.File('./assets/media/wtf.gif'))
-        elif message.channel.id == cfg["disc"][env]["chat_bot_channel"]:
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(ThreadPoolExecutor(), bot.get_cog('MarvinChat').chatbot_response, message_text)
-            await channel.send(response)
+        # COMMENT IN IF YOU WANT HIM TO CHAT
+        # elif message.channel.id == cfg["disc"][env]["chat_bot_channel"]:
+        #     loop = asyncio.get_event_loop()
+        #     response = await loop.run_in_executor(ThreadPoolExecutor(), bot.get_cog('MarvinChat').chatbot_response, message_text)
+        #     await channel.send(response)
             # await channel.send(chatbot.get_response(message.content.capitalize()))
         elif '<@!759093184219054120>' in message.content:
             response = random.choice(marvin_quotes)
