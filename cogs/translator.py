@@ -13,8 +13,8 @@ class MarvinTranslator(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        file = open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r')
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open(os.path.dirname(os.path.dirname(__file__)) + '/config.yaml', 'r') as file:
+            cfg = yaml.safe_load(file)
         self.key = cfg["microsoft"]["translator"]["key"]
         self.base_url = cfg["microsoft"]["translator"]["endpoint"]
         self.headers = {

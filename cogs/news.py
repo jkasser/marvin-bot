@@ -28,8 +28,8 @@ class MarvinNews(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
-        file = open('config.yaml', 'r')
-        self.cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open('config.yaml', 'r') as file:
+            self.cfg = yaml.safe_load(file)
         self.key = self.cfg["news"]["key"]
         env = os.environ.get('ENV', 'dev')
         self.news_channel = self.cfg["disc"][env]["news_channel"]

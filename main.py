@@ -3,12 +3,17 @@ import os
 import sys
 import discord
 import random
+import asyncio
 from discord.ext import commands
 from assets.data.quotes import *
+from concurrent.futures.thread import ThreadPoolExecutor
+# from chatterbot import ChatBot
+# from chatterbot.response_selection import get_random_response
+# from chatterbot.trainers import ChatterBotCorpusTrainer
 
 # discord config
-file = open('config.yaml', 'r')
-cfg = yaml.load(file, Loader=yaml.FullLoader)
+with open('config.yaml', 'r') as file:
+    cfg = yaml.safe_load(file)
 env = os.environ.get('ENV', 'NOT SET')
 if env == 'NOT SET':
     sys.exit('Set your environment first. E.g.:\n'
@@ -46,7 +51,8 @@ extensions = [
     # 'cogs.covid'
     'cogs.phone',
     'cogs.giphy',
-    'cogs.jokes'
+    'cogs.jokes',
+    # 'cogs.chat'
 ]
 
 
@@ -75,6 +81,12 @@ async def on_message(message):  # event that happens per any message.
             await channel.send(file=discord.File('./assets/media/shut_up.gif'))
         elif 'wtf' == message_text or 'what the fuck' == message_text or 'what the hell' == message_text:
             await channel.send(file=discord.File('./assets/media/wtf.gif'))
+        # COMMENT IN IF YOU WANT HIM TO CHAT
+        # elif message.channel.id == cfg["disc"][env]["chat_bot_channel"]:
+        #     loop = asyncio.get_event_loop()
+        #     response = await loop.run_in_executor(ThreadPoolExecutor(), bot.get_cog('MarvinChat').chatbot_response, message_text)
+        #     await channel.send(response)
+            # await channel.send(chatbot.get_response(message.content.capitalize()))
         elif '<@!759093184219054120>' in message.content:
             response = random.choice(marvin_quotes)
             await channel.send(response)

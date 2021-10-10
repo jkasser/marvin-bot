@@ -20,10 +20,6 @@ class MarvinStandup(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-    # file = open('config.yaml', 'r')
-    # cfg = yaml.load(file, Loader=yaml.FullLoader)
-    # env = os.environ.get('ENV', 'NOT SET')
-    # self.joke_channel = cfg["disc"][env]["booster_lounge_channel"]
         self.jokes_list = {
             "wocka": self.load_wocka_jokes(),
             "reddit":  self.load_reddit_jokes(),

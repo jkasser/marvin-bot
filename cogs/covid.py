@@ -13,8 +13,8 @@ from concurrent.futures.thread import ThreadPoolExecutor
 class Covid(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        file = open('config.yaml', 'r')
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
+        with open('config.yaml', 'r') as file:
+            cfg = yaml.safe_load(file)
         env = os.environ.get('ENV', 'dev')
         self.us_politics_channel = cfg["disc"][env]["us_politics_channel"]
         self.base_url = "http://covidtracking.com/api/"
