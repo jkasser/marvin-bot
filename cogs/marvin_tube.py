@@ -72,21 +72,29 @@ class MarvinTube(commands.Cog, MarvinDB):
                 latest_vid["video_id"] = video["id"]["videoId"]
                 latest_vid["title"] = video["snippet"]["title"]
             return latest_vid
-        elif r.status_code == 400:
-            # someone could have searched by a custom URL, so try to get fancy and let us search by the name
-            r = requests.get(
-                self.base_url + f'search?key={self.google_api_key}&order=date&maxResults=1&part=snippet,id&type=channel'
-                                f'&q={channel_id}'
-            )
-            if r.status_code == 200:
-                for video in r.json()["items"]:
-                    latest_vid["channel_title"] = video["snippet"]["channelTitle"]
-                    latest_vid["video_id"] = video["id"]["videoId"]
-                    latest_vid["title"] = video["snippet"]["title"]
-                return latest_vid
+        else:
+            response = f'There was an error returning this request: {r.status_code}\n{r.json()["error"]["message"]}'
+            return response
 
-        response = f'There was an error returning this request: {r.status_code}\n{r.text}'
-        return response
+    def _get_channel_by_custom_name(self, channel_name):
+        possible_channels = []
+        # someone could have searched by a custom URL, so try to get fancy and let us search by the name
+        r = requests.get(
+            self.base_url + f'search?key={self.google_api_key}&order=relevance&maxResults=3&part=snippet,id&type=channel'
+                            f'&q={channel_name}'
+        )
+        if r.status_code == 200:
+            for channel in r.json()["items"]:
+                possible_channels.append(
+                    {
+                        "channel_id": channel["snippet"]["channelId"],
+                        "channel_title": channel["snippet"]["channelTitle"]
+                    }
+                )
+            return possible_channels
+        else:
+            response = f'There was an error returning this request: {r.status_code}\n{r.text}'
+            return response
 
     # DB methods here
     def _get_current_subs(self):
@@ -116,7 +124,8 @@ class MarvinTube(commands.Cog, MarvinDB):
         def check(m):
             return m.author.name == ctx.author.name
         if channel_id is None:
-            await ctx.send('You haven\'t provided me with a channel ID, could you grab that for me now?')
+            await ctx.send('You haven\'t provided me with a channel ID or Channel Name. '
+                           'Could you grab that for me now?')
             try:
                 user_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
                 user_answer = user_answer.content
@@ -126,11 +135,62 @@ class MarvinTube(commands.Cog, MarvinDB):
             except TimeoutError:
                 await ctx.send('You have taken too long to decide! Good-bye!')
                 return
+        # figure out if it's a channel ID or channel name
+        loop = asyncio.get_event_loop()
+        if not channel_id.lower().startswith('uc'):
+            await ctx.send('This looks like a channel name instead of a channel ID, is this correct? (yes/no)')
+            try:
+                is_channel_id_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
+                is_channel_id_answer = is_channel_id_answer.content
+                if is_channel_id_answer.lower() not in ['yes', 'y', 'yep', 'yse', 'yess']:
+                    channel_id = channel_id
+                else:
+                    # perform the channel name lookup
+                    response = await loop.run_in_executor(
+                        ThreadPoolExecutor(), self._get_channel_by_custom_name, channel_id
+                    )
+                    if isinstance(response, list):
+                        if len(response) == 0:
+                            await ctx.send(f'I found no matches based on the channel name of: {channel_id}. Please'
+                                           f' try again! Good bye.')
+                            return
+                        elif len(response) == 1:
+                            await  ctx.send(f'I have found one match! I will now subscribe you to '
+                                            f'{response[0]["channel_title"]}')
+                            # set the channel_id here which should set it for the latest video check later
+                            channel_id = response[0]["channel_id"]
+                        else:
+                            # if we have more than one result let's let the user choose them here
+                            await ctx.send(f'Your search has {len(response)} results! Which channel would you like '
+                                           f'to subscribe? You can make a note of the other channel ID if you were'
+                                           f' trying to subscribe more than 1! Please post the number of the channel '
+                                           f'that best matches what you want, or say cancel!')
+                            strings = []
+                            for idx, possible_channel in enumerate(response):
+                                strings.append(f'{idx}. Title: {possible_channel["channel_title"]} - '
+                                               f'ID: {possible_channel["channel_id"]}')
+                            await ctx.send("\n".join(strings))
+                            channel_selection = await self.bot.wait_for("message", check=check, timeout=timeout)
+                            channel_selection = channel_selection.content
+                            if 'cancel' in channel_selection.lower():
+                                await ctx.send('Ok, goodbye!')
+                            else:
+                                try:
+                                    choice = int(channel_selection.strip(' .!,-:\'\"][{}@#$%'))
+                                    channel_id = response[choice]["channel_id"]
+                                except ValueError:
+                                    await ctx.send('I was unable to parse your response. However, you can just call'
+                                                   ' this command again and provide the channel ID of the channel '
+                                                   'you wish to subscribe to.')
+                                    return
+
+            except TimeoutError:
+                await ctx.send('You have taken too long to decide! Good-bye!')
+                return
 
         if channel_id not in self.channels.keys():
             disc_channel = self.bot.get_channel(int(self.tv_channel_id))
             # this is the first time we are retrieving this so let's do the whole shebang
-            loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(ThreadPoolExecutor(),
                                                   self._get_latest_video_for_channel_id, channel_id)
             if isinstance(response, dict):
