@@ -48,7 +48,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                 self.user_subs[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], sub_list=[],
                                                update_pending=False)
                 # retrieve the subs for this user by user ID
-                subs = self.get_active_subs(user[0])
+                subs = self._get_active_subs(user[0])
                 for sub in subs:
                     sub_dict = dict(
                         id=sub[0], type=sub[2], details=sub[3], when=sub[4], active=sub[5], last_sent=sub[6]
@@ -59,27 +59,27 @@ class Subscriptions(commands.Cog, MarvinDB):
         self.insert_or_update_subs_in_db.start()
         self.check_if_time_to_notify_user_of_sub.start()
 
-    def get_subs(self):
+    def _get_subs(self):
         return self.get_query(self.GET_ALL_SUBS)
 
-    def get_active_subs(self, user_id):
+    def _get_active_subs(self, user_id):
         cur = self.conn.cursor()
         results = cur.execute(self.GET_ACTIVE_SUBS_BY_USER_ID, (user_id,))
         results = results.fetchall()
         self.conn.commit()
         return results
 
-    def insert_sub(self, user_id, sub_type, sub_details, when_send, active, last_sent):
+    def _insert_sub(self, user_id, sub_type, sub_details, when_send, active, last_sent):
         return self.insert_query(self.INSERT_SUB, (user_id, sub_type, sub_details, when_send, active, last_sent,))
 
-    def update_last_sent_time_for_sub_by_id(self, sub_id, last_sent):
+    def _update_last_sent_time_for_sub_by_id(self, sub_id, last_sent):
         self.update_query(self.UPDATE_SUB_LAST_SENT, (last_sent, sub_id,))
 
-    def update_sub_active_status(self, sub_id, active):
+    def _update_sub_active_status(self, sub_id, active):
         self.update_query(self.UPDATE_SUB_ACTIVE_STATUS, (active, sub_id,))
 
     # keep this one here since it needs access to the bot
-    def get_user_object_by_id(self, user_id):
+    def _get_user_object_by_id(self, user_id):
         user = self.bot.fetch_user(user_id)
         # returns, name, id, etc
         return user
@@ -359,7 +359,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                             # set it equal to the preferred activeness
                             sub["active"] = map_active_to_bool(str(active).lower())
                             # now update the database
-                            self.update_sub_active_status(sub_id, sub["active"])
+                            self._update_sub_active_status(sub_id, sub["active"])
                             await ctx.send(f'Your sub {sub["id"]} has been set to {active}!')
                             return
                         except KeyError:
@@ -399,7 +399,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                 for sub in info["sub_list"]:
                     if "id" not in sub.keys():
                         # then we know we have to insert into the database
-                        sub_id = self.insert_sub(user_id, sub["type"], sub["details"], sub["when"], sub["active"], sub["last_sent"])
+                        sub_id = self._insert_sub(user_id, sub["type"], sub["details"], sub["when"], sub["active"], sub["last_sent"])
                         # set the sub ID in the dict
                         sub["id"] = sub_id
                     else:
@@ -444,7 +444,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                                                                    f' {e}')
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
-                                    self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
+                                    self._update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
                                 elif sub_type.lower() == 'news':
                                     # invoke the bot get news command
                                     articles = await loop.run_in_executor(ThreadPoolExecutor(), self.bot.get_cog('MarvinNews').get_news, sub_details)
@@ -473,7 +473,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                                                 continue
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
-                                    self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
+                                    self._update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
                         else:
                             continue
 
