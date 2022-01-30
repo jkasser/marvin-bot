@@ -1,10 +1,11 @@
 import requests
 import os
 import yaml
+import asyncio
+import functools
 from discord.ext import commands, tasks
 from utils.db import MarvinDB
 from sqlite3 import Error
-import asyncio
 from asyncio import TimeoutError
 from concurrent.futures.thread import ThreadPoolExecutor
 
@@ -210,7 +211,7 @@ class MarvinTube(commands.Cog, MarvinDB):
             await ctx.send(f'You are already subbed to {self.channels[channel_id]["channel_title"]}')
 
 
-    @tasks.loop(minutes=30)
+    @tasks.loop(minutes=15)
     async def check_for_new_videos(self):
         disc_channel = self.bot.get_channel(int(self.tv_channel_id))
         loop = asyncio.get_event_loop()
@@ -218,10 +219,12 @@ class MarvinTube(commands.Cog, MarvinDB):
             # only grab active channel subscriptions
             if channel_values["active"]:
                 # check channel k here, see if latest v == the latest channel
-                response = await loop.run_in_executor(ThreadPoolExecutor(), self._get_latest_video_for_channel_id(channel_id))
+                response = await loop.run_in_executor(
+                    ThreadPoolExecutor(), self._get_latest_video_for_channel_id, channel_id
+                )
                 if isinstance(response, dict):
                     latest_video = response["video_id"]
-                    if channel_values["latest_vid"] == latest_video:
+                    if "latest_vid" in channel_values.keys() and channel_values["latest_vid"] == latest_video:
                         continue
                     else:
                         # update the latest video id we have and post it to the channel
@@ -243,20 +246,30 @@ class MarvinTube(commands.Cog, MarvinDB):
     async def before_check_for_new_videos(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=5)
     async def insert_or_update_subs_in_db(self):
+        loop = asyncio.get_event_loop()
         for channel_id, channel_values in self.channels.items():
             # if the ID isnt in the keys then we haven't inserted it
             if "id" not in channel_values.keys():
-                id = self._insert_sub(
-                    channel_id, channel_values["channel_title"], channel_values["latest_vid"], channel_values["active"]
+                keyword_blocking_function = functools.partial(self._insert_sub,
+                    channel_id=channel_id, channel_title=channel_values["channel_title"],
+                    latest_vid=channel_values["latest_vid"], active=channel_values["active"]
                 )
+                id = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
                 # now add the returned ID from the insert to the dict so we know it's been added
                 channel_values["id"] = int(id)
             elif "update_pending" in channel_values.keys() and channel_values["update_pending"]:
                 # update both the latest vid as well as the active status
-                self._update_latest_vid_for_channel_sub(channel_values["id"], channel_values["latest_vid"])
-                self._update_sub_active_status(channel_values["id"], channel_values["active"])
+                update_latest_vid_func = functools.partial(
+                    self._update_latest_vid_for_channel_sub, sub_id=channel_values["id"],
+                    latest_vid=channel_values["latest_vid"])
+                await loop.run_in_executor(ThreadPoolExecutor(), update_latest_vid_func)
+
+                update_active_status_func = functools.partial(
+                    self._update_latest_vid_for_channel_sub, sub_id=channel_values["id"],
+                    latest_vid=channel_values["active"])
+                await loop.run_in_executor(ThreadPoolExecutor(), update_active_status_func)
                 # set the update_pending flag to false
                 channel_values["update_pending"] = False
 
