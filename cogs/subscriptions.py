@@ -428,7 +428,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                             # compare the hours
                             if now.hour >= int(sub_hour):
                                 # create the dm channel
-                                user = self.bot._get_user(info["disc_id"])
+                                user = self.bot.get_user(info["disc_id"])
                                 await user.create_dm()
                                 # it's time to send this bad boy!
                                 # call some logic here to run the sub

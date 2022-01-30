@@ -694,7 +694,7 @@ class AddressBook(commands.Cog, MarvinDB):
                             and now.year >= bday.year
                         ):
                             # happy birthday sucka! let's make sure your friends remember you, you nameless hero
-                            user = self.bot._get_user(info["disc_id"])
+                            user = self.bot.get_user(info["disc_id"])
                             await user.create_dm()
                             await user.dm_channel.send(
                                 f'It\'s {contact["name"]}\'s birthday! '
