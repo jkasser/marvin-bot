@@ -2,7 +2,12 @@ from discord.ext import commands, tasks
 from utils.db import MarvinDB
 from asyncio import TimeoutError
 from utils.helper import parse_string_to_datetime, turn_datetime_into_string
-from utils.helper import decode_value, encode_value, map_active_to_bool, map_bool_to_active
+from utils.helper import (
+    decode_value,
+    encode_value,
+    map_active_to_bool,
+    map_bool_to_active,
+)
 from utils.enums import ACTIVE_ENUM
 from datetime import datetime
 import pytz
@@ -22,9 +27,15 @@ class AddressBook(commands.Cog, MarvinDB):
         birthday_reminder integer,
         FOREIGN KEY(user_id) REFERENCES {MarvinDB.SUB_USERS_TABLE_NAME}(id)
     );"""
-    GET_ADDRESS_BOOK_FOR_USER = f"""SELECT * FROM {ADDRESS_TABLE_NAME} where user_id = ?"""
-    DELETE_ENTRY_FOR_USER = f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ? AND user_id = ?"""
-    GET_ENTRY_FOR_USER = F""" SELECT * FROM {ADDRESS_TABLE_NAME} WHERE name LIKE ? AND user_id = ?"""
+    GET_ADDRESS_BOOK_FOR_USER = (
+        f"""SELECT * FROM {ADDRESS_TABLE_NAME} where user_id = ?"""
+    )
+    DELETE_ENTRY_FOR_USER = (
+        f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ? AND user_id = ?"""
+    )
+    GET_ENTRY_FOR_USER = (
+        f""" SELECT * FROM {ADDRESS_TABLE_NAME} WHERE name LIKE ? AND user_id = ?"""
+    )
 
     UPDATE_ENTRY_FOR_USER = f"""UPDATE {ADDRESS_TABLE_NAME} SET name = ?, address = ?, phone = ?, email = ?, 
                             birthday = ?, birthday_reminder = ? WHERE id = ? AND user_id = ?"""
@@ -32,19 +43,21 @@ class AddressBook(commands.Cog, MarvinDB):
                                     WHERE user_id=? AND name = ? LIMIT 1)"""
     INSERT_CONTACT = f"""INSERT INTO {ADDRESS_TABLE_NAME} (user_id, name, address, phone, email, birthday, 
                     birthday_reminder) VALUES(?,?,?,?,?,?,?)"""
-    DELETE_CONTACT = F"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ?"""
+    DELETE_CONTACT = f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ?"""
 
     def __init__(self, bot):
         super(AddressBook, self).__init__()
         self.address_book = dict()
         self.bot = bot
         # create the address table if it doesn't exist
-        self.create_table(self.conn, self.ADDRESS_TABLE)
+        self._create_table(self.conn, self.ADDRESS_TABLE)
         # get all our users
         users = self.users
         if len(users) > 0:
             for user in users:
-                self.address_book[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], address_book=[])
+                self.address_book[user[1]] = dict(
+                    user_id=user[0], tz=user[2], disc_id=user[3], address_book=[]
+                )
                 addresses = self._get_address_book_for_user(user[0])
                 for address in addresses:
                     # the info will be stored encoded
@@ -55,7 +68,7 @@ class AddressBook(commands.Cog, MarvinDB):
                         phone=decode_value(address[4]),
                         email=decode_value(address[5]),
                         birthday=address[6],
-                        birthday_reminder=address[7]
+                        birthday_reminder=address[7],
                     )
                     self.address_book[user[1]]["address_book"].append(contact_info)
         self.check_birthday_notification.start()
@@ -68,33 +81,61 @@ class AddressBook(commands.Cog, MarvinDB):
         self.conn.commit()
         return results
 
-    def _insert_contact_into_db(self, user_id, name, address, phone, email, birthday, birthday_reminder):
+    def _insert_contact_into_db(
+        self, user_id, name, address, phone, email, birthday, birthday_reminder
+    ):
         values = (
-            user_id, name, encode_value(address), encode_value(phone), encode_value(email),
-            birthday, birthday_reminder,
+            user_id,
+            name,
+            encode_value(address),
+            encode_value(phone),
+            encode_value(email),
+            birthday,
+            birthday_reminder,
         )
-        contact_id = self.insert_query(self.INSERT_CONTACT, values)
+        contact_id = self._insert_query(self.INSERT_CONTACT, values)
         return contact_id
 
-    def _update_contact_by_user_id_and_contact_id(self, user_id, name, address, phone, email, birthday,
-                                                  birthday_reminder, contact_id):
+    def _update_contact_by_user_id_and_contact_id(
+        self,
+        user_id,
+        name,
+        address,
+        phone,
+        email,
+        birthday,
+        birthday_reminder,
+        contact_id,
+    ):
         # this needs to go in the order of:
         # name, address, phone, email, birthday, birthday_reminder
         # then the where clause of name and user_id. name needs to be wrapped in %% for a like clause
         values = (
-            name, encode_value(address), encode_value(phone), encode_value(email),
-            birthday, birthday_reminder, contact_id, user_id,)
-        self.update_query(self.UPDATE_ENTRY_FOR_USER, values)
+            name,
+            encode_value(address),
+            encode_value(phone),
+            encode_value(email),
+            birthday,
+            birthday_reminder,
+            contact_id,
+            user_id,
+        )
+        self._update_query(self.UPDATE_ENTRY_FOR_USER, values)
 
     def _delete_contact_by_id(self, contact_id):
-        self.delete_query(self.DELETE_CONTACT, (contact_id,))
+        self._delete_query(self.DELETE_CONTACT, (contact_id,))
 
-    @commands.command(name='contactlist',  aliases=['listcontacts'], help='List all of your contacts!')
+    @commands.command(
+        name="contactlist", aliases=["listcontacts"], help="List all of your contacts!"
+    )
     async def list_all_contact_names(self, ctx):
         user = str(ctx.author)
         if user in self.address_book.keys():
             channel = await ctx.author.create_dm()
-            contacts = sorted([contact for contact in self.address_book[user]["address_book"]], key=lambda k: k["name"])
+            contacts = sorted(
+                [contact for contact in self.address_book[user]["address_book"]],
+                key=lambda k: k["name"],
+            )
             if len(contacts) > 0:
                 msg = ""
                 for x in contacts:
@@ -102,108 +143,142 @@ class AddressBook(commands.Cog, MarvinDB):
                 await channel.send(msg)
             else:
                 # we can't find anyone
-                await ctx.send(f'You have no contacts with me!')
+                await ctx.send(f"You have no contacts with me!")
         else:
-            await ctx.send('Before you can use my address book feature, I need to get your timezone '
-                           '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
-                           'adding a contact with "!contactadd".')
+            await ctx.send(
+                "Before you can use my address book feature, I need to get your timezone "
+                '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
+                'adding a contact with "!contactadd".'
+            )
 
-    @commands.command(name='getcontact',  aliases=['searchcontact', 'searchcontacts', 'contactsearch', 'contactget'],
-                      help='Search for a contact in your address book! I will return all matching results.')
-    async def get_contact_by_name(self, ctx, * contact_name):
-        timeout=60
-        user = str(ctx.author)
-        contact_name = " ".join(contact_name)
-
-        def check(m):
-            return m.author.name == ctx.author.name
-        if contact_name == "":
-            await ctx.send('Please provide a name for the new contact!')
-            try:
-                contact_name = await self.bot.wait_for("message", check=check, timeout=timeout)
-                contact_name = contact_name.content
-                if contact_name.lower() == 'cancel':
-                    await ctx.send('This command has been cancelled! Goodbye.')
-                    return
-            except TimeoutError:
-                await ctx.send('Error: Please try again with !contactadd <name>')
-                return
-        await ctx.send(f'Looking up {contact_name.capitalize()}...')
-        if user in self.address_book.keys():
-            channel = await ctx.author.create_dm()
-            potential_hits = [contact for contact in self.address_book[user]["address_book"]
-                              if contact_name.lower() in contact["name"].lower()]
-            if len(potential_hits) > 0:
-                await ctx.send(f'I have found {len(potential_hits)} matche(s) and '
-                               f'will send the relevant info to you via a direct message!')
-                for hit in potential_hits:
-                    msg = f'{hit["name"].capitalize()}\'s Information:\n'
-                    for field, value in hit.items():
-                        if field.lower() == 'birthday' and value is not None:
-                            value = turn_datetime_into_string(value)
-                        elif field.lower() == 'birthday' and value is None:
-                            value = ""
-                        elif field.lower() == 'birthday_reminder':
-                            field = 'Birthday Reminders'
-                            value = map_bool_to_active(int(value))
-                        msg += f'{str(field).capitalize()}: {str(value)}\n'
-                    # add a blank line between entries
-                    msg += '\n'
-                    await channel.send(msg)
-            else:
-                # we can't find anyone
-                await ctx.send(f'Sorry! I was unable to find a contact by the name of {contact_name}.')
-        else:
-            await ctx.send('Before you can use my address book feature, I need to get your timezone '
-                           '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
-                           'adding a contact with "!contactadd".')
-
-    def retrieve_contacts_number(self, user,  contact_name):
-        results = {
-            "contact_found": False,
-            "contact_number": None,
-            "error_msg": "",
-            "potential_contacts": []
-        }
-        if user in self.address_book.keys():
-            potential_hits = [contact for contact in self.address_book[user]["address_book"]
-                              if contact_name.lower() == contact["name"].split()[0].lower()]
-            if len(potential_hits) == 1:
-                results["contact_found"] = True
-                results["contact_number"] = potential_hits[0]["phone"]
-            elif len(potential_hits) > 1:
-                new_line = '\n'
-                enumerated_contact_list = f'{new_line.join([str(result) for result in results["potential_contacts"]])}'
-                results["contact_found"] = True
-                results["potential_contacts"] = [(hit["name"], hit["phone"]) for hit in potential_hits]
-                results["error_msg"] = 'We have found multiple contacts! Which contact would you like to use? Provide' \
-                                       ' the number of the contact below.'
-            else:
-                # we can't find anyone, or found too many results
-                results["error_msg"] = f'Sorry! I was unable to find a contact by the name of {contact_name}.'
-        else:
-            results["error_msg"] = 'Before you can use my address book feature, I need to get your timezone '\
-                                   '(for reminders)! Please type "!subsettz" to set your timezone with me, and then ' \
-                                   'try adding a contact with "!contactadd".'
-        return results
-
-
-    @commands.command(name='contactadd', aliases=['addcontact'], help='Add an entry to your address book!')
-    async def add_contact(self, ctx, * contact_name):
+    @commands.command(
+        name="getcontact",
+        aliases=["searchcontact", "searchcontacts", "contactsearch", "contactget"],
+        help="Search for a contact in your address book! I will return all matching results.",
+    )
+    async def get_contact_by_name(self, ctx, *contact_name):
         timeout = 60
         user = str(ctx.author)
         contact_name = " ".join(contact_name)
 
         def check(m):
             return m.author.name == ctx.author.name
+
+        if contact_name == "":
+            await ctx.send("Please provide a name for the new contact!")
+            try:
+                contact_name = await self.bot.wait_for(
+                    "message", check=check, timeout=timeout
+                )
+                contact_name = contact_name.content
+                if contact_name.lower() == "cancel":
+                    await ctx.send("This command has been cancelled! Goodbye.")
+                    return
+            except TimeoutError:
+                await ctx.send("Error: Please try again with !contactadd <name>")
+                return
+        await ctx.send(f"Looking up {contact_name.capitalize()}...")
+        if user in self.address_book.keys():
+            channel = await ctx.author.create_dm()
+            potential_hits = [
+                contact
+                for contact in self.address_book[user]["address_book"]
+                if contact_name.lower() in contact["name"].lower()
+            ]
+            if len(potential_hits) > 0:
+                await ctx.send(
+                    f"I have found {len(potential_hits)} matche(s) and "
+                    f"will send the relevant info to you via a direct message!"
+                )
+                for hit in potential_hits:
+                    msg = f'{hit["name"].capitalize()}\'s Information:\n'
+                    for field, value in hit.items():
+                        if field.lower() == "birthday" and value is not None:
+                            value = turn_datetime_into_string(value)
+                        elif field.lower() == "birthday" and value is None:
+                            value = ""
+                        elif field.lower() == "birthday_reminder":
+                            field = "Birthday Reminders"
+                            value = map_bool_to_active(int(value))
+                        msg += f"{str(field).capitalize()}: {str(value)}\n"
+                    # add a blank line between entries
+                    msg += "\n"
+                    await channel.send(msg)
+            else:
+                # we can't find anyone
+                await ctx.send(
+                    f"Sorry! I was unable to find a contact by the name of {contact_name}."
+                )
+        else:
+            await ctx.send(
+                "Before you can use my address book feature, I need to get your timezone "
+                '(for reminders)! Please type "!subsettz" to set your timezone with me, and then try '
+                'adding a contact with "!contactadd".'
+            )
+
+    def retrieve_contacts_number(self, user, contact_name):
+        results = {
+            "contact_found": False,
+            "contact_number": None,
+            "error_msg": "",
+            "potential_contacts": [],
+        }
+        if user in self.address_book.keys():
+            potential_hits = [
+                contact
+                for contact in self.address_book[user]["address_book"]
+                if contact_name.lower() == contact["name"].split()[0].lower()
+            ]
+            if len(potential_hits) == 1:
+                results["contact_found"] = True
+                results["contact_number"] = potential_hits[0]["phone"]
+            elif len(potential_hits) > 1:
+                new_line = "\n"
+                enumerated_contact_list = f'{new_line.join([str(result) for result in results["potential_contacts"]])}'
+                results["contact_found"] = True
+                results["potential_contacts"] = [
+                    (hit["name"], hit["phone"]) for hit in potential_hits
+                ]
+                results["error_msg"] = (
+                    "We have found multiple contacts! Which contact would you like to use? Provide"
+                    f" the number of the contact below. {enumerated_contact_list}"
+                )
+            else:
+                # we can't find anyone, or found too many results
+                results[
+                    "error_msg"
+                ] = f"Sorry! I was unable to find a contact by the name of {contact_name}."
+        else:
+            results["error_msg"] = (
+                "Before you can use my address book feature, I need to get your timezone "
+                '(for reminders)! Please type "!subsettz" to set your timezone with me, and then '
+                'try adding a contact with "!contactadd".'
+            )
+        return results
+
+    @commands.command(
+        name="contactadd",
+        aliases=["addcontact"],
+        help="Add an entry to your address book!",
+    )
+    async def add_contact(self, ctx, *contact_name):
+        timeout = 60
+        user = str(ctx.author)
+        contact_name = " ".join(contact_name)
+
+        def check(m):
+            return m.author.name == ctx.author.name
+
         if user in self.address_book.keys():
             if contact_name == "":
-                await ctx.send('Please provide a name for the new contact!')
+                await ctx.send("Please provide a name for the new contact!")
                 try:
-                    contact_name = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    contact_name = await self.bot.wait_for(
+                        "message", check=check, timeout=timeout
+                    )
                     contact_name = contact_name.content
                 except TimeoutError:
-                    await ctx.send('Error: Please try again with !contactadd <name>')
+                    await ctx.send("Error: Please try again with !contactadd <name>")
                     return
             try:
                 # it's possible a user does this right after sub set tz
@@ -213,66 +288,93 @@ class AddressBook(commands.Cog, MarvinDB):
                     self.address_book[user]["address_book"] = []
                 else:
                     # If an address book is present, see if the contact already exists
-                    potential_hits = [contact for contact in self.address_book[user]["address_book"]
-                                      if contact_name.lower() in contact["name"].lower()]
+                    potential_hits = [
+                        contact
+                        for contact in self.address_book[user]["address_book"]
+                        if contact_name.lower() in contact["name"].lower()
+                    ]
                     if len(potential_hits) > 0:
-                        await ctx.send(f'I have found {len(potential_hits)} possible matche(s) '
-                                       f'already in your contacts. Are you sure this is a new contact? Y/N')
-                        confirm_name = await self.bot.wait_for("message", check=check, timeout=timeout)
+                        await ctx.send(
+                            f"I have found {len(potential_hits)} possible matche(s) "
+                            f"already in your contacts. Are you sure this is a new contact? Y/N"
+                        )
+                        confirm_name = await self.bot.wait_for(
+                            "message", check=check, timeout=timeout
+                        )
                         # if the name is correct then let's create an entry
-                        if confirm_name.content.lower().strip() not in ['y', 'yes']:
-                            await ctx.send('No problem, you can always search for a contact with '
-                                           '!getcontact to be sure. Just call !contactadd whenever you are '
-                                           'ready to try again!')
+                        if confirm_name.content.lower().strip() not in ["y", "yes"]:
+                            await ctx.send(
+                                "No problem, you can always search for a contact with "
+                                "!getcontact to be sure. Just call !contactadd whenever you are "
+                                "ready to try again!"
+                            )
                             # bail out
                             return
                 # store the address book as a variable to make it easier to work with
                 contact_info = self.address_book[user]["address_book"]
                 # check if the name provided is correct
-                await ctx.send(f'Ok! Let\'s add {contact_name.capitalize()} to your address book!'
-                               f'\nIs the name correct? Y/N')
-                confirm_name = await self.bot.wait_for("message", check=check, timeout=timeout)
+                await ctx.send(
+                    f"Ok! Let's add {contact_name.capitalize()} to your address book!"
+                    f"\nIs the name correct? Y/N"
+                )
+                confirm_name = await self.bot.wait_for(
+                    "message", check=check, timeout=timeout
+                )
                 # if the name is correct then let's create an entry
-                if confirm_name.content.lower().strip() in ['y', 'yes']:
+                if confirm_name.content.lower().strip() in ["y", "yes"]:
                     # create the dict in the address book to start
                     # dict(id=address[0], name=address[2], address=address[3], phone=address[4],
                     # email=address[5], birthday=address[6], bday_reminder=address[7])
-                    await ctx.send('Great! I will now gather info about your contact. If you don\'t have '
-                                   'or don\'t wish to provide the requested info (it will be hashed when stored),'
-                                   ' just reply "skip".\nI will now DM you for the following information in order'
-                                   ' to preserve your privacy.')
+                    await ctx.send(
+                        "Great! I will now gather info about your contact. If you don't have "
+                        "or don't wish to provide the requested info (it will be hashed when stored),"
+                        ' just reply "skip".\nI will now DM you for the following information in order'
+                        " to preserve your privacy."
+                    )
                     channel = await ctx.author.create_dm()
-                    await channel.send('Could you please provide the address? If you wish to skip '
-                                       'any of the fields, just reply with "skip".')
-                    addr_response = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    await channel.send(
+                        "Could you please provide the address? If you wish to skip "
+                        'any of the fields, just reply with "skip".'
+                    )
+                    addr_response = await self.bot.wait_for(
+                        "message", check=check, timeout=timeout
+                    )
                     addr_response = addr_response.content
                     # if they choose to skip we just need to store a blank string
-                    if addr_response.lower().strip() == 'skip':
+                    if addr_response.lower().strip() == "skip":
                         addr_response = ""
-                        await channel.send('Skipping address!')
+                        await channel.send("Skipping address!")
                     # phone
-                    await channel.send('Contact\'s phone number?')
-                    phone_response = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    await channel.send("Contact's phone number?")
+                    phone_response = await self.bot.wait_for(
+                        "message", check=check, timeout=timeout
+                    )
                     phone_response = phone_response.content
-                    if phone_response.lower().strip() == 'skip':
+                    if phone_response.lower().strip() == "skip":
                         phone_response = ""
-                        await channel.send('Skipping phone!')
+                        await channel.send("Skipping phone!")
                     # email
-                    await channel.send('Contact\'s email?')
-                    email_response = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    await channel.send("Contact's email?")
+                    email_response = await self.bot.wait_for(
+                        "message", check=check, timeout=timeout
+                    )
                     email_response = email_response.content
-                    if email_response.lower().strip() == 'skip':
+                    if email_response.lower().strip() == "skip":
                         email_response = ""
-                        await channel.send('Skipping email!')
+                        await channel.send("Skipping email!")
                     # birthday
-                    await channel.send('Contact\'s birthday? (MM/DD/YYYY)\nIf year isn\'t provided I will default '
-                                       'to the current year')
-                    bday_response = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    await channel.send(
+                        "Contact's birthday? (MM/DD/YYYY)\nIf year isn't provided I will default "
+                        "to the current year"
+                    )
+                    bday_response = await self.bot.wait_for(
+                        "message", check=check, timeout=timeout
+                    )
                     bday_response = bday_response.content
-                    if bday_response.lower().strip() == 'skip':
+                    if bday_response.lower().strip() == "skip":
                         bday_response = None
                         bday_reminder_response = 0
-                        await channel.send('Skipping birthday!')
+                        await channel.send("Skipping birthday!")
                     else:
                         try:
                             bday_response = parse_string_to_datetime(bday_response)
@@ -280,20 +382,28 @@ class AddressBook(commands.Cog, MarvinDB):
                             bday_response = ""
                         if isinstance(bday_response, datetime):
                             # if they provide a birthday then we should ask if they want a reminder
-                            await channel.send('Would you like me to remind you on their birthday? Y/N')
+                            await channel.send(
+                                "Would you like me to remind you on their birthday? Y/N"
+                            )
                             bday_reminder_response = await self.bot.wait_for(
                                 "message", check=check, timeout=timeout
                             )
                             bday_reminder_response = bday_reminder_response.content
-                            if bday_reminder_response.lower().strip() == 'skip' or \
-                                    bday_reminder_response.lower().strip() in ['no', 'n']:
+                            if (
+                                bday_reminder_response.lower().strip() == "skip"
+                                or bday_reminder_response.lower().strip() in ["no", "n"]
+                            ):
                                 bday_reminder_response = 0
-                                await channel.send('Someone\'s not that important are they?')
+                                await channel.send(
+                                    "Someone's not that important are they?"
+                                )
                             else:
                                 bday_reminder_response = 1
                         else:
-                            await channel.send('I was unable to parse your provided birthday,'
-                                               ' I will continue but leave it blank.')
+                            await channel.send(
+                                "I was unable to parse your provided birthday,"
+                                " I will continue but leave it blank."
+                            )
                             bday_response = ""
                             bday_reminder_response = 0
                     # OK FINALLY create the entry in the book
@@ -303,133 +413,179 @@ class AddressBook(commands.Cog, MarvinDB):
                         "phone": phone_response,
                         "email": email_response,
                         "birthday": bday_response,
-                        "birthday_reminder": bday_reminder_response
+                        "birthday_reminder": bday_reminder_response,
                     }
                     # now append it! we are done!
                     contact_info.append(contact_dict)
-                    await channel.send(f'I have successfully added '
-                                       f'{contact_name.capitalize()} to your address book!')
+                    await channel.send(
+                        f"I have successfully added "
+                        f"{contact_name.capitalize()} to your address book!"
+                    )
                     return
                 else:
                     # if it's incorrect then bail out
-                    await ctx.send('Ok! Just call "!contactadd" when you are ready to try again! Good-bye!')
+                    await ctx.send(
+                        'Ok! Just call "!contactadd" when you are ready to try again! Good-bye!'
+                    )
                     return
             except TimeoutError:
-                await ctx.send('You took too long to reply! Please try again!')
+                await ctx.send("You took too long to reply! Please try again!")
         else:
-            await ctx.send('Before you can use my address book feature, I need to get your timezone (for reminders)! '
-                           'Please type "!subsettz" to set your timezone with me, and then try adding a contact with'
-                           '"!contactadd".')
+            await ctx.send(
+                "Before you can use my address book feature, I need to get your timezone (for reminders)! "
+                'Please type "!subsettz" to set your timezone with me, and then try adding a contact with'
+                '"!contactadd".'
+            )
 
-    @commands.command(name='contactdelete', aliases=['deletecontact', 'delcontact'], help='Remove a contact by their name.')
+    @commands.command(
+        name="contactdelete",
+        aliases=["deletecontact", "delcontact"],
+        help="Remove a contact by their name.",
+    )
     async def delete_contact(self, ctx, contact_id=None):
         user = str(ctx.author)
         if contact_id is None:
-            await ctx.send('You must supply an ID of the contact to delete! If you don\'t see an ID yet then give it '
-                           'a few minutes while I update my database! Once an ID is present you can update the '
-                           'applicable contact.')
+            await ctx.send(
+                "You must supply an ID of the contact to delete! If you don't see an ID yet then give it "
+                "a few minutes while I update my database! Once an ID is present you can update the "
+                "applicable contact."
+            )
             return
         try:
             contact_id = int(contact_id)
         except ValueError:
-            await ctx.send('The ID must be a whole number! Please try again.')
+            await ctx.send("The ID must be a whole number! Please try again.")
             return
         if user in self.address_book.keys():
             # check if they have any contacts
             if len(self.address_book[user]["address_book"]) == 0:
-                await ctx.send('You have no contacts! Add some with !contactadd.')
+                await ctx.send("You have no contacts! Add some with !contactadd.")
                 return
             else:
                 # if they have contacts let's get the contact - do a str compare on ID since it could be an empty string
-                contact = [contact for contact in self.address_book[user]["address_book"] if
-                           int(contact["id"]) == int(contact_id) if "id" in contact.keys()]
+                contact = [
+                    contact
+                    for contact in self.address_book[user]["address_book"]
+                    if int(contact["id"]) == int(contact_id)
+                    if "id" in contact.keys()
+                ]
                 if len(contact) == 0:
-                    await ctx.send(f'I wasn\'t able to find a contact that matched ID: {contact_id}. It takes me a couple'
-                                   f' minutes to update my database which is where I get the ID from. You can always '
-                                   f'do a !contactget <contact name> to see if that contact exists and what their ID '
-                                   f'is!')
+                    await ctx.send(
+                        f"I wasn't able to find a contact that matched ID: {contact_id}. It takes me a couple"
+                        f" minutes to update my database which is where I get the ID from. You can always "
+                        f"do a !contactget <contact name> to see if that contact exists and what their ID "
+                        f"is!"
+                    )
                     return
                 elif len(contact) > 1:
-                    await ctx.send(f'Somehow I have found {len(contact)} matches. Please contact an admin.')
+                    await ctx.send(
+                        f"Somehow I have found {len(contact)} matches. Please contact an admin."
+                    )
                     return
                 else:
                     contact = contact[0]
                     await ctx.send(f'Deleting entry for {contact["name"]}!')
-                    del self.address_book[user]["address_book"][self.address_book[user]["address_book"].index(contact)]
+                    del self.address_book[user]["address_book"][
+                        self.address_book[user]["address_book"].index(contact)
+                    ]
                     # now delete from the database as well
                     self._delete_contact_by_id(int(contact_id))
-                    await ctx.send('Contact deleted!')
+                    await ctx.send("Contact deleted!")
 
-    @commands.command(name='contactupdate', aliases=['updatecontact'], help='Update a contact by their name.')
-    async def update_contact(self, ctx, contact_id=None, field=None, * value):
+    @commands.command(
+        name="contactupdate",
+        aliases=["updatecontact"],
+        help="Update a contact by their name.",
+    )
+    async def update_contact(self, ctx, contact_id=None, field=None, *value):
         user = str(ctx.author)
         try:
             value = " ".join(value)
         except Exception as e:
-            await ctx.send(f'Error: You must supply the new value that I should update {field} to! Please try again'
-                           f' with !contactupdate <contactID> <field> <value>.\n{e}')
+            await ctx.send(
+                f"Error: You must supply the new value that I should update {field} to! Please try again"
+                f" with !contactupdate <contactID> <field> <value>.\n{e}"
+            )
             return
         if contact_id is None:
-            await ctx.send('You must supply an ID of the contact to update! If you don\'t see an ID yet then give it '
-                           'a few minutes while I update my database! Once an ID present you can update the '
-                           'applicable contact. The ID must be an integer!')
+            await ctx.send(
+                "You must supply an ID of the contact to update! If you don't see an ID yet then give it "
+                "a few minutes while I update my database! Once an ID present you can update the "
+                "applicable contact. The ID must be an integer!"
+            )
             return
         elif field is None:
-            await ctx.send('You must supply the field you wish to update, e.g. name/phone/address/email/birthday')
+            await ctx.send(
+                "You must supply the field you wish to update, e.g. name/phone/address/email/birthday"
+            )
             return
         elif value is None:
-            await ctx.send(f'You must supply the new value that I should update {field} to!')
+            await ctx.send(
+                f"You must supply the new value that I should update {field} to!"
+            )
             return
-        elif field.lower() in 'bday_reminder':
+        elif field.lower() in "bday_reminder":
             try:
                 map_active_to_bool(value.lower())
             except ValueError:
-                await ctx.send(f'The supplied value {value} failed validation. I can only accept the following values '
-                               f'for the birthday reminder field: {", ".join(ACTIVE_ENUM.values())}')
-        elif field.lower() == 'id':
-            await ctx.send('You cannot update the ID of a record!')
+                await ctx.send(
+                    f"The supplied value {value} failed validation. I can only accept the following values "
+                    f'for the birthday reminder field: {", ".join(ACTIVE_ENUM.values())}'
+                )
+        elif field.lower() == "id":
+            await ctx.send("You cannot update the ID of a record!")
             return
-        elif field.lower() in 'birthday':
+        elif field.lower() in "birthday":
             try:
                 potential_bday = parse_string_to_datetime(value)
             except Exception:
                 potential_bday = None
             if not isinstance(potential_bday, datetime):
-                await ctx.send(f'The format of {value} was not correct.'
-                               f' Please supply a birthday in the format of MM/DD/YYYY.')
+                await ctx.send(
+                    f"The format of {value} was not correct."
+                    f" Please supply a birthday in the format of MM/DD/YYYY."
+                )
                 return
         try:
             contact_id = int(contact_id)
         except ValueError:
-            await ctx.send('The ID must be a whole number! Please try again.')
+            await ctx.send("The ID must be a whole number! Please try again.")
             return
         # ok check if the user exists
         if user in self.address_book.keys():
             # check if they have any contacts
             if len(self.address_book[user]["address_book"]) == 0:
-                await ctx.send('You have no contacts! Add some with !contactadd.')
+                await ctx.send("You have no contacts! Add some with !contactadd.")
                 return
             else:
                 # if they have contacts let's get the contact - do a str compare on ID since it could be an empty string
-                contact = [contact for contact in self.address_book[user]["address_book"]
-                           if int(contact["id"]) == int(contact_id) if "id" in contact.keys()]
+                contact = [
+                    contact
+                    for contact in self.address_book[user]["address_book"]
+                    if int(contact["id"]) == int(contact_id)
+                    if "id" in contact.keys()
+                ]
                 if len(contact) == 0:
-                    await ctx.send(f'I wasn\'t able to find a contact that matched ID: {contact_id}. It takes me a '
-                                   f'couple minutes to update my database which is where I get the ID from. '
-                                   f'You can always do a !contactget <contact name> to see if that contact exists '
-                                   f'and what their ID is!')
+                    await ctx.send(
+                        f"I wasn't able to find a contact that matched ID: {contact_id}. It takes me a "
+                        f"couple minutes to update my database which is where I get the ID from. "
+                        f"You can always do a !contactget <contact name> to see if that contact exists "
+                        f"and what their ID is!"
+                    )
                     return
                 elif len(contact) > 1:
-                    await ctx.send(f'Somehow I have found {len(contact)} matches. Please contact an admin.')
+                    await ctx.send(
+                        f"Somehow I have found {len(contact)} matches. Please contact an admin."
+                    )
                     return
                 else:
                     contact = contact[0]
                     # since ID is a primary key it will always be unique
-                    if field.lower() == 'birthday':
+                    if field.lower() == "birthday":
                         str_value = value
                         value = parse_string_to_datetime(value)
                     # this comes after and takes reminder as well as an option
-                    elif field.lower() in 'birthday_reminder':
+                    elif field.lower() in "birthday_reminder":
                         str_value = value
                         value = map_active_to_bool(value.lower())
                     else:
@@ -438,31 +594,37 @@ class AddressBook(commands.Cog, MarvinDB):
                         contact[field.lower()] = value
                         # now we also want to set the update flag to True here
                         contact["update_pending"] = True
-                        await ctx.send(f'Great! I have updated the {field} to {str_value}.')
+                        await ctx.send(
+                            f"Great! I have updated the {field} to {str_value}."
+                        )
                         return
                     else:
-                        await ctx.send(f'I could\'t find a valid field for: {field}. Here are the fields I have '
-                                       f'available to update: '
-                        f'{", ".join([key for key in contact.keys() if key != "id" if key != "update_pending"])}')
+                        await ctx.send(
+                            f"I could't find a valid field for: {field}. Here are the fields I have "
+                            f"available to update: "
+                            f'{", ".join([key for key in contact.keys() if key != "id" if key != "update_pending"])}'
+                        )
                         return
         else:
-            await ctx.send('It looks like this is your first time using my address book feature! Please call'
-                           '!subsettz to set your timezone. Then you will want to add contacts before you have'
-                           'something to update.')
+            await ctx.send(
+                "It looks like this is your first time using my address book feature! Please call"
+                "!subsettz to set your timezone. Then you will want to add contacts before you have"
+                "something to update."
+            )
 
     @tasks.loop(minutes=3)
     async def insert_or_update_contacts_in_database(self):
         for user, info in self.address_book.items():
             if "user_id" not in info.keys():
                 # if the user isn't in the database we need to add him first with TZ info and get his user_id for the
-                if not self.check_if_user_exists(user):
+                if not self._check_if_user_exists(user):
                     # insert the user and the timezone
-                    user_id = self.insert_user(user, info["tz"], info["disc_id"])
+                    user_id = self._insert_user(user, info["tz"], info["disc_id"])
                     # add this key to the dict in memory now
                     info["user_id"] = user_id
                     # if they aren't in the dictionary in memory, and not in the database, then something else broke
                 else:
-                    user_id = self.get_user(user)[0][0]
+                    user_id = self._get_user(user)[0][0]
             else:
                 # their id is stored in memory so we can just grab the user id from there
                 user_id = info["user_id"]
@@ -475,17 +637,30 @@ class AddressBook(commands.Cog, MarvinDB):
                         # expects: user_id, name, address, phone, email, birthday, birthday_reminder
                         # encoding happens within the insert contact method, so leave them as strings here
                         contact_id = self._insert_contact_into_db(
-                            user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
-                            contact["birthday"], int(contact["birthday_reminder"])
+                            user_id,
+                            contact["name"],
+                            contact["address"],
+                            contact["phone"],
+                            contact["email"],
+                            contact["birthday"],
+                            int(contact["birthday_reminder"]),
                         )
                         # set the contact ID in the dict <- from this point on users can update/delete contacts
                         contact["id"] = contact_id
-                    elif "update_pending" in contact.keys() and contact["update_pending"]:
+                    elif (
+                        "update_pending" in contact.keys() and contact["update_pending"]
+                    ):
                         # if id is in keys then lets try to update the contact
                         # expects: user_id, name, address, phone, email, birthday, birthday_reminder
                         self._update_contact_by_user_id_and_contact_id(
-                            user_id, contact["name"], contact["address"], contact["phone"], contact["email"],
-                            contact["birthday"], int(contact["birthday_reminder"]), contact["id"]
+                            user_id,
+                            contact["name"],
+                            contact["address"],
+                            contact["phone"],
+                            contact["email"],
+                            contact["birthday"],
+                            int(contact["birthday_reminder"]),
+                            contact["id"],
                         )
                         # set the update_pending flag to false
                         contact["update_pending"] = False
@@ -505,17 +680,25 @@ class AddressBook(commands.Cog, MarvinDB):
             if 0 <= now.hour < 1:
                 for contact in info["address_book"]:
                     # if the birthday exists, reminder is set to 1 i.e. true then lets check
-                    if int(contact["birthday_reminder"]) and contact["birthday"] != "" and contact["birthday"] is not None:
+                    if (
+                        int(contact["birthday_reminder"])
+                        and contact["birthday"] != ""
+                        and contact["birthday"] is not None
+                    ):
                         # birthday is a datetime object, so we can call day/month/hour
                         bday = contact["birthday"]
                         # if the day and month match, and the year is either greater or equal, it's their birthday!!
-                        if now.day == bday.day and now.month == bday.month and now.year >= bday.year:
+                        if (
+                            now.day == bday.day
+                            and now.month == bday.month
+                            and now.year >= bday.year
+                        ):
                             # happy birthday sucka! let's make sure your friends remember you, you nameless hero
-                            user = self.bot.get_user(info["disc_id"])
+                            user = self.bot._get_user(info["disc_id"])
                             await user.create_dm()
                             await user.dm_channel.send(
                                 f'It\'s {contact["name"]}\'s birthday! '
-                                f'Don\'t forget to wish them a happy birthay today!'
+                                f"Don't forget to wish them a happy birthay today!"
                             )
 
     @check_birthday_notification.before_loop
