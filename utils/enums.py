@@ -1,7 +1,4 @@
-ACTIVE_ENUM = {
-    0: "inactive",
-    1: "active"
-}
+ACTIVE_ENUM = {0: "inactive", 1: "active"}
 
 STR_TO_INT = {
     "one": "1",
@@ -31,7 +28,7 @@ STR_TO_INT = {
     "twenty-three": "23",
     "twenty three": "23",
     "twenty-four": "24",
-    "twenty four": "24"
+    "twenty four": "24",
 }
 
 TIME_IN_MINUTES = {
@@ -39,5 +36,5 @@ TIME_IN_MINUTES = {
     "day": 1400,
     "week": 10080,
     "month": 43800,
-    "year": 525600
+    "year": 525600,
 }
