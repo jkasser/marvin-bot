@@ -210,7 +210,6 @@ class MarvinTube(commands.Cog, MarvinDB):
         else:
             await ctx.send(f'You are already subbed to {self.channels[channel_id]["channel_title"]}')
 
-
     @tasks.loop(minutes=15)
     async def check_for_new_videos(self):
         disc_channel = self.bot.get_channel(int(self.tv_channel_id))
