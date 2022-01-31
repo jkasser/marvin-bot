@@ -286,7 +286,7 @@ class MarvinTube(commands.Cog, MarvinDB):
                 f'You are already subbed to {self.channels[channel_id]["channel_title"]}'
             )
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(hours=4)
     async def check_for_new_videos(self):
         disc_channel = self.bot.get_channel(int(self.tv_channel_id))
         loop = asyncio.get_event_loop()
