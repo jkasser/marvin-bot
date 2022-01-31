@@ -157,6 +157,54 @@ class MarvinTube(commands.Cog, MarvinDB):
         )
 
     @commands.command(
+        name="updatechannelsub",
+        help="Sets the provided channel ID to active/inactive depending on it's current status.",
+    )
+    async def update_channel_sub(self, ctx, channel_id=None):
+        if channel_id is None:
+            await ctx.send(
+                "Which channel ID (the number I return when you call !getchannelsubs) would you like to update?"
+            )
+
+            def check(m):
+                return m.author.name == ctx.author.name
+
+            try:
+                user_answer = await self.bot.wait_for(
+                    "message", check=check, timeout=60
+                )
+                channel_id = user_answer.content
+            except TimeoutError:
+                await ctx.send("You took too long to respond! Good bye.")
+
+        try:
+            channel_id = int(channel_id)
+            updated_any_value = False
+            for channel, values in self.channels.items():
+                if int(channel_id) == int(values["id"]):
+                    if values["active"] == 0:
+                        values["active"] = 1
+                        active_status = "Active"
+                    else:
+                        values["active"] = 0
+                        active_status = "Inactive"
+                    updated_any_value = True
+                    values["update_pending"] = True
+                    await ctx.send(
+                        f"I have updated your subscription to be {active_status}!"
+                    )
+                    return
+            if updated_any_value == False:
+                await ctx.send(
+                    "I was unable to find a subscription to update! Please try again."
+                )
+                return
+        except ValueError:
+            await ctx.send(
+                "Sorry. I was unable to parse the provided channel ID. Make sure it is just a number, e.g. 1"
+            )
+
+    @commands.command(
         name="subchannel",
         help="Subscribe to a youtube channel and have their latest videos posted"
         "to our tv channel!",
