@@ -142,10 +142,16 @@ class MarvinTube(commands.Cog, MarvinDB):
     )
     async def get_channel_subs(self, ctx):
         new_line = "\n"
-        print(self.channels)
-        list_of_current_channels = [
-            values["channel_title"] for channel, values in self.channels.items()
-        ]
+        list_of_current_channels = []
+        for channel, values in self.channels.items():
+            if "id" in values.keys():
+                list_of_current_channels.append(
+                    f'{values["id"]}. {values["channel_title"]} - {values["active"]}'
+                )
+            else:
+                list_of_current_channels.append(
+                    f'(ID NOT READY YET) {values["channel_title"]} - {values["active"]}'
+                )
         await ctx.send(
             f"You are currently subscribed to: {new_line.join(list_of_current_channels)}"
         )
