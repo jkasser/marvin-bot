@@ -351,7 +351,7 @@ class MarvinTube(commands.Cog, MarvinDB):
                 channel_values["id"] = int(db_id)
             elif (
                 "update_pending" in channel_values.keys()
-                and channel_values["update_pending"]
+                and channel_values["update_pending"] == True
             ):
                 # update both the latest vid as well as the active status
                 update_latest_vid_func = functools.partial(
@@ -362,9 +362,9 @@ class MarvinTube(commands.Cog, MarvinDB):
                 await loop.run_in_executor(ThreadPoolExecutor(), update_latest_vid_func)
 
                 update_active_status_func = functools.partial(
-                    self._update_latest_vid_for_channel_sub,
+                    self._update_sub_active_status,
                     sub_id=channel_values["id"],
-                    latest_vid=channel_values["active"],
+                    active=channel_values["active"],
                 )
                 await loop.run_in_executor(
                     ThreadPoolExecutor(), update_active_status_func
