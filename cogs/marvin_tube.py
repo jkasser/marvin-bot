@@ -54,7 +54,7 @@ class MarvinTube(commands.Cog, MarvinDB):
         self.channels = {}
         for sub in subs:
             self.channels[sub[1]] = dict(
-                id=sub[0], channel_title=sub[2], latest_vide=sub[3], active=sub[4]
+                id=sub[0], channel_title=sub[2], latest_vid=sub[3], active=sub[4]
             )
         # start the loop to post videos
         self.check_for_new_videos.start()
@@ -278,9 +278,11 @@ class MarvinTube(commands.Cog, MarvinDB):
                 await disc_channel.send(
                     f'https://youtube.com/watch?v={response["video_id"]}'
                 )
+                return
             else:
                 # if its not a dict we got a string back which means the API call failed, post the error to the channel
                 await ctx.send(response)
+                return
         else:
             await ctx.send(
                 f'You are already subbed to {self.channels[channel_id]["channel_title"]}'
