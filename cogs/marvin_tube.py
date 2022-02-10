@@ -69,9 +69,12 @@ class MarvinTube(commands.Cog, MarvinDB):
         if r.status_code == 200:
             # all the returned videos will be stored in the items list of dicts
             for video in r.json()["items"]:
-                latest_vid["channel_title"] = video["snippet"]["channelTitle"]
-                latest_vid["video_id"] = video["id"]["videoId"]
-                latest_vid["title"] = video["snippet"]["title"]
+                try:
+                    latest_vid["channel_title"] = video["snippet"]["channelTitle"]
+                    latest_vid["video_id"] = video["id"]["videoId"]
+                    latest_vid["title"] = video["snippet"]["title"]
+                except KeyError:
+                    pass
             return latest_vid
         else:
             response = f'There was an error returning this request: {r.status_code}\n{r.json()["error"]["message"]}'
