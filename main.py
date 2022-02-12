@@ -57,6 +57,7 @@ extensions = [
     "cogs.jokes",
     # 'cogs.chat'
     "cogs.marvin_tube",
+    "cogs.plex"
 ]
 
 
