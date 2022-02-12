@@ -3,16 +3,16 @@ disc:
   prod:
     token:
     guild:
-    # riot.py channels
     status_channel:
     api_updates_channel:
-    # reddit.py channels
     lol_channel:
     travel_channel:
-    # covid.py channels
     us_politics_channel:
-    #news.py channels
     news_channel:
+    sms_channel:
+    callback_host:
+    booster_lounge_channel:
+    jep_channel_category:
   dev:
     token:
     guild:
@@ -21,7 +21,12 @@ disc:
     api_updates_channel:
     us_politics_channel:
     news_channel:
-    lol_channel: 
+    lol_channel:
+    sms_channel:
+    callback_host:
+    booster_lounge_channel:
+    jep_channel_category:
+    chat_bot_channel:
 
 riot:
   key:
@@ -42,15 +47,23 @@ rapidAPI:
 mapquest:
   key:
 
-trello:
-  key:
-  token:
-  board_id:
-
+# under jkasser mail account in azure
 microsoft:
   translator:
     key:
+    # replace with backup if an issue arises with the above key
+    backup_key:
     endpoint:
+
+google:
+  api_key:
+  key:
+  project_id:
+  bearer:
+
+usps:
+  un:
+  pw:
 
 twilio:
   account_sid:

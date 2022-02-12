@@ -10,49 +10,66 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class MarvinBot(commands.Cog):
-    
     def __init__(self, bot):
         self.bot = bot
         self.named_queues = dict(General=[])
-        with open('config.yaml', 'r') as file:
+        with open("config.yaml", "r") as file:
             cfg = yaml.safe_load(file)
-        env = os.environ.get('ENV', 'NOT SET')
+        env = os.environ.get("ENV", "NOT SET")
         self.booster_channel = cfg["disc"][env]["booster_lounge_channel"]
 
-
-    @commands.command(name='latency', aliases=['ping'], help='Get my latency in ms.')
+    @commands.command(name="latency", aliases=["ping"], help="Get my latency in ms.")
     async def get_latency(self, ctx):
-        await ctx.send(f'My latency is {round(self.bot.latency * 1000, 1)}ms.')
+        await ctx.send(f"My latency is {round(self.bot.latency * 1000, 1)}ms.")
 
-    @commands.command(name='grail', help='Tis a silly command')
+    @commands.command(name="grail", help="Tis a silly command")
     async def get_monty_python_quotes(self, ctx):
         response = random.choice(holy_grail_quotes)
         await ctx.send(response)
 
-    @commands.command(name='kanye', aliases=['yeezy', 'yeezus'],
-                      help='Whipped it out she said I never seen snakes on a plane.')
+    @commands.command(
+        name="kanye",
+        aliases=["yeezy", "yeezus"],
+        help="Whipped it out she said I never seen snakes on a plane.",
+    )
     async def get_kanye_quotes(self, ctx):
         response = random.choice(kanye_quotes)
         await ctx.send(response)
 
-    @commands.command(name='lullaby', help='Let Marvin read you a lullaby!')
+    @commands.command(name="lullaby", help="Let Marvin read you a lullaby!")
     async def post_marvin_lullaby(self, ctx):
         await ctx.send(marvin_lullaby)
 
-    @commands.command(name='flipcoin', help='Having trouble making a decision? Let Marvin flip a coin for you!')
+    @commands.command(
+        name="flipcoin",
+        help="Having trouble making a decision? Let Marvin flip a coin for you!",
+    )
     async def marvin_coin_flip(self, ctx):
-        coin_choices = ['Heads', 'Tails']
-        await ctx.send(f'Results are in!\nThe coin landed on: {random.choice(coin_choices)}')
+        coin_choices = ["Heads", "Tails"]
+        await ctx.send(
+            f"Results are in!\nThe coin landed on: {random.choice(coin_choices)}"
+        )
 
-    @commands.command(name='whatsmyvibe', help='What you vibing too right now lil gangsta?')
+    @commands.command(
+        name="whatsmyvibe", help="What you vibing too right now lil gangsta?"
+    )
     async def get_vibe(self, ctx, user: discord.Member = None):
-        web_url = 'https://open.spotify.com/track/'
+        web_url = "https://open.spotify.com/track/"
         user = user or ctx.author  # default to the caller
-        spot = next((activity for activity in user.activities if isinstance(activity, discord.Spotify)), None)
+        spot = next(
+            (
+                activity
+                for activity in user.activities
+                if isinstance(activity, discord.Spotify)
+            ),
+            None,
+        )
         if spot is None:
             await ctx.send(f"{user.name.capitalize()} is not listening to Spotify.")
             return
-        embedspotify = discord.Embed(title=f"{user.name.capitalize()}'s Spotify", color=0x1eba10)
+        embedspotify = discord.Embed(
+            title=f"{user.name.capitalize()}'s Spotify", color=0x1EBA10
+        )
 
         embedspotify.add_field(name="Artist", value=spot.artist, inline=False)
         embedspotify.add_field(name="Album", value=spot.album)
@@ -61,36 +78,50 @@ class MarvinBot(commands.Cog):
         await ctx.send(embed=embedspotify)
         await ctx.send(url)
 
-    @commands.command(name='roll', help='Type !roll <max number> to get a random number between 0 and the max!')
+    @commands.command(
+        name="roll",
+        help="Type !roll <max number> to get a random number between 0 and the max!",
+    )
     async def roll_dice(self, ctx, max_roll):
-        await ctx.send(f'You rolled {random.randint(0, int(max_roll))}')
+        await ctx.send(f"You rolled {random.randint(0, int(max_roll))}")
 
-    @commands.command(name='decide', help='Let marvin make a decision for you!')
+    @commands.command(name="decide", help="Let marvin make a decision for you!")
     async def decide(self, ctx):
         await ctx.send(f'{random.choice(["Yes.", "No."])}')
 
-    @commands.command(name='hangover', help='Get some medical advice from someone completely unqualified!')
+    @commands.command(
+        name="hangover",
+        help="Get some medical advice from someone completely unqualified!",
+    )
     async def hangover(self, ctx):
         await ctx.send(random.choice(hangover_cures))
 
-    @commands.command(name='addrole', pass_context=True)
+    @commands.command(name="addrole", pass_context=True)
     @commands.has_any_role("Admins", "TheOGs")
     async def add_role_to_user(self, ctx, user: discord.Member, role: discord.Role):
         await user.add_roles(role)
-        await ctx.send(f'{ctx.author.name} has bestowed the role of {role.name} on {user.display_name}')
+        await ctx.send(
+            f"{ctx.author.name} has bestowed the role of {role.name} on {user.display_name}"
+        )
 
-    @commands.command(name='removerole', pass_context=True)
+    @commands.command(name="removerole", pass_context=True)
     @commands.has_any_role("Admins", "TheOGs")
-    async def remove_role_from_user(self, ctx, user: discord.Member, role: discord.Role):
+    async def remove_role_from_user(
+        self, ctx, user: discord.Member, role: discord.Role
+    ):
         await user.remove_roles(role)
-        await ctx.send(f'{ctx.author.name} has removed the role of {role.name} from {user.display_name}')
+        await ctx.send(
+            f"{ctx.author.name} has removed the role of {role.name} from {user.display_name}"
+        )
 
-    @commands.command(name='getroles')
+    @commands.command(name="getroles")
     async def get_all_roles_in_channel(self, ctx):
         await ctx.send(", ".join([str(r.name) for r in ctx.guild.roles]))
 
-    @commands.command(name='adduser',
-                      help='Add a user to the channel. You must be a member of TheOGs to use this command.')
+    @commands.command(
+        name="adduser",
+        help="Add a user to the channel. You must be a member of TheOGs to use this command.",
+    )
     @commands.has_any_role("Admins", "TheOGs")
     async def add_user_to_channel(self, ctx, *users):
         members = await ctx.guild.fetch_members(limit=150).flatten()
@@ -111,33 +142,43 @@ class MarvinBot(commands.Cog):
                         perms.connect = True
                         perms.change_nickname = True
                         perms.stream = True
-                        await ctx.message.channel.set_permissions(member, overwrite=perms)
-                        await ctx.send(f'I have added the following member: {member.name}')
+                        await ctx.message.channel.set_permissions(
+                            member, overwrite=perms
+                        )
+                        await ctx.send(
+                            f"I have added the following member: {member.name}"
+                        )
                         break
                     except Exception as e:
-                        await ctx.send(f'I have encountered the following error: {e}')
+                        await ctx.send(f"I have encountered the following error: {e}")
 
-    @commands.command(name='makeprivate', help='Make a private channel for you and the supplied members.')
+    @commands.command(
+        name="makeprivate",
+        help="Make a private channel for you and the supplied members.",
+    )
     @commands.has_any_role("Admins", "TheOGs")
-    async def make_private_channel(self, ctx, * members: discord.Member):
+    async def make_private_channel(self, ctx, *members: discord.Member):
         try:
             guild = ctx.guild
             creator = ctx.author
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                guild.me: discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True
+                ),
             }
-            channel_name = f'{creator.name}s-private-channel'
+            channel_name = f"{creator.name}s-private-channel"
             channel = discord.utils.get(guild.text_channels, name=channel_name)
 
             if channel is None:
-                channel = await guild.create_text_channel(channel_name,
-                                                          category=discord.utils.get(ctx.guild.categories,
-                                                                                     name='🔐 Private'),
-                                                          overwrites=overwrites)
-                await ctx.send(f'Channel: {channel} has been created!')
+                channel = await guild.create_text_channel(
+                    channel_name,
+                    category=discord.utils.get(ctx.guild.categories, name="🔐 Private"),
+                    overwrites=overwrites,
+                )
+                await ctx.send(f"Channel: {channel} has been created!")
             elif channel:
-                await ctx.send(f'Channel: {channel_name} already exists!')
+                await ctx.send(f"Channel: {channel_name} already exists!")
             # whoops add permissions to creater also
             perms = channel.overwrites_for(creator)
             perms.send_messages = True
@@ -169,46 +210,64 @@ class MarvinBot(commands.Cog):
                 perms.stream = True
                 await channel.set_permissions(member, overwrite=perms)
 
-            await ctx.send(f'I have added: {", ".join([member.name for member in members])} to channel')
+            await ctx.send(
+                f'I have added: {", ".join([member.name for member in members])} to channel'
+            )
         except Exception as e:
-            await ctx.send(f'I have encountered the following error: {e}')
+            await ctx.send(f"I have encountered the following error: {e}")
 
-    @commands.command(name='qcreate', aliases=['createq', 'queuecreate', 'createqueue'],
-                      help='Create a single word named queue in memory, if left blank, will create the "General"'
-                           'queue, which exists by default.\nEx. !qcreate myqueue')
+    @commands.command(
+        name="qcreate",
+        aliases=["createq", "queuecreate", "createqueue"],
+        help='Create a single word named queue in memory, if left blank, will create the "General"'
+        "queue, which exists by default.\nEx. !qcreate myqueue",
+    )
     @commands.has_any_role("Admins", "TheOGs")
-    async def create_named_queue(self, ctx, name='General'):
+    async def create_named_queue(self, ctx, name="General"):
         if name not in self.named_queues.keys():
             self.named_queues[name] = []
-            await ctx.send(f'Queue: {name}, created!')
+            await ctx.send(f"Queue: {name}, created!")
         else:
-            await ctx.send(f'Queue: {name}, already exists!')
+            await ctx.send(f"Queue: {name}, already exists!")
 
-    @commands.command(name='qaddme', help='Call !qaddme <name> to be added to a specific queue, '
-                                     'if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue.')
+    @commands.command(
+        name="qaddme",
+        help="Call !qaddme <name> to be added to a specific queue, "
+        "if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue.",
+    )
     async def add_me_to_queue(self, ctx, name=None):
         if name is None:
             queue = self.named_queues["General"]
-            name = 'General'
+            name = "General"
         else:
             if name in self.named_queues.keys():
                 queue = self.named_queues[name]
             else:
-                await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+                await ctx.send(
+                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
+                )
                 return
         username = ctx.author.mention
         queue.append(username)
-        await ctx.send(f'{username} has been added to the: {name} queue at position: {queue.index(username) + 1}')
+        await ctx.send(
+            f"{username} has been added to the: {name} queue at position: {queue.index(username) + 1}"
+        )
 
-    @commands.command(name='qadduser', aliases=['qadd', 'queueadd'], help='This only works to add a user to the general queue, '
-                                       'pass in the user\'s username.\nEx. !adduser marvin.')
+    @commands.command(
+        name="qadduser",
+        aliases=["qadd", "queueadd"],
+        help="This only works to add a user to the general queue, "
+        "pass in the user's username.\nEx. !adduser marvin.",
+    )
     @commands.has_any_role("Admins", "TheOGs")
     async def add_user_to_queue(self, ctx, user):
         queue = self.named_queues["General"]
         if user is None:
             username = ctx.message.author.mention
             queue.append(username)
-            await ctx.send(f'{username} has been added to the General queue at position: {queue.index(username) + 1}')
+            await ctx.send(
+                f"{username} has been added to the General queue at position: {queue.index(username) + 1}"
+            )
         else:
             members = await ctx.guild.fetch_members(limit=150).flatten()
             for member in members:
@@ -216,70 +275,98 @@ class MarvinBot(commands.Cog):
                     username = member.mention
                     queue.append(username)
                     await ctx.send(
-                        f'{username} has been added to the General queue at position: {queue.index(username) + 1}')
+                        f"{username} has been added to the General queue at position: {queue.index(username) + 1}"
+                    )
                     break
-                elif members.index(member) + 1 == len(members) and user not in member.name:
-                    await ctx.send(f'No member found for {user}')
+                elif (
+                    members.index(member) + 1 == len(members)
+                    and user not in member.name
+                ):
+                    await ctx.send(f"No member found for {user}")
 
-    @commands.command(name='qlist', aliases=['listq', 'listqueue', 'queuelist'], help='See the current queue list of the queue name provided.'
-                                    ' If no name is provided then it will provide the list of the General queue.'
-                                    '\nEx. !qlist myqueue')
+    @commands.command(
+        name="qlist",
+        aliases=["listq", "listqueue", "queuelist"],
+        help="See the current queue list of the queue name provided."
+        " If no name is provided then it will provide the list of the General queue."
+        "\nEx. !qlist myqueue",
+    )
     async def get_queue_list(self, ctx, name=None):
         if name is None:
             queue = self.named_queues["General"]
-            name = 'General'
+            name = "General"
         else:
             if name in self.named_queues.keys():
                 queue = self.named_queues[name]
             else:
-                await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+                await ctx.send(
+                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
+                )
                 return
         if len(queue) >= 1:
             await ctx.send(f'{", ".join(user for user in queue)}')
         else:
-            await ctx.send(f'The {name} queue is currently empty.')
+            await ctx.send(f"The {name} queue is currently empty.")
 
-    @commands.command(name='qclear', aliases=['clearqueue', 'clearq'], help='Clears the provided queue name. If no queue name is provided it will '
-                                     'clear the General queue.\nEx. !qclear myqueue')
+    @commands.command(
+        name="qclear",
+        aliases=["clearqueue", "clearq"],
+        help="Clears the provided queue name. If no queue name is provided it will "
+        "clear the General queue.\nEx. !qclear myqueue",
+    )
     @commands.has_any_role("Admins", "TheOGs")
     async def clear_queue(self, ctx, name=None):
         if name is None:
             queue = self.named_queues["General"]
-            name = 'General'
+            name = "General"
         else:
             if name in self.named_queues.keys():
                 queue = self.named_queues[name]
             else:
-                await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+                await ctx.send(
+                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
+                )
                 return
         queue.clear()
-        await ctx.send(f'The queue: {name} has been cleared!')
+        await ctx.send(f"The queue: {name} has been cleared!")
 
-    @commands.command(name='qnext', aliases=['queuenext', 'next'], help='Call the next person in the provided queue. If no queue name is provided, '
-                                    'it will call the next person from the General queue.\nEx. !qnext myqueue')
+    @commands.command(
+        name="qnext",
+        aliases=["queuenext", "next"],
+        help="Call the next person in the provided queue. If no queue name is provided, "
+        "it will call the next person from the General queue.\nEx. !qnext myqueue",
+    )
     @commands.has_any_role("Admins", "TheOGs")
     async def get_next_user_in_queue(self, ctx, name=None):
         if name is None:
             queue = self.named_queues["General"]
-            name = 'General'
+            name = "General"
         else:
             if name in self.named_queues.keys():
                 queue = self.named_queues[name]
             else:
-                await ctx.send(f'The {name} queue does not currently exist! Use !qcreate <name> to create it!')
+                await ctx.send(
+                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
+                )
                 return
 
         if len(queue) >= 1:
             user = queue.pop(0)
-            await ctx.send(f'{user}, you have been summoned!')
+            await ctx.send(f"{user}, you have been summoned!")
         else:
-            await ctx.send(f'The {name} queue is empty! There is no one else to call')
+            await ctx.send(f"The {name} queue is empty! There is no one else to call")
 
-    @commands.command(name='getmyid', aliases=['myid'], help='Return your discord user ID, helpful for debugging.')
+    @commands.command(
+        name="getmyid",
+        aliases=["myid"],
+        help="Return your discord user ID, helpful for debugging.",
+    )
     async def get_my_user_id(self, ctx):
-        await ctx.send(f'Your user ID is: {ctx.message.author.id}')
+        await ctx.send(f"Your user ID is: {ctx.message.author.id}")
 
-    @commands.command(pass_context=True, help='Delete all the messages from this channel.')
+    @commands.command(
+        pass_context=True, help="Delete all the messages from this channel."
+    )
     @commands.has_role("Admins")
     async def purge(self, ctx, count=None):
         if count is None:
@@ -287,23 +374,28 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.channel.purge(limit=int(count))
 
-    @commands.command(name='ip', aliases=['getip'], help='Returns external XP')
+    @commands.command(name="ip", aliases=["getip"], help="Returns external XP")
     @commands.has_role("Owner")
     async def get_external_ip(self, ctx):
         loop = asyncio.get_event_loop()
-        r = await loop.run_in_executor(ThreadPoolExecutor(), requests.get, 'http://api.hostip.info/get_json.php')
+        r = await loop.run_in_executor(
+            ThreadPoolExecutor(), requests.get, "http://api.hostip.info/get_json.php"
+        )
         await ctx.send(str(r.json()["ip"]))
 
-    @commands.command(name='troll', help='Boosters only!')
+    @commands.command(name="troll", help="Boosters only!")
     @commands.has_role("Server Booster")
     async def get_voice_channels(self, ctx):
         if ctx.message.channel.id != self.booster_channel:
-            await ctx.send('I don\'t do such things.')
+            await ctx.send("I don't do such things.")
         else:
             voice_channel_list = ctx.guild.voice_channels
-            active_channels = [active_channel for active_channel in voice_channel_list
-                               if 'Marvin' not in [member.name for member in active_channel.members]
-                               and len([member.name for member in active_channel.members]) > 0]
+            active_channels = [
+                active_channel
+                for active_channel in voice_channel_list
+                if "Marvin" not in [member.name for member in active_channel.members]
+                and len([member.name for member in active_channel.members]) > 0
+            ]
 
             # prioritize joining an active channel otherwise join any channel and wait for someone to join
             if len(active_channels) > 0:
@@ -314,13 +406,18 @@ class MarvinBot(commands.Cog):
             # now that we have a channel to join, see if we are already in one that we need to disconnect from
             voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
             if voice_client:
-                await ctx.send(f'Disconnecting from current voice channel and switching to: {channel_to_join.name}')
+                await ctx.send(
+                    f"Disconnecting from current voice channel and switching to: {channel_to_join.name}"
+                )
                 await voice_client.disconnect()
                 new_channel = await channel_to_join.connect()
             else:
-                await ctx.send(f'Attempting to join: {channel_to_join.name}')
+                await ctx.send(f"Attempting to join: {channel_to_join.name}")
                 new_channel = await channel_to_join.connect()
-            media_file = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/assets/media/rroll.mp3'
+            media_file = (
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                + "/assets/media/rroll.mp3"
+            )
             new_channel.play(discord.FFmpegPCMAudio(media_file))
             while new_channel.is_playing():
                 await asyncio.sleep(1)

@@ -40,7 +40,7 @@ class Subscriptions(commands.Cog, MarvinDB):
         super(Subscriptions, self).__init__()
         self.user_subs = {}
         self.bot = bot
-        self.create_table(self.conn, self.SUBSCRIPTION_TABLE)
+        self._create_table(self.conn, self.SUBSCRIPTION_TABLE)
         # put it all into memory
         users = self.users # inherits this from the subscriptions db class
         if len(users) > 0:
@@ -48,7 +48,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                 self.user_subs[user[1]] = dict(user_id=user[0], tz=user[2], disc_id=user[3], sub_list=[],
                                                update_pending=False)
                 # retrieve the subs for this user by user ID
-                subs = self.get_active_subs(user[0])
+                subs = self._get_active_subs(user[0])
                 for sub in subs:
                     sub_dict = dict(
                         id=sub[0], type=sub[2], details=sub[3], when=sub[4], active=sub[5], last_sent=sub[6]
@@ -59,27 +59,27 @@ class Subscriptions(commands.Cog, MarvinDB):
         self.insert_or_update_subs_in_db.start()
         self.check_if_time_to_notify_user_of_sub.start()
 
-    def get_subs(self):
-        return self.get_query(self.GET_ALL_SUBS)
+    def _get_subs(self):
+        return self._get_query(self.GET_ALL_SUBS)
 
-    def get_active_subs(self, user_id):
+    def _get_active_subs(self, user_id):
         cur = self.conn.cursor()
         results = cur.execute(self.GET_ACTIVE_SUBS_BY_USER_ID, (user_id,))
         results = results.fetchall()
         self.conn.commit()
         return results
 
-    def insert_sub(self, user_id, sub_type, sub_details, when_send, active, last_sent):
-        return self.insert_query(self.INSERT_SUB, (user_id, sub_type, sub_details, when_send, active, last_sent,))
+    def _insert_sub(self, user_id, sub_type, sub_details, when_send, active, last_sent):
+        return self._insert_query(self.INSERT_SUB, (user_id, sub_type, sub_details, when_send, active, last_sent,))
 
-    def update_last_sent_time_for_sub_by_id(self, sub_id, last_sent):
-        self.update_query(self.UPDATE_SUB_LAST_SENT, (last_sent, sub_id,))
+    def _update_last_sent_time_for_sub_by_id(self, sub_id, last_sent):
+        self._update_query(self.UPDATE_SUB_LAST_SENT, (last_sent, sub_id,))
 
-    def update_sub_active_status(self, sub_id, active):
-        self.update_query(self.UPDATE_SUB_ACTIVE_STATUS, (active, sub_id,))
+    def _update_sub_active_status(self, sub_id, active):
+        self._update_query(self.UPDATE_SUB_ACTIVE_STATUS, (active, sub_id,))
 
     # keep this one here since it needs access to the bot
-    def get_user_object_by_id(self, user_id):
+    def _get_user_object_by_id(self, user_id):
         user = self.bot.fetch_user(user_id)
         # returns, name, id, etc
         return user
@@ -104,8 +104,8 @@ class Subscriptions(commands.Cog, MarvinDB):
                 try:
                     user_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
                     user_answer = user_answer.content
-                    possible_tz = timezones.get_possible_timezones(user_answer)
-                    if timezones.check_if_timezone_match(possible_tz):
+                    possible_tz = timezones._get_possible_timezones(user_answer)
+                    if timezones._check_if_timezone_match(possible_tz):
                         await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
                                        f'Your timezone has been set successfully!')
                         # add the user to our dict and add their discord ID to the body
@@ -126,8 +126,8 @@ class Subscriptions(commands.Cog, MarvinDB):
                     await ctx.send('You have taken too long to decide! Good-bye!')
                     return
             else:
-                possible_tz = timezones.get_possible_timezones(supplied_tz)
-                if timezones.check_if_timezone_match(possible_tz):
+                possible_tz = timezones._get_possible_timezones(supplied_tz)
+                if timezones._check_if_timezone_match(possible_tz):
                     await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
                                    f'Your timezone has been set successfully!')
                     # add the user to our dict and add their discord ID to the body
@@ -158,8 +158,8 @@ class Subscriptions(commands.Cog, MarvinDB):
         try:
             user_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
             user_answer = user_answer.content
-            possible_tz = timezones.get_possible_timezones(user_answer)
-            if timezones.check_if_timezone_match(possible_tz):
+            possible_tz = timezones._get_possible_timezones(user_answer)
+            if timezones._check_if_timezone_match(possible_tz):
                 await ctx.send(f'I have found the matching timezone: {possible_tz[0]}')
                 if user in self.user_subs.keys():
                     # if the user exists, just set the timezone value
@@ -359,13 +359,13 @@ class Subscriptions(commands.Cog, MarvinDB):
                             # set it equal to the preferred activeness
                             sub["active"] = map_active_to_bool(str(active).lower())
                             # now update the database
-                            self.update_sub_active_status(sub_id, sub["active"])
+                            self._update_sub_active_status(sub_id, sub["active"])
                             await ctx.send(f'Your sub {sub["id"]} has been set to {active}!')
                             return
                         except KeyError:
                             # This means they didn't provide active/inactive correctly!
                             await ctx.send(f'You said set it to {active}. '
-                                           f'My only possible choices are: {",".join(enums.ACTIVE_ENUM.keys())}')
+                                           f'My only possible choices are: {",".join(enums.ACTIVE_ENUM.values())}')
                             return
                 else:
                     continue
@@ -379,27 +379,27 @@ class Subscriptions(commands.Cog, MarvinDB):
             # if we haven't set the user ID, then we haven't stored it yet, only store if they have set their tz
             if "user_id" not in info.keys() and "tz" in info.keys():
                 # if the user isn't in the database we need to add him first with TZ info and get his user_id for the
-                if not self.check_if_user_exists(user):
+                if not self._check_if_user_exists(user):
                     # insert the user and the timezone
-                    user_id = self.insert_user(user, info["tz"], info["disc_id"])
+                    user_id = self._insert_user(user, info["tz"], info["disc_id"])
                     # add this key to the dict in memory now
                     info["user_id"] = user_id
                     # if they aren't in the dictionary in memory, and not in the database, then something else broke
                 else:
-                    user_id = self.get_user(user)[0][0]
+                    user_id = self._get_user(user)[0][0]
             else:
                 # their id is stored in memory so we can just grab the user id from there
                 user_id = info["user_id"]
                 # we should check if a change is pending and update the record if not:
                 if "update_pending" in info.keys() and info["update_pending"]:
-                    self.update_user_tz(user, info["tz"])
+                    self._update_user_tz(user, info["tz"])
             # if sub_list isnt in info.keys then the user has just set their tz, not created any subscriptions yet
             if "sub_list" in info.keys():
                 # now get every sub id in the database that is active, check if id in sub_ids
                 for sub in info["sub_list"]:
                     if "id" not in sub.keys():
                         # then we know we have to insert into the database
-                        sub_id = self.insert_sub(user_id, sub["type"], sub["details"], sub["when"], sub["active"], sub["last_sent"])
+                        sub_id = self._insert_sub(user_id, sub["type"], sub["details"], sub["when"], sub["active"], sub["last_sent"])
                         # set the sub ID in the dict
                         sub["id"] = sub_id
                     else:
@@ -434,7 +434,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                                 # call some logic here to run the sub
                                 if sub_type.lower() == 'weather':
                                     # invoke the bot get weather command
-                                    keyword_blocking_function = functools.partial(self.bot.get_cog('Weather').get_weather_for_area, sub_details, days=1, tz=info["tz"])
+                                    keyword_blocking_function = functools.partial(self.bot.get_cog('Weather')._get_weather_for_area, sub_details, days=1, tz=info["tz"])
                                     weather_embed = await loop.run_in_executor(ThreadPoolExecutor(), keyword_blocking_function)
                                     try:
                                         await user.dm_channel.send(embed=weather_embed)
@@ -444,10 +444,10 @@ class Subscriptions(commands.Cog, MarvinDB):
                                                                    f' {e}')
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
-                                    self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
+                                    self._update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
                                 elif sub_type.lower() == 'news':
                                     # invoke the bot get news command
-                                    articles = await loop.run_in_executor(ThreadPoolExecutor(), self.bot.get_cog('MarvinNews').get_news, sub_details)
+                                    articles = await loop.run_in_executor(ThreadPoolExecutor(), self.bot.get_cog('MarvinNews')._get_news, sub_details)
                                     if isinstance(articles, list):
                                         for article in articles:
                                             try:
@@ -473,7 +473,7 @@ class Subscriptions(commands.Cog, MarvinDB):
                                                 continue
                                     # update the last sent time in memory and in the database
                                     sub["last_sent"] = datetime.now(user_tz)
-                                    self.update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
+                                    self._update_last_sent_time_for_sub_by_id(sub["id"], datetime.now(user_tz))
                         else:
                             continue
 
