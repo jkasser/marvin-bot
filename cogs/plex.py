@@ -4,6 +4,7 @@ import json
 import boto3
 import os
 from discord.ext import commands, tasks
+from discord import DiscordServerError
 
 
 class MarvinMedia(commands.Cog):
@@ -37,7 +38,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexget', help='Get a list of active media!')
-    async def get_current_dls(self, ctx):
+    async def get_current_dls(self):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='get-all')
         print(response)
@@ -47,7 +48,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexpauseall', help='Pause all active media!')
-    async def pause_current_dls(self, ctx):
+    async def pause_current_dls(self):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='pause-all')
         await self.disc_channel.send(
@@ -56,7 +57,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexpauseone', help='Pause a specified hash!')
-    async def pause_one(self, ctx, hash):
+    async def pause_one(self, hash):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         if hash is None:
             await self.disc_channel.send('You must provide a hash, call plexget to see a list of all current hashes.')
@@ -68,7 +69,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexresumeall', help='Resume all active media!')
-    async def resume_all(self, ctx):
+    async def resume_all(self):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='resume-all')
         await self.disc_channel.send(
@@ -77,7 +78,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexresumeone', help='Resume a specified hash!')
-    async def resume_one(self, ctx, hash):
+    async def resume_one(self, hash):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         if hash is None:
             await self.disc_channel.send('You must provide a hash, call plexget to see a list of all current hashes.')
@@ -89,7 +90,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexdownload', help='Download specified media!')
-    async def download_link(self, ctx, link):
+    async def download_link(self, link):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         if link is None:
             await self.disc_channel.send('You must provide a link.')
@@ -101,7 +102,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexforcestart', help='Force start all active media!')
-    async def force_start(self, ctx):
+    async def force_start(self):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='force-start')
         await self.disc_channel.send(
@@ -110,7 +111,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexdelete', help='Delete the specified hash!')
-    async def delete_one(self, ctx, hash):
+    async def delete_one(self, hash):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         if hash is None:
             await self.disc_channel.send('You must provide a hash, call plexget to see a list of all current hashes.')
@@ -122,7 +123,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plextagtv', help='Tag the specified hash as tv!')
-    async def tag_tv(self, ctx, hash):
+    async def tag_tv(self, hash):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         if hash is None:
             await self.disc_channel.send('You must provide a hash, call plexget to see a list of all current hashes.')
@@ -134,7 +135,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plextagmovie', help='Tag the specified hash as movie!')
-    async def tag_movie(self, ctx, hash):
+    async def tag_movie(self, hash):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         if hash is None:
             await self.disc_channel.send('You must provide a hash, call plexget to see a list of all current hashes.')
@@ -146,7 +147,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexprocess', help='Process the specified hash!')
-    async def process_file(self, ctx, hash):
+    async def process_file(self, hash):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         if hash is None:
             await self.disc_channel.send('You must provide a hash, call plexget to see a list of all current hashes.')
@@ -158,7 +159,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexstartapp', help='Start the application!')
-    async def start_app(self, ctx):
+    async def start_app(self):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='start')
         await self.disc_channel.send(
@@ -167,7 +168,7 @@ class MarvinMedia(commands.Cog):
 
     @commands.has_role('Family')
     @commands.command('plexconenct', help='Connect to the application!')
-    async def start_app(self, ctx):
+    async def start_app(self):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='connect')
         await self.disc_channel.send(
@@ -177,9 +178,13 @@ class MarvinMedia(commands.Cog):
     @tasks.loop(minutes=30)
     async def purge_all(self):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
-        await self.disc_channel.send('Purging all messages!')
-        await self.disc_channel.purge()
-        await self.disc_channel.send('Purge complete. Next purge in 30 minutes!')
+        try:
+            await self.disc_channel.send('Purging all messages!')
+            await self.disc_channel.purge()
+            await self.disc_channel.send('Purge complete. Next purge in 30 minutes!')
+        except DiscordServerError:
+            pass
+
 
     @purge_all.before_loop
     async def before_purge_all(self):
