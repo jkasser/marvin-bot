@@ -109,7 +109,7 @@ class Riot(MarvinDB, commands.Cog):
             ]
             for x in r.json():
                 name = (
-                    x["nameKey"].capitalize()
+                    " ".join(x["nameKey"].split("_")).capitalize()
                     + " "
                     + " ".join(x["nameKeySecondary"].split("_")).capitalize()
                 )
@@ -359,12 +359,27 @@ class Riot(MarvinDB, commands.Cog):
         )
         return r.json()
 
+    def _find_split_point(self, text):
+        split_point = 1500
+        for char in text[split_point:]:
+            if char != '\n':
+                split_point += 1
+            else:
+                return split_point
+
     @commands.command(
         name="clash", help="Get current and upcoming clash tournament schedule."
     )
     async def get_clash(self, ctx):
         schedule = self._get_clash_schedule()
-        await ctx.send(str(schedule))
+        # if it's longer than 200 chars, split it here
+        if len(schedule) / 2000 > 1:
+            split_point = self._find_split_point(schedule)
+            broken_up_response = [schedule[:split_point], schedule[split_point:]]
+            for text_to_send in broken_up_response:
+                await ctx.send(str(text_to_send))
+        else:
+            await ctx.send(str(schedule))
 
     @commands.command(
         name="getsummoner", help="Pass in a summoner name and to get their info!"
