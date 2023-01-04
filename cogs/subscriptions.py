@@ -322,6 +322,9 @@ class Subscriptions(commands.Cog, MarvinDB):
         user = str(ctx.author)
         # we only need to get subs for the user
         try:
+            # a user could be in the list but with an empty array if they cancelled all their subs
+            if len(self.user_subs[user]["sub_list"]) == 0:
+                await ctx.send('You no longer have any active subscriptions!')
             for x in self.user_subs[user]["sub_list"]:
                 if "id" in x.keys():
                     sub_type = x["type"]
