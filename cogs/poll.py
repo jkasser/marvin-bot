@@ -15,7 +15,7 @@ class QuickPoll(commands.Cog):
             await ctx.send("You cannot make a poll for more than 10 things!")
             return
 
-        if len(options) == 2 and options[0] == "yes" and options[1] == "no":
+        if len(options) == 2 and options[0].lower() == "yes" and options[1].lower() == "no":
             reactions = ["✅", "❌"]
         else:
             reactions = ["1⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟"]
