@@ -46,6 +46,17 @@ class MarvinMedia(commands.Cog):
             f'Message {response["MessageId"]} sent. Response status: {response["ResponseMetadata"]["HTTPStatusCode"]}'
         )
 
+
+    @commands.has_role('Family')
+    @commands.command('getlogs', help='Get the most recent log file!')
+    async def get_current_dls(self, ctx):
+        self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
+        response = self._send_command_to_sqs(command='get-logs')
+        print(response)
+        await self.disc_channel.send(
+            f'Message {response["MessageId"]} sent. Response status: {response["ResponseMetadata"]["HTTPStatusCode"]}'
+        )
+
     @commands.has_role('Family')
     @commands.command('plexpauseall', help='Pause all active media!')
     async def pause_current_dls(self, ctx):
