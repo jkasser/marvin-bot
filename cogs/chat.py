@@ -141,7 +141,7 @@ class MarvinChat(commands.Cog):
             return_list.append({"intent": self.classes[r[0]], "probability": str(r[1])})
         return return_list
 
-    def getResponse(self, ints, intents_json):
+    def get_response(self, ints, intents_json):
         try:
             tag = ints[0]["intent"]
             list_of_intents = intents_json["intents"]
@@ -155,7 +155,7 @@ class MarvinChat(commands.Cog):
 
     def chatbot_response(self, msg):
         ints = self.predict_class(msg, self.model)
-        res = self.getResponse(ints, self.intents)
+        res = self.get_response(ints, self.intents)
         return res
 
 

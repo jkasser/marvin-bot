@@ -51,7 +51,7 @@ class MarvinBot(commands.Cog):
         )
 
     @commands.command(
-        name="whatsmyvibe", help="What you vibing too right now lil gangsta?"
+        name="whatsmyvibe", help="What you vibing to right now?"
     )
     async def get_vibe(self, ctx, user: discord.Member = None):
         web_url = "https://open.spotify.com/track/"
@@ -154,7 +154,8 @@ class MarvinBot(commands.Cog):
 
     @commands.command(
         name="makeprivate",
-        help="Make a private channel for you and the supplied members.",
+        help="Make a private channel for you and the supplied members. Note: server owners WILL have access to the "
+             "channel as well.",
     )
     @commands.has_any_role("Admins", "TheOGs")
     async def make_private_channel(self, ctx, *members: discord.Member):
@@ -229,29 +230,6 @@ class MarvinBot(commands.Cog):
             await ctx.send(f"Queue: {name}, created!")
         else:
             await ctx.send(f"Queue: {name}, already exists!")
-
-    @commands.command(
-        name="qaddme",
-        help="Call !qaddme <name> to be added to a specific queue, "
-        "if name is not provided it adds you to the general queue.\nEx. !qaddme myqueue.",
-    )
-    async def add_me_to_queue(self, ctx, name=None):
-        if name is None:
-            queue = self.named_queues["General"]
-            name = "General"
-        else:
-            if name in self.named_queues.keys():
-                queue = self.named_queues[name]
-            else:
-                await ctx.send(
-                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
-                )
-                return
-        username = ctx.author.mention
-        queue.append(username)
-        await ctx.send(
-            f"{username} has been added to the: {name} queue at position: {queue.index(username) + 1}"
-        )
 
     @commands.command(
         name="qadduser",

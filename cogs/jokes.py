@@ -14,26 +14,13 @@ class MarvinStandup(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.jokes_list = {
-            "wocka": self.load_wocka_jokes(),
-            "reddit": self.load_reddit_jokes(),
-            "stupid": self.load_stupid_jokes(),
-        }
+        self.jokes_list = {}
+        for name, file in self.JOKES_FILES.items():
+            self.jokes_list[name] = self.load_jokes_from_file(file)
 
-    def load_reddit_jokes(self):
-        with open(self.JOKES_BASE_DIR + self.JOKES_FILES["reddit"]) as reddit_json:
-            reddit_jokes = json.load(reddit_json)
-            return reddit_jokes
-
-    def load_stupid_jokes(self):
-        with open(self.JOKES_BASE_DIR + self.JOKES_FILES["stupid"]) as stupid_json:
-            stupid_jokes = json.load(stupid_json)
-            return stupid_jokes
-
-    def load_wocka_jokes(self):
-        with open(self.JOKES_BASE_DIR + self.JOKES_FILES["wocka"]) as wocka_json:
-            wocka_jokes = json.load(wocka_json)
-            return wocka_jokes
+    def load_jokes_from_file(self, file):
+        with open(self.JOKES_BASE_DIR + file) as jokes_file:
+            return json.load(jokes_file)
 
     @commands.command(name="joke", help="Want to hear something funny?")
     async def tell_joke(self, ctx):
