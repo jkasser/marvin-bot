@@ -2,15 +2,7 @@ import yaml
 import os
 import sys
 import discord
-import random
-import asyncio
 from discord.ext import commands
-from assets.data.quotes import *
-from concurrent.futures.thread import ThreadPoolExecutor
-
-# from chatterbot import ChatBot
-# from chatterbot.response_selection import get_random_response
-# from chatterbot.trainers import ChatterBotCorpusTrainer
 
 # discord config
 with open("config.yaml", "r") as file:
@@ -23,8 +15,34 @@ if env == "NOT SET":
         "Linux: export ENV=dev"
     )
 token = cfg["disc"][env]["token"]
-intents = discord.Intents().all()
-bot = commands.Bot(command_prefix=cfg["disc"]["prefix"], intents=intents)
+intents = discord.Intents.all()
+
+class Bot(commands.Bot):
+    def __init__(self):
+        super().__init__(
+            intents=intents,
+            command_prefix=cfg["disc"]["prefix"],
+            self_bot=True, strip_after_prefix = True
+        )
+
+client = Bot()
+
+
+# cogs
+@client.command()
+async def load(extension):
+    await client.load_extension(f'cogs.{extension}')
+
+
+@client.command()
+async def unload(extension):
+    await client.unload_extension(f'cogs.{extension}')
+
+
+async def load_extension():
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            await client.load_extension(f'cogs.{filename[:-3]}')
 
 
 class UserInfo:
@@ -41,35 +59,33 @@ class UserInfo:
 extensions = [
     "cogs.subscriptions",
     "cogs.marvin",
-    "cogs.todo",
     "cogs.riot",
     "cogs.jeopardy",
     "cogs.news",
-    "cogs.reminder",
     "cogs.reddit",
     "cogs.weather",
     "cogs.address_book",
-    "cogs.translator",
-    "cogs.poll",
-    # 'cogs.covid'
     "cogs.phone",
     "cogs.giphy",
-    "cogs.jokes",
-    # 'cogs.chat'
     "cogs.marvin_tube",
     "cogs.plex"
 ]
 
 
-@bot.event
-async def on_ready():  # method expected by client. This runs once when connected
-    await bot.change_presence(
-        status=discord.Status.online, activity=discord.CustomActivity(name="Vibing")
-    )
-    print(f"We have logged in as {bot.user}")  # notification of login.
+@commands.Cog.listener()
+async def on_ready(self):
+    print('Logged in as: {0.user.name}\nBots user id: {0.user.id}'.format(self.client))
+    print('Discord.py version:')
+    print(discord.__version__)
+    print('Ready!')
 
 
-@bot.event
+@commands.command()
+async def ping(self, ctx):
+    await ctx.send(f'Ping is {round(self.client.latency * 1000)} ms')
+
+
+@commands.Cog.listener()
 async def on_message(message):  # event that happens per any message.
     # each message has a bunch of attributes. Here are a few.
     # check out more by print(dir(message)) for example.
@@ -79,14 +95,8 @@ async def on_message(message):  # event that happens per any message.
 
     message_text = message.content.strip().lower()
     channel = message.channel
-    if message.author != bot.user:
-        if "towel" in message_text:
-            await channel.send(towel_quote)
-        elif "meaning of life" in message_text or "answer to life" in message_text:
-            await channel.send(the_answer_to_life)
-        elif " thumb " in message_text:
-            await channel.send(thumb_quote)
-        elif (
+    if message.author != client.user:
+        if (
             "shut up" in message_text
             or "be quiet" in message_text
             or "stfu" in message_text
@@ -98,20 +108,10 @@ async def on_message(message):  # event that happens per any message.
             or "what the hell" == message_text
         ):
             await channel.send(file=discord.File("./assets/media/wtf.gif"))
-        # COMMENT IN IF YOU WANT HIM TO CHAT
-        # elif message.channel.id == cfg["disc"][env]["chat_bot_channel"]:
-        #     loop = asyncio.get_event_loop()
-        #     response = await loop.run_in_executor(ThreadPoolExecutor(),
-        #     bot.get_cog('MarvinChat').chatbot_response, message_text)
-        #     await channel.send(response)
-        # await channel.send(chatbot.get_response(message.content.capitalize()))
-        elif "<@!759093184219054120>" in message.content:
-            response = random.choice(marvin_quotes)
-            await channel.send(response)
-    await bot.process_commands(message)
+    await client.process_commands(message)
 
 
-@bot.event
+@client.event
 async def on_member_join(member):
     await member.create_dm()
     await member.dm_channel.send(
@@ -119,12 +119,6 @@ async def on_member_join(member):
     )
 
 
-@bot.event
+@client.event
 async def on_command_error(ctx, error):
     await ctx.send(error)
-
-
-if __name__ == "__main__":
-    for extension in extensions:
-        bot.load_extension(extension)
-    bot.run(token)
