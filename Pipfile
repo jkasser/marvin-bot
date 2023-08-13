@@ -24,6 +24,7 @@ keras = "*"
 pyyaml = "*"
 boto3 = "*"
 black = "*"
+pymongo = "*"
 
 [requires]
 python_version = "3.8"
