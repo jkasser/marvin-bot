@@ -32,7 +32,15 @@ def strip_tags(html):
 
 
 def get_user_friendly_date_from_string(date_string: str) -> str:
-    return f'{calendar.month_name[int(date_string.split("-")[1])]} {date_string.split("-")[2].split("T")[0]}, {date_string.split("-")[0]}'
+    try:
+        friendly_date = f'{calendar.month_name[int(date_string.split("-")[1])]} {date_string.split("-")[2].split("T")[0]}, {date_string.split("-")[0]}'
+    except AttributeError:
+        # use todays date if we fail
+        day = datetime.date(datetime.utcnow()).day
+        month = calendar.month_name[datetime.date(datetime.utcnow()).month]
+        year = datetime.date(datetime.utcnow()).year
+        friendly_date = f"{month} {day}, {year}"
+    return friendly_date
 
 
 def turn_datetime_into_string(datetime_object) -> str:
