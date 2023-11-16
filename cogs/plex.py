@@ -4,7 +4,7 @@ import json
 import boto3
 import os
 from discord.ext import commands, tasks
-from discord import DiscordServerError
+from discord.errors import DiscordServerError, Forbidden
 
 
 class MarvinMedia(commands.Cog):
@@ -17,11 +17,11 @@ class MarvinMedia(commands.Cog):
         self.queue_url = cfg["plex"]["sqs_queue"]
         self.msg_q_id = cfg["plex"]["message_group_id"]
         self.sqs = boto3.client(
-        "sqs",
-        region_name=cfg["plex"]["region"],
-        aws_access_key_id=cfg["plex"]["aws_key_id"],
-        aws_secret_access_key=cfg["plex"]["aws_secret_id"]
-    )
+            "sqs",
+            region_name=cfg["plex"]["region"],
+            aws_access_key_id=cfg["plex"]["aws_key_id"],
+            aws_secret_access_key=cfg["plex"]["aws_secret_id"]
+        )
         # we will only post to a specific channel
         env = os.environ.get("ENV", "NOT SET")
         self.plex_channel_id = cfg["disc"][env]["plex_channel"]
@@ -178,7 +178,7 @@ class MarvinMedia(commands.Cog):
         )
 
     @commands.has_role('Family')
-    @commands.command('plexconenct', help='Connect to the application!')
+    @commands.command('plexconnect', help='Connect to the application!')
     async def start_app(self, ctx):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='connect')
@@ -193,9 +193,8 @@ class MarvinMedia(commands.Cog):
             await self.disc_channel.send('Purging all messages!')
             await self.disc_channel.purge()
             await self.disc_channel.send('Purge complete. Next purge in 30 minutes!')
-        except DiscordServerError:
-            pass
-
+        except (DiscordServerError, Forbidden) as e:
+            await self.disc_channel.send(f'Error encountered: {e}')
 
     @purge_all.before_loop
     async def before_purge_all(self):
