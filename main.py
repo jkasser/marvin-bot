@@ -2,6 +2,7 @@ import yaml
 import os
 import sys
 import discord
+from utils.roles import Permissions
 from discord.ext import commands
 
 # discord config
@@ -17,13 +18,17 @@ if env == "NOT SET":
 token = cfg["disc"][env]["token"]
 intents = discord.Intents.all()
 
+WELCOME_CHANNEL = cfg["disc"][env]["welcome_channel"]
+
+
 class Bot(commands.Bot):
     def __init__(self):
         super().__init__(
             intents=intents,
             command_prefix=cfg["disc"]["prefix"],
-            self_bot=True, strip_after_prefix = True
+            self_bot=True, strip_after_prefix=True
         )
+
 
 client = Bot()
 
@@ -72,13 +77,40 @@ extensions = [
 ]
 
 
-@commands.Cog.listener()
-async def on_ready(self):
-    print('Logged in as: {0.user.name}\nBots user id: {0.user.id}'.format(self.client))
+@client.event
+async def on_ready():
+    print('Logged in as: {0.user.name}\nBots user id: {0.user.id}'.format(client))
     print('Discord.py version:')
     print(discord.__version__)
     print('Ready!')
+    # do our role logic here too
+    channel = client.get_channel(WELCOME_CHANNEL)
+    embed = discord.Embed(
+        title="Select Your Roles!",
+        description="React with the corresponding emoji to get the role! If you wish to have a role removed please "
+                    "contact an Admin!",
+        color=0xff0000,
+    )
+    for emoji, role in Permissions.permissions_list.items():
+        embed.add_field(
+            name=emoji,
+            value=role[1],
+            inline=True,
+        )
+    embed.set_footer(text="Welcome to our server!")
+    msg = await channel.send(embed=embed)
+    for emoji, role in Permissions.permissions_list.items():
+        await msg.add_reaction(emoji)
 
+
+@client.event
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
+    if payload.channel_id != WELCOME_CHANNEL or payload.member.bot:
+        return
+    if str(payload.emoji) in Permissions.permissions_list.keys():
+        role_id = Permissions.permissions_list[str(payload.emoji)][0]
+        # discord.utils.get(payload.member.guild.roles, id=role_id)
+        await payload.member.add_roles(discord.utils.get(payload.member.guild.roles, id=role_id))
 
 @commands.command()
 async def ping(self, ctx):
@@ -115,10 +147,13 @@ async def on_message(message):  # event that happens per any message.
 async def on_member_join(member):
     await member.create_dm()
     await member.dm_channel.send(
-        f"Hi {member.name}, welcome to my Discord server! Type !help to see my command list!"
+        f"Hi {member.name}, welcome to my Discord server! Please take a brief second to select the channels you wish to access!"
     )
 
 
 @client.event
 async def on_command_error(ctx, error):
     await ctx.send(error)
+
+
+client.run(token)

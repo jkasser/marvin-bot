@@ -22,24 +22,6 @@ class MarvinBot(commands.Cog):
     async def get_latency(self, ctx):
         await ctx.send(f"My latency is {round(self.bot.latency * 1000, 1)}ms.")
 
-    @commands.command(name="grail", help="Tis a silly command")
-    async def get_monty_python_quotes(self, ctx):
-        response = random.choice(holy_grail_quotes)
-        await ctx.send(response)
-
-    @commands.command(
-        name="kanye",
-        aliases=["yeezy", "yeezus"],
-        help="Whipped it out she said I never seen snakes on a plane.",
-    )
-    async def get_kanye_quotes(self, ctx):
-        response = random.choice(kanye_quotes)
-        await ctx.send(response)
-
-    @commands.command(name="lullaby", help="Let Marvin read you a lullaby!")
-    async def post_marvin_lullaby(self, ctx):
-        await ctx.send(marvin_lullaby)
-
     @commands.command(
         name="flipcoin",
         help="Having trouble making a decision? Let Marvin flip a coin for you!",
@@ -89,12 +71,6 @@ class MarvinBot(commands.Cog):
     async def decide(self, ctx):
         await ctx.send(f'{random.choice(["Yes.", "No."])}')
 
-    @commands.command(
-        name="hangover",
-        help="Get some medical advice from someone completely unqualified!",
-    )
-    async def hangover(self, ctx):
-        await ctx.send(random.choice(hangover_cures))
 
     @commands.command(name="addrole", pass_context=True)
     @commands.has_any_role("Admins", "TheOGs")
