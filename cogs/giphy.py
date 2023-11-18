@@ -43,7 +43,7 @@ class Giphy(commands.Cog):
                     )
             await ctx.send(embed=embed)
         except (IndexError, KeyError):
-            await ctx.send("I could'nt find any matching results! Please try again.")
+            await ctx.send("I couldn't find any matching results! Please try again.")
 
 
 def setup(bot):

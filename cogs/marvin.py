@@ -71,9 +71,8 @@ class MarvinBot(commands.Cog):
     async def decide(self, ctx):
         await ctx.send(f'{random.choice(["Yes.", "No."])}')
 
-
     @commands.command(name="addrole", pass_context=True)
-    @commands.has_any_role("Admins", "TheOGs")
+    @commands.has_any_role("Admins")
     async def add_role_to_user(self, ctx, user: discord.Member, role: discord.Role):
         await user.add_roles(role)
         await ctx.send(
@@ -81,7 +80,7 @@ class MarvinBot(commands.Cog):
         )
 
     @commands.command(name="removerole", pass_context=True)
-    @commands.has_any_role("Admins", "TheOGs")
+    @commands.has_any_role("Admins")
     async def remove_role_from_user(
         self, ctx, user: discord.Member, role: discord.Role
     ):
@@ -96,9 +95,9 @@ class MarvinBot(commands.Cog):
 
     @commands.command(
         name="adduser",
-        help="Add a user to the channel. You must be a member of TheOGs to use this command.",
+        help="Add a user to the channel. You must be an Admin to use this command.",
     )
-    @commands.has_any_role("Admins", "TheOGs")
+    @commands.has_any_role("Admins")
     async def add_user_to_channel(self, ctx, *users):
         members = await ctx.guild.fetch_members(limit=150).flatten()
         for user in users:
@@ -133,7 +132,7 @@ class MarvinBot(commands.Cog):
         help="Make a private channel for you and the supplied members. Note: server owners WILL have access to the "
              "channel as well.",
     )
-    @commands.has_any_role("Admins", "TheOGs")
+    @commands.has_any_role("Admins")
     async def make_private_channel(self, ctx, *members: discord.Member):
         try:
             guild = ctx.guild
@@ -192,123 +191,6 @@ class MarvinBot(commands.Cog):
             )
         except Exception as e:
             await ctx.send(f"I have encountered the following error: {e}")
-
-    @commands.command(
-        name="qcreate",
-        aliases=["createq", "queuecreate", "createqueue"],
-        help='Create a single word named queue in memory, if left blank, will create the "General"'
-        "queue, which exists by default.\nEx. !qcreate myqueue",
-    )
-    @commands.has_any_role("Admins", "TheOGs")
-    async def create_named_queue(self, ctx, name="General"):
-        if name not in self.named_queues.keys():
-            self.named_queues[name] = []
-            await ctx.send(f"Queue: {name}, created!")
-        else:
-            await ctx.send(f"Queue: {name}, already exists!")
-
-    @commands.command(
-        name="qadduser",
-        aliases=["qadd", "queueadd"],
-        help="This only works to add a user to the general queue, "
-        "pass in the user's username.\nEx. !adduser marvin.",
-    )
-    @commands.has_any_role("Admins", "TheOGs")
-    async def add_user_to_queue(self, ctx, user):
-        queue = self.named_queues["General"]
-        if user is None:
-            username = ctx.message.author.mention
-            queue.append(username)
-            await ctx.send(
-                f"{username} has been added to the General queue at position: {queue.index(username) + 1}"
-            )
-        else:
-            members = await ctx.guild.fetch_members(limit=150).flatten()
-            for member in members:
-                if user in member.name:
-                    username = member.mention
-                    queue.append(username)
-                    await ctx.send(
-                        f"{username} has been added to the General queue at position: {queue.index(username) + 1}"
-                    )
-                    break
-                elif (
-                    members.index(member) + 1 == len(members)
-                    and user not in member.name
-                ):
-                    await ctx.send(f"No member found for {user}")
-
-    @commands.command(
-        name="qlist",
-        aliases=["listq", "listqueue", "queuelist"],
-        help="See the current queue list of the queue name provided."
-        " If no name is provided then it will provide the list of the General queue."
-        "\nEx. !qlist myqueue",
-    )
-    async def get_queue_list(self, ctx, name=None):
-        if name is None:
-            queue = self.named_queues["General"]
-            name = "General"
-        else:
-            if name in self.named_queues.keys():
-                queue = self.named_queues[name]
-            else:
-                await ctx.send(
-                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
-                )
-                return
-        if len(queue) >= 1:
-            await ctx.send(f'{", ".join(user for user in queue)}')
-        else:
-            await ctx.send(f"The {name} queue is currently empty.")
-
-    @commands.command(
-        name="qclear",
-        aliases=["clearqueue", "clearq"],
-        help="Clears the provided queue name. If no queue name is provided it will "
-        "clear the General queue.\nEx. !qclear myqueue",
-    )
-    @commands.has_any_role("Admins", "TheOGs")
-    async def clear_queue(self, ctx, name=None):
-        if name is None:
-            queue = self.named_queues["General"]
-            name = "General"
-        else:
-            if name in self.named_queues.keys():
-                queue = self.named_queues[name]
-            else:
-                await ctx.send(
-                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
-                )
-                return
-        queue.clear()
-        await ctx.send(f"The queue: {name} has been cleared!")
-
-    @commands.command(
-        name="qnext",
-        aliases=["queuenext", "next"],
-        help="Call the next person in the provided queue. If no queue name is provided, "
-        "it will call the next person from the General queue.\nEx. !qnext myqueue",
-    )
-    @commands.has_any_role("Admins", "TheOGs")
-    async def get_next_user_in_queue(self, ctx, name=None):
-        if name is None:
-            queue = self.named_queues["General"]
-            name = "General"
-        else:
-            if name in self.named_queues.keys():
-                queue = self.named_queues[name]
-            else:
-                await ctx.send(
-                    f"The {name} queue does not currently exist! Use !qcreate <name> to create it!"
-                )
-                return
-
-        if len(queue) >= 1:
-            user = queue.pop(0)
-            await ctx.send(f"{user}, you have been summoned!")
-        else:
-            await ctx.send(f"The {name} queue is empty! There is no one else to call")
 
     @commands.command(
         name="getmyid",

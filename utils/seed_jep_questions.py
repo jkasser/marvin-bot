@@ -3,7 +3,7 @@ import json
 import yaml
 import discord
 from discord.ext import commands
-from cogs.jeopardy import Jeopardy
+from cogs.wip.jeopardy import Jeopardy
 
 
 class InsertQuestions(Jeopardy):

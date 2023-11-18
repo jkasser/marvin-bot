@@ -3,12 +3,12 @@ from discord.ext import commands
 
 
 class Reactions:
-    text_channels_emoji = "🤷"
+    text_channels_emoji = "💬"
     travel_emoji = "🌏"
     news_politics_emoji = "📰"
     coding_emoji = "💾"
     voice_gaming_emoji = "🎮"
-    lol_emoji = ":league_of_legends:"
+    lol_emoji = "🤬"
 
 
 class Roles:
