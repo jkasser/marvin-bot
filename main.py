@@ -112,6 +112,18 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         # discord.utils.get(payload.member.guild.roles, id=role_id)
         await payload.member.add_roles(discord.utils.get(payload.member.guild.roles, id=role_id))
 
+
+@client.event
+async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
+    guild = await client.fetch_guild(payload.guild_id)
+    member = await guild.fetch_member(payload.user_id)
+    if payload.channel_id != WELCOME_CHANNEL or member.bot:
+        return
+    if str(payload.emoji) in Permissions.permissions_list.keys():
+        role_id = Permissions.permissions_list[str(payload.emoji)][0]
+        await member.remove_roles(discord.utils.get(member.guild.roles, id=role_id))
+
+
 @commands.command()
 async def ping(self, ctx):
     await ctx.send(f'Ping is {round(self.client.latency * 1000)} ms')
