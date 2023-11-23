@@ -21,36 +21,22 @@ class Riot(MarvinDB, commands.Cog):
     ASSETS_BASE_DIR = "/assets/riot_games/"
 
     TABLE_NAME = "riot_games"
-    SUMMONER_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-        id integer PRIMARY KEY,
-        summoner_name text NOT NULL,
-        summoner_id text not NULL,
-        account_id text NOT NULL,
-        puuid text NOT NULL,
-        summoner_level integer NOT NULL,
-        profile_icon integer NOT NULL,
-        revision_date integer NOT NULL
-    );"""
-    INSERT_SUMMONER = f"""INSERT INTO {TABLE_NAME}(summoner_name,summoner_id,account_id,puuid,summoner_level,
-                        profile_icon,revision_date) VALUES(?,?,?,?,?,?,?)"""
+
+    # Fields
+    SUMMONER_NAME = "summoner_name"
+    SUMMONER_ID = "summoner_id"
+    ACCOUNT_ID = "account_id"
+    PUUID = "puuid"
+    SUMMONER_LEVEL = "summoner_level"
+    PROFILE_ICON = "profile_icon"
+    REVISION_DATE = "revision_date"
+
     UPDATE_SUMMONER = f"""UPDATE {TABLE_NAME} SET summoner_level = ?, profile_icon = ?, revision_date = ?
                         WHERE summoner_id = ?"""
-    FIND_SUMMONER_BY_ID = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_id = ?"""
-    FIND_SUMMONER_BY_NAME = f"""SELECT * FROM {TABLE_NAME} WHERE summoner_name = ?"""
-    CHECK_IF_SUMMONER_EXISTS_BY_ID = (
-        f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_id=? LIMIT 1)"""
-    )
-    CHECK_IF_SUMMONER_EXISTS_BY_NAME = (
-        f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE summoner_name=? LIMIT 1)"""
-    )
 
     # Data dragon assets table
     ASSETS_TABLE_NAME = "assets_ver"
-    ASSETS_VER_TABLE = f"""CREATE TABLE IF NOT EXISTS {ASSETS_TABLE_NAME} (
-        id integer PRIMARY KEY,
-        current_version text NOT NULL
-    );
-    """
+    CURRENT_VERSION = "current_version"
     INSERT_LATEST_DATA_VERSION = (
         f"""INSERT INTO {ASSETS_TABLE_NAME}(current_version) VALUES(?)"""
     )
@@ -64,6 +50,7 @@ class Riot(MarvinDB, commands.Cog):
 
     # Issue tracker
     LOL_STATUS_TABLE_NAME = "lol_status"
+    ISSUE_HASH = "issue_hash"
     LOL_STATUS_TABLE = f"""CREATE TABLE IF NOT EXISTS {LOL_STATUS_TABLE_NAME} (
         id integer PRIMARY KEY,
         issue_hash text NOT NULL
@@ -79,9 +66,9 @@ class Riot(MarvinDB, commands.Cog):
         # setup bot for cogs
         self.bot = bot
         # Create the database
-        self.summoner_table = self._create_table(self.conn, self.SUMMONER_TABLE)
-        self.data_version_table = self._create_table(self.conn, self.ASSETS_VER_TABLE)
-        self.issue_table = self._create_table(self.conn, self.LOL_STATUS_TABLE)
+        self.summoner_table = self.select_collection(self.TABLE_NAME)
+        self.data_version_table = self.select_collection(self.ASSETS_TABLE_NAME)
+        self.issue_table = self.select_collection(self.LOL_STATUS_TABLE)
         # Riot API Stuff
         with open(
             os.path.dirname(os.path.dirname(__file__)) + "/config.yaml", "r"
@@ -147,68 +134,96 @@ class Riot(MarvinDB, commands.Cog):
             revision_date = summoner_body["revisionDate"]
             if not self._check_if_summoner_exists_by_id(summoner_id):
                 self._insert_summoner_into_db(
-                    (
-                        summoner_name,
-                        summoner_id,
-                        account_id,
-                        puuid,
-                        summoner_level,
-                        profile_icon_id,
-                        revision_date,
-                    )
+                    name=summoner_name,
+                    summoner_id=summoner_id,
+                    account_id=account_id,
+                    puuid=puuid,
+                    summoner_level=summoner_level,
+                    profile_icon=profile_icon_id,
+                    revision_date=revision_date,
                 )
             else:
                 self._update_summoner_in_db(
-                    (summoner_level, profile_icon_id, revision_date, summoner_id)
+                    summoner_id,
+                    {
+                        self.SUMMONER_NAME: summoner_name,
+                        self.SUMMONER_LEVEL: summoner_level,
+                        self.PROFILE_ICON: profile_icon_id,
+                        self.REVISION_DATE: revision_date,
+                    }
                 )
             return summoner_name, summoner_level, profile_icon_id
 
-    def _insert_summoner_into_db(self, values: tuple):
-        """Values: summoner_name,summoner_id,account_id,puuid,summoner_level,profile_icon,revision_date in a tuple"""
-        return self._insert_query(self.INSERT_SUMMONER, values)
+    def _insert_summoner_into_db(self, name, summoner_id, account_id, puuid, summoner_level, profile_icon, revision_date):
+        return self.summoner_table.insert_one(
+            {
+                self.SUMMONER_NAME: name,
+                self.SUMMONER_ID: summoner_id,
+                self.ACCOUNT_ID: account_id,
+                self.PUUID: puuid,
+                self.SUMMONER_LEVEL: summoner_level,
+                self.PROFILE_ICON: profile_icon,
+                self.REVISION_DATE: revision_date,
+            }
+        )
 
-    def _get_summoner_by_name(self, summoner_name: str):
-        cur = self.conn.cursor()
-        results = cur.execute(self.FIND_SUMMONER_BY_NAME, (summoner_name,)).fetchone()
-        self.conn.commit()
+    def _get_summoner_by_name(self, summoner_name):
+        results = self.run_find_one_query(
+            table_name=self.summoner_table,
+            query_to_run={
+                self.SUMMONER_NAME: str(summoner_name),
+            }
+        )
         return results
 
-    def _check_if_summoner_exists_by_id(self, summoner_id: id):
-        cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_ID, (summoner_id,))
-        results = results.fetchone()[0]
-        self.conn.commit()
-        if results == 0:
-            return False
-        else:
+    def _check_if_summoner_exists_by_id(self, summoner_id):
+        results = self.run_find_one_query(
+            table_name=self.summoner_table,
+            query_to_run={
+                self.SUMMONER_ID: summoner_id
+            }
+        )
+        if results:
             return True
+        else:
+            return False
 
     def _check_if_summoner_exists_by_name(self, summoner_name: str):
-        cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_SUMMONER_EXISTS_BY_NAME, (summoner_name,))
-        results = results.fetchone()[0]
-        self.conn.commit()
-        if results == 0:
-            return False
-        else:
+        results = self.run_find_one_query(
+            table_name=self.summoner_table,
+            query_to_run={
+                self.SUMMONER_NAME: summoner_name
+            }
+        )
+        if results:
             return True
+        else:
+            return False
 
     def _check_if_summoner_needs_update(
         self, summoner_id: str, current_revision_date: int
     ):
-        cur = self.conn.cursor()
-        results = cur.execute(self.FIND_SUMMONER_BY_ID, (summoner_id,)).fetchone()
-        self.conn.commit()
-        if results[7] < current_revision_date:
+        results = self.run_find_one_query(
+            table_name=self.summoner_table,
+            query_to_run={
+                self.SUMMONER_ID: summoner_id
+            }
+        )
+        if results[self.REVISION_DATE] < current_revision_date:
             return True
         else:
             return False
 
-    def _update_summoner_in_db(self, values: tuple):
+    def _update_summoner_in_db(self, summoner_id, values_to_set: dict):
         """summoner_level = ?, profile_icon = ?, revision_date = ? WHERE summoner_id = ?"""
-        cur = self.conn.cursor()
-        cur.execute(self.UPDATE_SUMMONER, values)
-        self.conn.commit()
+        self.summoner_table.update_one(
+            {
+                self.SUMMONER_ID: summoner_id,
+            },
+            {
+                "$set": values_to_set
+            }
+        )
 
     def _get_profile_img_for_id(self, profile_icon_id: int):
         parent_path = (
@@ -248,29 +263,42 @@ class Riot(MarvinDB, commands.Cog):
             return False
 
     def _check_if_assets_current_version_exists(self):
-        cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_IF_CURRENT_VER_EXISTS).fetchone()[0]
-        self.conn.commit()
-        if results == 0:
-            return False
-        else:
+        results = self.run_find_one_query(
+            table_name=self.ASSETS_TABLE_NAME,
+            query_to_run={}
+        )
+        if results is not None:
             return True
+        else:
+            return False
 
     def _get_current_assets_version_from_db(self):
-        cur = self.conn.cursor()
-        results = cur.execute(self.GET_ASSETS_LATEST_VERSION).fetchone()
-        self.conn.commit()
+        results = self.run_find_one_query(
+            table_name=self.ASSETS_TABLE_NAME,
+            query_to_run={}
+        )
         return results
 
     def _insert_assets_current_version(self, current_version: str):
-        """Values: current_version"""
-        return self._insert_query(self.INSERT_LATEST_DATA_VERSION, (current_version,))
+        return self.insert_one(
+            table_name=self.ASSETS_TABLE_NAME,
+            query_to_run={
+                self.CURRENT_VERSION: current_version
+            }
+        )
 
     def _update_assets_current_version(self, current_version: str):
-        """current_version=?"""
-        cur = self.conn.cursor()
-        cur.execute(self.UPDATE_LATEST_DATA_VERSION, (current_version,))
-        self.conn.commit()
+        version = self.run_find_one_query(
+            table_name=self.ASSETS_TABLE_NAME,
+            query_to_run={}
+        ).id
+        return self.set_field_for_object_in_table(
+            table_name=self.ASSETS_TABLE_NAME,
+            record_id_to_update=version.id,
+            query_to_run={
+                self.CURRENT_VERSION: current_version
+            }
+        )
 
     def _download_new_assets(self, url, version_name):
         path = (
@@ -334,17 +362,25 @@ class Riot(MarvinDB, commands.Cog):
         return issues
 
     def _check_if_issue_hash_exists(self, hash_id: str):
-        cur = self.conn.cursor()
-        results = cur.execute(self.CHECK_ISSUE_HASH, (hash_id,)).fetchone()[0]
-        self.conn.commit()
-        if results == 0:
+        results = self.run_find_one_query(
+            table_name=self.LOL_STATUS_TABLE_NAME,
+            query_to_run={
+                self.ISSUE_HASH: hash_id
+            }
+        )
+        if results is not None:
             return False
         else:
             return True
 
     def _insert_issue_hash(self, issue_hash: str):
         """Values: issue_hash"""
-        return self._insert_query(self.INSERT_ISSUE_HASH, (issue_hash,))
+        return self.insert_one(
+            table_name=self.LOL_STATUS_TABLE_NAME,
+            query_to_run={
+                self.ISSUE_HASH: issue_hash
+            }
+        )
 
     def _get_match_by_match_id(self, match_id):
         r = requests.get(
@@ -405,9 +441,9 @@ class Riot(MarvinDB, commands.Cog):
                 return
         else:
             one_day_ago = (
-                int(str(time.time()).replace(".", "")[: len(str(results[7]))]) - 86400
+                int(str(time.time()).replace(".", "")[: len(str(results[self.REVISION_DATE]))]) - 86400
             )
-            if results[7] <= one_day_ago:
+            if results[self.REVISION_DATE] <= one_day_ago:
                 # its been awhile, let's get new info
                 name, summoner_level, profile_icon_id = await loop.run_in_executor(
                     ThreadPoolExecutor(),
@@ -416,9 +452,9 @@ class Riot(MarvinDB, commands.Cog):
                 )
             else:
                 name, summoner_level, profile_icon_id = (
-                    results[1],
-                    results[5],
-                    results[6],
+                    results[self.SUMMONER_NAME],
+                    results[self.SUMMONER_LEVEL],
+                    results[self.PROFILE_ICON],
                 )
         embedded_link = discord.Embed(
             title=name, description=summoner_level, color=0x8B0000
@@ -471,7 +507,7 @@ class Riot(MarvinDB, commands.Cog):
             )
             try:
                 if self._check_if_assets_current_version_exists():
-                    assets_db_version = self._get_current_assets_version_from_db()[0]
+                    assets_db_version = self._get_current_assets_version_from_db()[self.CURRENT_VERSION]
                     # See if the api version is greater than our current one
                     if api_current_version > assets_db_version:
                         await api_updates_channel.send(
@@ -525,7 +561,7 @@ class Riot(MarvinDB, commands.Cog):
                 await api_updates_channel.send(e)
         else:
             if self._check_if_assets_current_version_exists():
-                assets_db_version = self._get_current_assets_version_from_db()[0]
+                assets_db_version = self._get_current_assets_version_from_db()[self.CURRENT_VERSION]
                 self.assets_version = assets_db_version
 
     @tasks.loop(minutes=15)
@@ -560,5 +596,5 @@ class Riot(MarvinDB, commands.Cog):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
-    bot.add_cog(Riot(bot))
+async def setup(bot):
+    await bot.add_cog(Riot(bot))
