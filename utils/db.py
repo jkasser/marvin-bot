@@ -1,8 +1,6 @@
 import os.path
-
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-from ssl import CERT_NONE
 import yaml
 import datetime
 
@@ -139,9 +137,9 @@ class MarvinDB():
             query_to_run
         )
 
-    def insert_contact(self, discord_id, name, phone, address, birthday, email, share_with=[]):
+    def insert_contact(self, discord_id, name, phone, address, birthday, email, summoner_id=None, share_with=[]):
         db = self.select_collection('contacts')
-        db.insert_one(
+        results = db.insert_one(
             {
                 "disc_id": discord_id,
                 "details": {
@@ -151,6 +149,15 @@ class MarvinDB():
                     "dob": birthday,
                     "email": email
                 },
+                "summoner_id": summoner_id,
                 "share_with": share_with
             }
         )
+        return results
+
+    def insert_one(self, table_name, query_to_run):
+        db = self.select_collection(table_name)
+        results = db.insert_one(
+            query_to_run
+        )
+        return results
