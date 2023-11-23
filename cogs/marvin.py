@@ -4,7 +4,6 @@ import requests
 import os
 import asyncio
 import yaml
-from assets.data.quotes import *
 from discord.ext import commands
 from concurrent.futures.thread import ThreadPoolExecutor
 
@@ -16,7 +15,7 @@ class MarvinBot(commands.Cog):
         with open("config.yaml", "r") as file:
             cfg = yaml.safe_load(file)
         env = os.environ.get("ENV", "NOT SET")
-        self.booster_channel = cfg["disc"][env]["booster_lounge_channel"]
+        #self.booster_channel = cfg["disc"][env]["booster_lounge_channel"]
 
     @commands.command(name="latency", aliases=["ping"], help="Get my latency in ms.")
     async def get_latency(self, ctx):
@@ -260,5 +259,5 @@ class MarvinBot(commands.Cog):
             await new_channel.disconnect()
 
 
-def setup(bot):
-    bot.add_cog(MarvinBot(bot))
+async def setup(bot):
+    await bot.add_cog(MarvinBot(bot))

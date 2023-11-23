@@ -30,24 +30,26 @@ class Bot(commands.Bot):
         )
 
 
-client = Bot()
+bot = Bot()
 
 
 # cogs
-@client.command()
+@bot.command()
 async def load(extension):
-    await client.load_extension(f'cogs.{extension}')
+    await bot.load_extension(f'cogs.{extension}')
 
 
-@client.command()
+@bot.command()
 async def unload(extension):
-    await client.unload_extension(f'cogs.{extension}')
+    await bot.unload_extension(f'cogs.{extension}')
 
 
-async def load_extension():
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
-            await client.load_extension(f'cogs.{filename[:-3]}')
+async def load_extensions():
+    for cog in extensions:
+        await bot.load_extension(cog)
+    # for filename in os.listdir('./cogs'):
+    #     if filename.endswith('.py'):
+    #         await bot.load_extension(f'cogs.{filename[:-3]}')
 
 
 class UserInfo:
@@ -62,29 +64,32 @@ class UserInfo:
 
 # Get the list of cogs
 extensions = [
-    "cogs.subscriptions",
+    # "cogs.subscriptions",
     "cogs.marvin",
     "cogs.riot",
-    "cogs.jeopardy",
-    "cogs.news",
-    "cogs.reddit",
-    "cogs.weather",
-    "cogs.address_book",
-    "cogs.phone",
-    "cogs.giphy",
-    "cogs.marvin_tube",
-    "cogs.plex"
+    # "cogs.jeopardy",
+    # "cogs.news",
+    # "cogs.reddit",
+    # "cogs.weather",
+    # "cogs.address_book",
+    # "cogs.phone",
+    # "cogs.giphy",
+    # "cogs.marvin_tube",
+    # "cogs.plex"
 ]
 
 
-@client.event
+@bot.event
 async def on_ready():
-    print('Logged in as: {0.user.name}\nBots user id: {0.user.id}'.format(client))
+    print('Logged in as: {0.user.name}\nBots user id: {0.user.id}'.format(bot))
     print('Discord.py version:')
     print(discord.__version__)
     print('Ready!')
+    # load our cogs
+    await load_extensions()
     # do our role logic here too
-    channel = client.get_channel(WELCOME_CHANNEL)
+    channel = bot.get_channel(WELCOME_CHANNEL)
+    await channel.purge()
     embed = discord.Embed(
         title="Select Your Roles!",
         description="React with the corresponding emoji to get the role! If you wish to have a role removed please "
@@ -103,19 +108,18 @@ async def on_ready():
         await msg.add_reaction(emoji)
 
 
-@client.event
+@bot.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     if payload.channel_id != WELCOME_CHANNEL or payload.member.bot:
         return
     if str(payload.emoji) in Permissions.permissions_list.keys():
         role_id = Permissions.permissions_list[str(payload.emoji)][0]
-        # discord.utils.get(payload.member.guild.roles, id=role_id)
         await payload.member.add_roles(discord.utils.get(payload.member.guild.roles, id=role_id))
 
 
-@client.event
+@bot.event
 async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
-    guild = await client.fetch_guild(payload.guild_id)
+    guild = await bot.fetch_guild(payload.guild_id)
     member = await guild.fetch_member(payload.user_id)
     if payload.channel_id != WELCOME_CHANNEL or member.bot:
         return
@@ -124,22 +128,17 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
         await member.remove_roles(discord.utils.get(member.guild.roles, id=role_id))
 
 
-@commands.command()
-async def ping(self, ctx):
-    await ctx.send(f'Ping is {round(self.client.latency * 1000)} ms')
-
-
-@commands.Cog.listener()
+@bot.event
 async def on_message(message):  # event that happens per any message.
     # each message has a bunch of attributes. Here are a few.
     # check out more by print(dir(message)) for example.
     print(
-        f"{message.channel}: {message.author}: {message.author.name}: {message.content}"
+        f"{message.channel}: {message.author}: {message.content}"
     )
 
     message_text = message.content.strip().lower()
     channel = message.channel
-    if message.author != client.user:
+    if message.author != bot.user:
         if (
             "shut up" in message_text
             or "be quiet" in message_text
@@ -152,10 +151,10 @@ async def on_message(message):  # event that happens per any message.
             or "what the hell" == message_text
         ):
             await channel.send(file=discord.File("./assets/media/wtf.gif"))
-    await client.process_commands(message)
+    await bot.process_commands(message)
 
 
-@client.event
+@bot.event
 async def on_member_join(member):
     await member.create_dm()
     await member.dm_channel.send(
@@ -163,9 +162,11 @@ async def on_member_join(member):
     )
 
 
-@client.event
+@bot.event
 async def on_command_error(ctx, error):
     await ctx.send(error)
 
 
-client.run(token)
+if __name__ == '__main__':
+    bot.run(token)
+
