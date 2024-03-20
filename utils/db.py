@@ -67,22 +67,21 @@ class MarvinDB:
         else:
             return None
 
-    def run_find_many_query(self, table_name, query_to_run):
-        db = self.select_collection(table_name)
+    def run_find_many_query(self, table, query_to_run):
         for key, value in query_to_run.items():
             if '$' in key:  # this means we are doing and and or or, which means a list of dictionaries
                 for subdict in value:  # for each sub dictionary in the list
                     for subkey, subvalue in subdict.items():  # iterate through each dict and update
-                        if "_id" in subkey or "user" in subkey or "ID" in subkey or "account" in subkey:
+                        if "_id" == subkey or "user" in subkey or "ID" in subkey or "account" in subkey:
                             # print('this is an _id, wrap it in an object id!')
                             subdict[subkey] = ObjectId(subdict[subkey])
-            elif "_id" in key or "user" in key or "ID" in key or "account" in key:
+            elif "_id" == key or "user" in key or "ID" in key or "account" in key:
                 # print('this is an _id, wrap it in an object id!')
                 query_to_run[key] = ObjectId(query_to_run[key])
                 # print(f'query to run is now {query_to_run}'
                 query_to_run = query_to_run
 
-        result_list = db.find(
+        result_list = table.find(
             query_to_run
         )
         # self.close_conn()
@@ -92,8 +91,6 @@ class MarvinDB:
                 for key, value in result.items():
                     if isinstance(value, ObjectId):
                         result[key] = str(result[key])
-                    if isinstance(value, datetime.datetime):
-                        result[key] = str(datetime.datetime.now())
             return find_many_result
         else:
             return None
@@ -123,11 +120,11 @@ class MarvinDB:
             if '$' in key:  # this means we are doing and and or or, which means a list of dictionaries
                 for subdict in value:  # for each sub dictionary in the list
                     for subkey, subvalue in subdict.items():  # iterate through each dict and update
-                        if "_id" in subkey or "user" in subkey or "ID" in subkey or "account" in subkey:
+                        if "_id" == subkey or "user" in subkey or "ID" in subkey or "account" in subkey:
                             # print('this is an _id, wrap it in an object id!')
                             subdict[subkey] = ObjectId(subdict[subkey])
             # user has to be an == not an 'in' since username is NOT an object ID
-            elif "_id" in key or "user" == key or "ID" in key or "account" in key:
+            elif "_id" == key or "user" == key or "ID" in key or "account" in key:
                 # print('this is an _id, wrap it in an object id!')
                 query_to_run[key] = ObjectId(query_to_run[key])
                 # print(f'query to run is now {query_to_run}'
