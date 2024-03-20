@@ -11,6 +11,7 @@ from discord.ext import commands, tasks
 from datetime import datetime
 from pytz import reference
 from utils.db import MarvinDB
+from utils.message_handler import MessageHandler
 from utils.helper import get_user_friendly_date_from_string, get_current_hour_of_day
 import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -31,35 +32,12 @@ class Riot(MarvinDB, commands.Cog):
     PROFILE_ICON = "profile_icon"
     REVISION_DATE = "revision_date"
 
-    UPDATE_SUMMONER = f"""UPDATE {TABLE_NAME} SET summoner_level = ?, profile_icon = ?, revision_date = ?
-                        WHERE summoner_id = ?"""
-
     # Data dragon assets table
     ASSETS_TABLE_NAME = "assets_ver"
     CURRENT_VERSION = "current_version"
-    INSERT_LATEST_DATA_VERSION = (
-        f"""INSERT INTO {ASSETS_TABLE_NAME}(current_version) VALUES(?)"""
-    )
-    UPDATE_LATEST_DATA_VERSION = (
-        f"""UPDATE {ASSETS_TABLE_NAME} SET current_version = ?"""
-    )
-    CHECK_IF_CURRENT_VER_EXISTS = (
-        f"""SELECT EXISTS(SELECT * FROM {ASSETS_TABLE_NAME} LIMIT 1)"""
-    )
-    GET_ASSETS_LATEST_VERSION = f"""SELECT current_version FROM {ASSETS_TABLE_NAME}"""
-
     # Issue tracker
     LOL_STATUS_TABLE_NAME = "lol_status"
     ISSUE_HASH = "issue_hash"
-    LOL_STATUS_TABLE = f"""CREATE TABLE IF NOT EXISTS {LOL_STATUS_TABLE_NAME} (
-        id integer PRIMARY KEY,
-        issue_hash text NOT NULL
-    );
-    """
-    INSERT_ISSUE_HASH = (
-        f"""INSERT INTO {LOL_STATUS_TABLE_NAME} (issue_hash) VALUES(?)"""
-    )
-    CHECK_ISSUE_HASH = f"""SELECT EXISTS(SELECT * FROM {LOL_STATUS_TABLE_NAME} WHERE issue_hash=? LIMIT 1)"""
 
     def __init__(self, bot):
         super(Riot, self).__init__()
@@ -68,7 +46,8 @@ class Riot(MarvinDB, commands.Cog):
         # Create the database
         self.summoner_table = self.select_collection(self.TABLE_NAME)
         self.data_version_table = self.select_collection(self.ASSETS_TABLE_NAME)
-        self.issue_table = self.select_collection(self.LOL_STATUS_TABLE)
+        self.issue_table = self.select_collection(self.LOL_STATUS_TABLE_NAME)
+
         # Riot API Stuff
         with open(
             os.path.dirname(os.path.dirname(__file__)) + "/config.yaml", "r"
@@ -169,7 +148,7 @@ class Riot(MarvinDB, commands.Cog):
 
     def _get_summoner_by_name(self, summoner_name):
         results = self.run_find_one_query(
-            table_name=self.summoner_table,
+            table=self.summoner_table,
             query_to_run={
                 self.SUMMONER_NAME: str(summoner_name),
             }
@@ -178,7 +157,7 @@ class Riot(MarvinDB, commands.Cog):
 
     def _check_if_summoner_exists_by_id(self, summoner_id):
         results = self.run_find_one_query(
-            table_name=self.summoner_table,
+            table=self.summoner_table,
             query_to_run={
                 self.SUMMONER_ID: summoner_id
             }
@@ -190,7 +169,7 @@ class Riot(MarvinDB, commands.Cog):
 
     def _check_if_summoner_exists_by_name(self, summoner_name: str):
         results = self.run_find_one_query(
-            table_name=self.summoner_table,
+            table=self.summoner_table,
             query_to_run={
                 self.SUMMONER_NAME: summoner_name
             }
@@ -204,7 +183,7 @@ class Riot(MarvinDB, commands.Cog):
         self, summoner_id: str, current_revision_date: int
     ):
         results = self.run_find_one_query(
-            table_name=self.summoner_table,
+            table=self.summoner_table,
             query_to_run={
                 self.SUMMONER_ID: summoner_id
             }
@@ -264,7 +243,7 @@ class Riot(MarvinDB, commands.Cog):
 
     def _check_if_assets_current_version_exists(self):
         results = self.run_find_one_query(
-            table_name=self.ASSETS_TABLE_NAME,
+            table=self.data_version_table,
             query_to_run={}
         )
         if results is not None:
@@ -274,26 +253,25 @@ class Riot(MarvinDB, commands.Cog):
 
     def _get_current_assets_version_from_db(self):
         results = self.run_find_one_query(
-            table_name=self.ASSETS_TABLE_NAME,
+            table=self.data_version_table,
             query_to_run={}
         )
         return results
 
     def _insert_assets_current_version(self, current_version: str):
-        return self.insert_one(
-            table_name=self.ASSETS_TABLE_NAME,
-            query_to_run={
+        return self.data_version_table.insert_one(
+            {
                 self.CURRENT_VERSION: current_version
             }
         )
 
     def _update_assets_current_version(self, current_version: str):
         version = self.run_find_one_query(
-            table_name=self.ASSETS_TABLE_NAME,
+            table=self.ASSETS_TABLE_NAME,
             query_to_run={}
         ).id
         return self.set_field_for_object_in_table(
-            table_name=self.ASSETS_TABLE_NAME,
+            table=self.data_version_table,
             record_id_to_update=version.id,
             query_to_run={
                 self.CURRENT_VERSION: current_version
@@ -363,7 +341,7 @@ class Riot(MarvinDB, commands.Cog):
 
     def _check_if_issue_hash_exists(self, hash_id: str):
         results = self.run_find_one_query(
-            table_name=self.LOL_STATUS_TABLE_NAME,
+            table=self.data_version_table,
             query_to_run={
                 self.ISSUE_HASH: hash_id
             }
@@ -375,9 +353,8 @@ class Riot(MarvinDB, commands.Cog):
 
     def _insert_issue_hash(self, issue_hash: str):
         """Values: issue_hash"""
-        return self.insert_one(
-            table_name=self.LOL_STATUS_TABLE_NAME,
-            query_to_run={
+        return self.issue_table.insert_one(
+            {
                 self.ISSUE_HASH: issue_hash
             }
         )
@@ -395,27 +372,13 @@ class Riot(MarvinDB, commands.Cog):
         )
         return r.json()
 
-    def _find_split_point(self, text):
-        split_point = 1500
-        for char in text[split_point:]:
-            if char != '\n':
-                split_point += 1
-            else:
-                return split_point
-
     @commands.command(
         name="clash", help="Get current and upcoming clash tournament schedule."
     )
     async def get_clash(self, ctx):
         schedule = self._get_clash_schedule()
-        # if it's longer than 200 chars, split it here
-        if len(schedule) / 2000 > 1:
-            split_point = self._find_split_point(schedule)
-            broken_up_response = [schedule[:split_point], schedule[split_point:]]
-            for text_to_send in broken_up_response:
-                await ctx.send(str(text_to_send))
-        else:
-            await ctx.send(str(schedule))
+        for _ in MessageHandler(schedule).response:
+            await ctx.send(str(_))
 
     @commands.command(
         name="getsummoner", help="Pass in a summoner name and to get their info!"
