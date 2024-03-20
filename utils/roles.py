@@ -1,5 +1,7 @@
 import discord
 from discord.ext import commands
+import yaml
+import os
 
 
 class Reactions:
@@ -12,12 +14,15 @@ class Reactions:
 
 
 class Roles:
-    text_channels = (1175090001885790309, "Text Channels")
-    travel = (1175095586110845040, "Travel Channels")
-    news_and_politics = (1175096549013999637, "News and Politics")
-    coding = (1175097189782003732, "Coding")
-    voice_gaming = (1175094986316980332, "Voice/Gaming Channels")
-    lol = (1175093620450267167, "League of Legends")
+    with open("config.yaml", "r") as file:
+        cfg = yaml.safe_load(file)
+    env = os.environ.get("ENV", "NOT SET")
+    text_channels = (cfg["roles"][env]["text_channels"], "Text Channels")
+    travel = (cfg["roles"][env]["travel"], "Travel Channels")
+    news_and_politics = (cfg["roles"][env]["news_and_politics"], "News and Politics")
+    coding = (cfg["roles"][env]["coding"], "Coding")
+    voice_gaming = (cfg["roles"][env]["voice_gaming"], "Voice/Gaming Channels")
+    lol = (cfg["roles"][env]["lol"], "League of Legends")
 
 
 class Permissions(commands.Cog, Reactions, Roles):
@@ -30,4 +35,3 @@ class Permissions(commands.Cog, Reactions, Roles):
         Reactions.voice_gaming_emoji: Roles.voice_gaming,
         Reactions.lol_emoji: Roles.lol,
     }
-

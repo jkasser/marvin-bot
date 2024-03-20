@@ -15,7 +15,7 @@ class MarvinBot(commands.Cog):
         with open("config.yaml", "r") as file:
             cfg = yaml.safe_load(file)
         env = os.environ.get("ENV", "NOT SET")
-        #self.booster_channel = cfg["disc"][env]["booster_lounge_channel"]
+        self.booster_channel = cfg["disc"][env]["booster_lounge_channel"]
 
     @commands.command(name="latency", aliases=["ping"], help="Get my latency in ms.")
     async def get_latency(self, ctx):
@@ -209,7 +209,7 @@ class MarvinBot(commands.Cog):
         else:
             await ctx.channel.purge(limit=int(count))
 
-    @commands.command(name="ip", aliases=["getip"], help="Returns external XP")
+    @commands.command(name="ip", aliases=["getip"], help="Returns external IP")
     @commands.has_role("Owner")
     async def get_external_ip(self, ctx):
         loop = asyncio.get_event_loop()
