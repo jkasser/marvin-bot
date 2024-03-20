@@ -11,7 +11,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 class MarvinBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.named_queues = dict(General=[])
         with open("config.yaml", "r") as file:
             cfg = yaml.safe_load(file)
         env = os.environ.get("ENV", "NOT SET")
