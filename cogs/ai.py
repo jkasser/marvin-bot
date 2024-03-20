@@ -24,7 +24,7 @@ class MarvinAI(commands.Cog):
     @commands.has_any_role("Server Booster", "Family", "Admins")
     @commands.Cog.listener("on_message")
     async def ai_message(self, message):
-        if message.channel.id == self.ai_channel and not message.author.bot:
+        if message.channel.id == self.ai_channel and not message.author.bot and not message.content.startswith('!'):
             gpt_response = await self.ai_client.chat.completions.create(
                 model=self.ai_model,
                 messages=[
