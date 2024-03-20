@@ -680,7 +680,7 @@ class AddressBook(commands.Cog, MarvinDB):
                             contact[self.EMAIL],
                             contact[self.DATE_OF_BIRTH],
                             contact[self.SHARE_WITH],
-                        ).inserted_id
+                        )
                         # set the contact ID in the dict <- from this point on users can update/delete contacts
                         contact["_id"] = contact_id
                     elif (
