@@ -64,18 +64,17 @@ class UserInfo:
 
 # Get the list of cogs
 extensions = [
-    # "cogs.subscriptions",
     "cogs.marvin",
     "cogs.riot",
     # "cogs.jeopardy",
-    # "cogs.news",
-    # "cogs.reddit",
-    # "cogs.weather",
-    # "cogs.address_book",
-    # "cogs.phone",
-    # "cogs.giphy",
-    # "cogs.marvin_tube",
-    # "cogs.plex"
+    "cogs.news",
+    "cogs.reddit",
+    "cogs.address_book",
+    "cogs.phone",
+    "cogs.giphy",
+    "cogs.marvin_tube",
+    "cogs.plex",
+    "cogs.ai",
 ]
 
 
@@ -92,8 +91,8 @@ async def on_ready():
     await channel.purge()
     embed = discord.Embed(
         title="Select Your Roles!",
-        description="React with the corresponding emoji to get the role! If you wish to have a role removed please "
-                    "contact an Admin!",
+        description="React with the corresponding emoji to get the role! If you wish to have a role removed just "
+                    "unselect the relevant emoji or contact an Admin!",
         color=0xff0000,
     )
     for emoji, role in Permissions.permissions_list.items():
@@ -140,7 +139,8 @@ async def on_message(message):
 async def on_member_join(member):
     await member.create_dm()
     await member.dm_channel.send(
-        f"Hi {member.name}, welcome to my Discord server! Please take a brief second to select the channels you wish to access!"
+        f"Hi {member.name}, welcome to my Discord server! Please take a brief second to select the "
+        f"channels you wish to access!"
     )
 
 
