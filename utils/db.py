@@ -5,7 +5,7 @@ import yaml
 import datetime
 
 
-class MarvinDB():
+class MarvinDB:
 
     def __init__(self):
         path = os.path.dirname(os.path.abspath(os.path.dirname(__file__))) + '\\config.yaml'
@@ -13,14 +13,16 @@ class MarvinDB():
             cfg = yaml.safe_load(file)
         username = cfg["database"]["username"]
         password = cfg["database"]["password"]
-        self.database = cfg["database"]["name"]
-        self.client = MongoClient(
-            f"mongodb+srv://{username}:{password}@{self.database}.akjlnty.mongodb.net/",
+        self.database_name = cfg["database"]["name"]
+        self.mongo = MongoClient(
+            f"mongodb+srv://{username}:{password}@{self.database_name}.akjlnty.mongodb.net/",
             tlsAllowInvalidCertificates=True
-        )
+        ).marvindb
 
     def select_collection(self, table_name):
-        return self.client[self.database][table_name]
+        if table_name not in self.mongo.list_collection_names():
+            self.mongo.create_collection(table_name)
+        return self.mongo[table_name]
 
     def get_user_record(self, user_id):
         db = self.select_collection('users')
@@ -37,8 +39,7 @@ class MarvinDB():
                 user_record[key] = str(datetime.datetime.now())
         return user_record
 
-    def run_find_one_query(self, table_name, query_to_run):
-        db = self.select_collection(table_name)
+    def run_find_one_query(self, table, query_to_run):
         for key, value in query_to_run.items():
             if '$' in key:  # this means we are doing an and or or, which means a list of dictionaries
                 for subdict in value:  # for each sub dictionary in the list
@@ -52,7 +53,7 @@ class MarvinDB():
                 # print(f'query to run is now {query_to_run}'
                 query_to_run = query_to_run
         # now run the query
-        result = db.find_one(
+        result = table.find_one(
             query_to_run
         )
         # self.close_conn()
@@ -106,9 +107,8 @@ class MarvinDB():
             }
         )
 
-    def set_field_for_object_in_table(self, table_name: str, record_id_to_update: str, query_to_run: dict):
-        db = self.select_collection(table_name)
-        db.update_one(
+    def set_field_for_object_in_table(self, table, record_id_to_update: str, query_to_run: dict):
+        table.update_one(
             {
                 '_id': ObjectId(record_id_to_update)
             },
@@ -152,12 +152,5 @@ class MarvinDB():
                 "summoner_id": summoner_id,
                 "share_with": share_with
             }
-        )
-        return results
-
-    def insert_one(self, table_name, query_to_run):
-        db = self.select_collection(table_name)
-        results = db.insert_one(
-            query_to_run
         )
         return results
