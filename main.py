@@ -129,28 +129,10 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
 
 
 @bot.event
-async def on_message(message):  # event that happens per any message.
-    # each message has a bunch of attributes. Here are a few.
-    # check out more by print(dir(message)) for example.
+async def on_message(message):
     print(
         f"{message.channel}: {message.author}: {message.content}"
     )
-
-    message_text = message.content.strip().lower()
-    channel = message.channel
-    if message.author != bot.user:
-        if (
-            "shut up" in message_text
-            or "be quiet" in message_text
-            or "stfu" in message_text
-        ):
-            await channel.send(file=discord.File("./assets/media/shut_up.gif"))
-        elif (
-            "wtf" == message_text
-            or "what the fuck" == message_text
-            or "what the hell" == message_text
-        ):
-            await channel.send(file=discord.File("./assets/media/wtf.gif"))
     await bot.process_commands(message)
 
 
