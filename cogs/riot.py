@@ -272,7 +272,7 @@ class Riot(MarvinDB, commands.Cog):
         ).id
         return self.set_field_for_object_in_table(
             table=self.data_version_table,
-            record_id_to_update=version.id,
+            record_id_to_update=version,
             query_to_run={
                 self.CURRENT_VERSION: current_version
             }
