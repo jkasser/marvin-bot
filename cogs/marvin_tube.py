@@ -12,33 +12,20 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 class MarvinTube(commands.Cog, MarvinDB):
 
-    MARVIN_TUBE_TABLE = "video_subs"
+    TABLE_NAME = "video_subs"
 
-    TUBE_TABLE = f"""CREATE TABLE IF NOT EXISTS {MARVIN_TUBE_TABLE} (
-        id integer PRIMARY KEY,
-        channel_id text NOT NULL,
-        channel_title text NOT NULL,
-        latest_vid text NOT NULL,
-        active integer NOT NULL
-    );"""
-
-    INSERT_VIDEO_SUB = f"""INSERT INTO {MARVIN_TUBE_TABLE}(channel_id,channel_title,latest_vid,active) VALUES(?,?,?,?)"""
-
-    UPDATE_SUB_LATEST_VID = (
-        f"""UPDATE {MARVIN_TUBE_TABLE} SET latest_vid = ? where id = ?"""
-    )
-    UPDATE_SUB_ACTIVE_STATUS = (
-        f"""UPDATE {MARVIN_TUBE_TABLE} SET active = ? where id = ?"""
-    )
-
-    GET_ALL_SUBS = f"""SELECT * FROM {MARVIN_TUBE_TABLE}"""
+    # field names
+    CHANNEL_ID = "channel_id"
+    CHANNEL_TITLE = "channel_title"
+    LATEST_VID = "latest_vid"
+    ACTIVE = "active"
 
     def __init__(self, bot):
         super(MarvinTube, self).__init__()
         self.bot = bot
         # try to create the table
         try:
-            self._create_table(self.conn, self.TUBE_TABLE)
+            self.video_subs = self.select_collection(self.TABLE_NAME)
         except Error as e:
             print(e)
         env = os.environ.get("ENV", "NOT SET")
@@ -53,8 +40,11 @@ class MarvinTube(commands.Cog, MarvinDB):
         subs = self._get_current_subs()
         self.channels = {}
         for sub in subs:
-            self.channels[sub[1]] = dict(
-                id=sub[0], channel_title=sub[2], latest_vid=sub[3], active=sub[4]
+            self.channels[sub[self.CHANNEL_ID]] = dict(
+                _id=sub["_id"],
+                channel_title=sub[self.CHANNEL_TITLE],
+                latest_vid=sub[self.LATEST_VID],
+                active=sub[self.ACTIVE]
             )
         # start the loop to post videos
         self.check_for_new_videos.start()
@@ -105,39 +95,53 @@ class MarvinTube(commands.Cog, MarvinDB):
 
     # DB methods here
     def _get_current_subs(self):
-        results = self._get_query(self.GET_ALL_SUBS)
+        results = self.run_find_many_query(self.video_subs, {})
+        if not results:
+            results = []
         return results
 
     def _insert_sub(
         self, channel_id: str, channel_title: str, latest_vid: str, active: int
     ):
-        return self._insert_query(
-            self.INSERT_VIDEO_SUB,
-            (
-                channel_id,
-                channel_title,
-                latest_vid,
-                active,
-            ),
+        """ Returns ID of inserted record. """
+        # first see if the sub already exists
+        sub = self.run_find_one_query(
+            table=self.video_subs,
+            query_to_run={
+                self.CHANNEL_ID: channel_id
+            }
         )
+        if not sub:
+            return self.video_subs.insert_one(
+                {
+                    self.CHANNEL_ID: channel_id,
+                    self.CHANNEL_TITLE: channel_title,
+                    self.LATEST_VID: latest_vid,
+                    self.ACTIVE: active,
+                }
+            ).inserted_id
+        else:
+            return sub["_id"]
 
-    def _update_latest_vid_for_channel_sub(self, sub_id: int, latest_vid: str):
-        self._update_query(
-            self.UPDATE_SUB_LATEST_VID,
-            (
-                latest_vid,
-                sub_id,
-            ),
+    def _update_latest_vid_for_channel_sub(self, sub_id, latest_vid: str):
+        result = self.set_field_for_object_in_table(
+            table=self.video_subs,
+            record_id_to_update=sub_id,
+            query_to_run={
+                self.LATEST_VID: latest_vid,
+            },
         )
+        return result
 
-    def _update_sub_active_status(self, sub_id: int, active: int):
-        self._update_query(
-            self.UPDATE_SUB_ACTIVE_STATUS,
-            (
-                active,
-                sub_id,
-            ),
+    def _update_sub_active_status(self, sub_id, active: int):
+        result = self.set_field_for_object_in_table(
+            table=self.video_subs,
+            record_id_to_update=sub_id,
+            query_to_run={
+                self.ACTIVE: active,
+            }
         )
+        return result
 
     @commands.command(
         name="getchannelsubs",
@@ -147,26 +151,34 @@ class MarvinTube(commands.Cog, MarvinDB):
         new_line = "\n"
         list_of_current_channels = []
         for channel, values in self.channels.items():
-            if "id" in values.keys():
+            if "_id" in values.keys():
                 list_of_current_channels.append(
-                    f'{values["id"]}. {values["channel_title"]} - {values["active"]}'
+                    f'{values["_id"]} - {values[self.CHANNEL_TITLE]} - {self._get_active_status_from_bool(values[self.ACTIVE])}'
                 )
             else:
                 list_of_current_channels.append(
-                    f'(ID NOT READY YET) {values["channel_title"]} - {values["active"]}'
+                    f'(ID NOT READY YET) - {values[self.CHANNEL_TITLE]} - {self._get_active_status_from_bool(values[self.ACTIVE])}'
                 )
         await ctx.send(
             f"You are currently subscribed to: {new_line.join(list_of_current_channels)}"
         )
 
+    @staticmethod
+    def _get_active_status_from_bool(active: int):
+        active_status = {
+            1: "Active",
+            0: "Inactive",
+        }
+        return active_status[active]
+
     @commands.command(
         name="updatechannelsub",
         help="Sets the provided channel ID to active/inactive depending on it's current status.",
     )
-    async def update_channel_sub(self, ctx, channel_id=None):
-        if channel_id is None:
+    async def update_channel_sub(self, ctx, sub_id=None):
+        if sub_id is None:
             await ctx.send(
-                "Which channel ID (the number I return when you call !getchannelsubs) would you like to update?"
+                "Which channel hash (the string I return when you call !getchannelsubs) would you like to update?"
             )
 
             def check(m):
@@ -176,28 +188,25 @@ class MarvinTube(commands.Cog, MarvinDB):
                 user_answer = await self.bot.wait_for(
                     "message", check=check, timeout=60
                 )
-                channel_id = user_answer.content
+                sub_id = user_answer.content
             except TimeoutError:
                 await ctx.send("You took too long to respond! Good bye.")
 
         try:
-            channel_id = int(channel_id)
             updated_any_value = False
             for channel, values in self.channels.items():
-                if int(channel_id) == int(values["id"]):
-                    if values["active"] == 0:
-                        values["active"] = 1
-                        active_status = "Active"
+                if sub_id == values["_id"]:
+                    if values[self.ACTIVE] == 0:
+                        values[self.ACTIVE] = 1
                     else:
-                        values["active"] = 0
-                        active_status = "Inactive"
+                        values[self.ACTIVE] = 0
                     updated_any_value = True
                     values["update_pending"] = True
                     await ctx.send(
-                        f"I have updated your subscription to be {active_status}!"
+                        f"I have updated your subscription to be {self._get_active_status_from_bool(values[self.ACTIVE])}!"
                     )
                     return
-            if updated_any_value == False:
+            if not updated_any_value:
                 await ctx.send(
                     "I was unable to find a subscription to update! Please try again."
                 )
@@ -300,9 +309,9 @@ class MarvinTube(commands.Cog, MarvinDB):
                             else:
                                 try:
                                     choice = int(
-                                        channel_selection.strip(" .!,-:'\"][{}@#$%")
+                                        channel_selection.strip(" .!,:'-\"][{}@#$%")
                                     )
-                                    channel_id = response[choice]["channel_id"]
+                                    channel_id = response[choice-1][self.CHANNEL_ID]
                                 except ValueError:
                                     await ctx.send(
                                         "I was unable to parse your response. However, you can just call"
@@ -323,9 +332,9 @@ class MarvinTube(commands.Cog, MarvinDB):
             )
             if isinstance(response, dict):
                 self.channels[channel_id] = {
-                    "active": 1,
-                    "latest_vid": response["video_id"],
-                    "channel_title": response["channel_title"],
+                    self.ACTIVE: 1,
+                    self.LATEST_VID: response["video_id"],
+                    self.CHANNEL_TITLE: response["channel_title"],
                 }
                 # let's try to grab the channel name at this point
                 await ctx.send(
@@ -395,19 +404,17 @@ class MarvinTube(commands.Cog, MarvinDB):
         loop = asyncio.get_event_loop()
         for channel_id, channel_values in self.channels.items():
             # if the ID isnt in the keys then we haven't inserted it
-            if "id" not in channel_values.keys():
+            if "_id" not in channel_values.keys():
                 keyword_blocking_function = functools.partial(
                     self._insert_sub,
                     channel_id=channel_id,
-                    channel_title=channel_values["channel_title"],
-                    latest_vid=channel_values["latest_vid"],
-                    active=channel_values["active"],
+                    channel_title=channel_values[self.CHANNEL_TITLE],
+                    latest_vid=channel_values[self.LATEST_VID],
+                    active=channel_values[self.ACTIVE],
                 )
-                db_id = await loop.run_in_executor(
+                channel_values["_id"] = await loop.run_in_executor(
                     ThreadPoolExecutor(), keyword_blocking_function
                 )
-                # now add the returned ID from the insert to the dict so we know it's been added
-                channel_values["id"] = int(db_id)
             elif (
                 "update_pending" in channel_values.keys()
                 and channel_values["update_pending"] == True
@@ -415,15 +422,15 @@ class MarvinTube(commands.Cog, MarvinDB):
                 # update both the latest vid as well as the active status
                 update_latest_vid_func = functools.partial(
                     self._update_latest_vid_for_channel_sub,
-                    sub_id=channel_values["id"],
-                    latest_vid=channel_values["latest_vid"],
+                    sub_id=channel_values["_id"],
+                    latest_vid=channel_values[self.LATEST_VID],
                 )
                 await loop.run_in_executor(ThreadPoolExecutor(), update_latest_vid_func)
 
                 update_active_status_func = functools.partial(
                     self._update_sub_active_status,
-                    sub_id=channel_values["id"],
-                    active=channel_values["active"],
+                    sub_id=channel_values["_id"],
+                    active=channel_values[self.ACTIVE],
                 )
                 await loop.run_in_executor(
                     ThreadPoolExecutor(), update_active_status_func
@@ -436,5 +443,5 @@ class MarvinTube(commands.Cog, MarvinDB):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
-    bot.add_cog(MarvinTube(bot))
+async def setup(bot):
+    await bot.add_cog(MarvinTube(bot))
