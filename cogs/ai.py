@@ -1,9 +1,7 @@
-import os
 import yaml
 from openai import AsyncOpenAI
 from discord.ext import commands
 from utils.message_handler import MessageHandler
-from main import AI_CHANNELS
 
 
 class MarvinAI(commands.Cog):
@@ -23,7 +21,7 @@ class MarvinAI(commands.Cog):
     @commands.has_any_role("Server Booster", "Family", "Admins")
     @commands.Cog.listener("on_message")
     async def ai_message(self, message):
-        if message.channel.id in AI_CHANNELS and not message.author.bot and not message.content.startswith('!'):
+        if not message.author.bot and not message.content.startswith('!') and message.content.startswith('Marvin'):
             gpt_response = await self.ai_client.chat.completions.create(
                 model=self.ai_model,
                 messages=[
