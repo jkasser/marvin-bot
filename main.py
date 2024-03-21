@@ -89,7 +89,7 @@ async def on_ready():
     await load_extensions()
     # do our role logic here too
     channel = bot.get_channel(WELCOME_CHANNEL)
-    await channel.purge()
+    # await channel.purge()
     embed = discord.Embed(
         title="Select Your Roles!",
         description="React with the corresponding emoji to get the role! If you wish to have a role removed just "
