@@ -49,17 +49,13 @@ class Riot(MarvinDB, commands.Cog):
         self.issue_table = self.select_collection(self.LOL_STATUS_TABLE_NAME)
 
         # Riot API Stuff
-        with open(
-            os.path.dirname(os.path.dirname(__file__)) + "/config.yaml", "r"
-        ) as file:
-            cfg = yaml.safe_load(file)
         env = os.environ.get("ENV", "dev")
-        self.api_updates_channel = self.lol_channel = cfg["disc"][env][
+        self.api_updates_channel = self.lol_channel = self.bot.config["disc"][env][
             "api_updates_channel"
         ]
-        self.status_channel = self.lol_channel = cfg["disc"][env]["status_channel"]
-        region = cfg["riot"]["region"]
-        self.key = cfg["riot"]["key"]
+        self.status_channel = self.lol_channel = self.bot.config["disc"][env]["status_channel"]
+        region = self.bot.config["riot"]["region"]
+        self.key = self.bot.config["riot"]["key"]
         self.base_url = f"https://{region}.api.riotgames.com/lol/"
         self.headers = {"Content-Type": "application/json", "X-Riot-Token": self.key}
         self.assets_version = None

@@ -5,6 +5,7 @@ import discord
 from utils.roles import Permissions
 from discord.ext import commands
 
+
 # discord config
 with open("config.yaml", "r") as file:
     cfg = yaml.safe_load(file)
@@ -28,7 +29,7 @@ class Bot(commands.Bot):
             command_prefix=cfg["disc"]["prefix"],
             self_bot=True, strip_after_prefix=True
         )
-
+        self.config = cfg
 
 bot = Bot()
 
