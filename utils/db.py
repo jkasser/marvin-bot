@@ -8,7 +8,7 @@ import datetime
 class MarvinDB:
 
     def __init__(self):
-        path = os.path.dirname(os.path.abspath(os.path.dirname(__file__))) + '\\config.yaml'
+        path = os.path.dirname(os.path.abspath(os.path.dirname(__file__))) + '/config.yaml'
         with open(path, "r") as file:
             cfg = yaml.safe_load(file)
         username = cfg["database"]["username"]
