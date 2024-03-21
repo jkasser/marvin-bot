@@ -3,6 +3,7 @@ import yaml
 from openai import AsyncOpenAI
 from discord.ext import commands
 from utils.message_handler import MessageHandler
+from main import AI_CHANNELS
 
 
 class MarvinAI(commands.Cog):
@@ -12,8 +13,6 @@ class MarvinAI(commands.Cog):
         self.named_queues = dict(General=[])
         with open("config.yaml", "r") as file:
             cfg = yaml.safe_load(file)
-        env = os.environ.get("ENV", "NOT SET")
-        self.ai_channel = cfg["disc"][env]["ai_channel"]
         self.ai_model = cfg["ai"]["model"]
         ai_key = cfg["ai"]["key"]
         self.instructions = cfg["ai"]["instructions"]
@@ -24,7 +23,7 @@ class MarvinAI(commands.Cog):
     @commands.has_any_role("Server Booster", "Family", "Admins")
     @commands.Cog.listener("on_message")
     async def ai_message(self, message):
-        if message.channel.id == self.ai_channel and not message.author.bot and not message.content.startswith('!'):
+        if message.channel.id in AI_CHANNELS and not message.author.bot and not message.content.startswith('!'):
             gpt_response = await self.ai_client.chat.completions.create(
                 model=self.ai_model,
                 messages=[

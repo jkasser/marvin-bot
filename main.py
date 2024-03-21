@@ -20,6 +20,11 @@ token = cfg["disc"][env]["token"]
 intents = discord.Intents.all()
 
 WELCOME_CHANNEL = cfg["disc"][env]["welcome_channel"]
+AI_CHANNELS = [
+    759196533714976778,  # jeff's channel
+    cfg["disc"][env]["booster_lounge_channel"],
+    759062406310658048,  # code stuff
+]
 
 
 class Bot(commands.Bot):
@@ -30,6 +35,7 @@ class Bot(commands.Bot):
             self_bot=True, strip_after_prefix=True
         )
         self.config = cfg
+
 
 bot = Bot()
 
