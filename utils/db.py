@@ -133,21 +133,3 @@ class MarvinDB:
         db.delete_many(
             query_to_run
         )
-
-    def insert_contact(self, discord_id, name, phone, address, birthday, email, summoner_id=None, share_with=[]):
-        db = self.select_collection('contacts')
-        results = db.insert_one(
-            {
-                "disc_id": discord_id,
-                "details": {
-                    "name": name,
-                    "phone": phone,
-                    "address": address,
-                    "dob": birthday,
-                    "email": email
-                },
-                "summoner_id": summoner_id,
-                "share_with": share_with
-            }
-        )
-        return results
