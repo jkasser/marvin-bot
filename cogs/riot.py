@@ -263,7 +263,7 @@ class Riot(MarvinDB, commands.Cog):
 
     def _update_assets_current_version(self, current_version: str):
         version = self.run_find_one_query(
-            table=self.ASSETS_TABLE_NAME,
+            table=self.data_version_table,
             query_to_run={}
         ).id
         return self.set_field_for_object_in_table(
