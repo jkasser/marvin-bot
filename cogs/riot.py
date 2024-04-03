@@ -265,7 +265,7 @@ class Riot(MarvinDB, commands.Cog):
         version = self.run_find_one_query(
             table=self.data_version_table,
             query_to_run={}
-        ).id
+        )["_id"]
         return self.set_field_for_object_in_table(
             table=self.data_version_table,
             record_id_to_update=version,
