@@ -10,30 +10,14 @@ import yaml
 import discord
 import asyncio
 from discord.ext import commands, tasks
-from sqlite3 import Error
-from utils.db import MarvinDB
 from utils.helper import get_current_hour_of_day
 from concurrent.futures.thread import ThreadPoolExecutor
 
 
-class MarvinReddit(MarvinDB, commands.Cog):
-
-    TABLE_NAME = "reddit"
-
-    REDDIT_TABLE = f"""CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-        id integer PRIMARY KEY,
-        post_id integer NOT NULL
-    );"""
-
-    INSERT_POST = f"""INSERT INTO {TABLE_NAME}(post_id) VALUES(?)"""
-
-    CHECK_IF_EXISTS = (
-        f"""SELECT EXISTS(SELECT * FROM {TABLE_NAME} WHERE post_id=? LIMIT 1)"""
-    )
+class MarvinReddit(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        super().__init__()
         with open("config.yaml", "r") as file:
             cfg = yaml.safe_load(file)
         client_id = cfg["reddit"]["client_id"]
@@ -46,10 +30,6 @@ class MarvinReddit(MarvinDB, commands.Cog):
             client_secret=client_secret,
             user_agent="Marvin Bot 1.0",
         )
-        try:
-            self._create_table(self.conn, self.REDDIT_TABLE)
-        except Error as e:
-            print(e)
         self.post_tracker = {"travel_stream": [], "lol_stream": []}
         self.check_reddit_travel_stream.start()
         self.check_reddit_lol_stream.start()
@@ -160,7 +140,7 @@ class MarvinReddit(MarvinDB, commands.Cog):
     @tasks.loop(hours=1)
     async def clear_post_trackers(self):
         hour = get_current_hour_of_day()
-        if hour >= 0 and hour <= 1:
+        if 0 <= hour <= 1:
             # clear out our lists in memory every 24 hours, check every hour,
             self.post_tracker["lol_stream"].clear()
             self.post_tracker["travel_stream"].clear()
@@ -178,5 +158,5 @@ class MarvinReddit(MarvinDB, commands.Cog):
         await self.bot.wait_until_ready
 
 
-def setup(bot):
-    bot.add_cog(MarvinReddit(bot))
+async def setup(bot):
+    await bot.add_cog(MarvinReddit(bot))

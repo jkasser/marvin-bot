@@ -7,7 +7,6 @@ from html.parser import HTMLParser
 from fuzzywuzzy import fuzz
 from dateutil import parser
 from datetime import datetime
-from utils.enums import *
 
 
 class HTMLStripper(HTMLParser):
@@ -102,16 +101,6 @@ def decode_value(value: str):
 
 def parse_string_to_datetime(date):
     return parser.parse(date)
-
-
-def map_bool_to_active(bool_value: int) -> str:
-    return ACTIVE_ENUM[int(bool_value)]
-
-
-def map_active_to_bool(active_or_inactive: str) -> int:
-    for k, v in ACTIVE_ENUM.items():
-        if active_or_inactive.lower().strip() == v:
-            return k
 
 
 def get_current_hour_of_day():
