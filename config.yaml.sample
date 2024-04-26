@@ -3,6 +3,7 @@ disc:
   prod:
     token:
     guild:
+    welcome_channel:
     status_channel:
     api_updates_channel:
     lol_channel:
@@ -16,6 +17,7 @@ disc:
   dev:
     token:
     guild:
+    welcome_channel:
     travel_channel:
     status_channel:
     api_updates_channel:

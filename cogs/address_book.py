@@ -1,129 +1,132 @@
 from discord.ext import commands, tasks
 from utils.db import MarvinDB
+from bson import ObjectId
 from asyncio import TimeoutError
-from utils.helper import parse_string_to_datetime, turn_datetime_into_string
 from utils.helper import (
     decode_value,
     encode_value,
-    map_active_to_bool,
-    map_bool_to_active,
+    parse_string_to_datetime,
+    turn_datetime_into_string
 )
-from utils.enums import ACTIVE_ENUM
+from utils import timezones
 from datetime import datetime
 import pytz
 
 
 class AddressBook(commands.Cog, MarvinDB):
 
-    ADDRESS_TABLE_NAME = "address_book"
-    ADDRESS_TABLE = f"""CREATE TABLE IF NOT EXISTS {ADDRESS_TABLE_NAME} (
-        id integer PRIMARY KEY,
-        user_id integer NOT NULL,
-        name text NOT NULL,
-        address text,
-        phone text,
-        email text,
-        birthday timestamp,
-        birthday_reminder integer,
-        FOREIGN KEY(user_id) REFERENCES {MarvinDB.SUB_USERS_TABLE_NAME}(id)
-    );"""
-    GET_ADDRESS_BOOK_FOR_USER = (
-        f"""SELECT * FROM {ADDRESS_TABLE_NAME} where user_id = ?"""
-    )
-    DELETE_ENTRY_FOR_USER = (
-        f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ? AND user_id = ?"""
-    )
-    GET_ENTRY_FOR_USER = (
-        f""" SELECT * FROM {ADDRESS_TABLE_NAME} WHERE name LIKE ? AND user_id = ?"""
-    )
+    USERS_TABLE_NAME = "users"
+    ADDRESS_TABLE_NAME = "contacts"
 
-    UPDATE_ENTRY_FOR_USER = f"""UPDATE {ADDRESS_TABLE_NAME} SET name = ?, address = ?, phone = ?, email = ?, 
-                            birthday = ?, birthday_reminder = ? WHERE id = ? AND user_id = ?"""
-    CHECK_IF_ENTRY_EXISTS = f"""SELECT EXISTS(SELECT * FROM {ADDRESS_TABLE_NAME} 
-                                    WHERE user_id=? AND name = ? LIMIT 1)"""
-    INSERT_CONTACT = f"""INSERT INTO {ADDRESS_TABLE_NAME} (user_id, name, address, phone, email, birthday, 
-                    birthday_reminder) VALUES(?,?,?,?,?,?,?)"""
-    DELETE_CONTACT = f"""DELETE FROM {ADDRESS_TABLE_NAME} WHERE id = ?"""
+    # users table fields
+    USERNAME = "username"
+    DATE_OF_BIRTH = "dob"  # shared with contact book
+    TIMEZONE = "timezone"
+    DISCORD_ID = "disc_id"  # shared with contact book
+
+    # contact book
+    NAME = "name"
+    PHONE = "phone"
+    ADDRESS = "address"
+    EMAIL = "email"
+    SHARE_WITH = "share_with"  # list
+
+    ENCODED_FIELDS = [
+        PHONE,
+        ADDRESS,
+        NAME,
+        EMAIL
+    ]
+
+    # name of contacts list where all contacts will exist for a given user
+    CONTACTS = "contacts"
 
     def __init__(self, bot):
         super(AddressBook, self).__init__()
-        self.address_book = dict()
+        self.address_book = {}
         self.bot = bot
         # create the address table if it doesn't exist
-        self._create_table(self.conn, self.ADDRESS_TABLE)
+        self.users_table = self.select_collection(self.USERS_TABLE_NAME)
+        self.contacts_table = self.select_collection(self.ADDRESS_TABLE_NAME)
         # get all our users
-        users = self.users
+        users = self.run_find_many_query(
+            self.users_table,
+            {},
+        )
         if len(users) > 0:
             for user in users:
-                self.address_book[user[1]] = dict(
-                    user_id=user[0], tz=user[2], disc_id=user[3], address_book=[]
-                )
-                addresses = self._get_address_book_for_user(user[0])
+                self.address_book[user[self.USERNAME]] = {
+                    "_id": user["_id"],
+                    self.DISCORD_ID: user[self.DISCORD_ID],
+                    self.TIMEZONE: user[self.TIMEZONE],
+                    self.DATE_OF_BIRTH: None,
+                    self.CONTACTS: []
+                }
+                addresses = self._get_address_book_for_user(user[self.DISCORD_ID])
                 for address in addresses:
                     # the info will be stored encoded
-                    contact_info = dict(
-                        id=address[0],
-                        name=address[2],
-                        address=decode_value(address[3]),
-                        phone=decode_value(address[4]),
-                        email=decode_value(address[5]),
-                        birthday=address[6],
-                        birthday_reminder=address[7],
-                    )
-                    self.address_book[user[1]]["address_book"].append(contact_info)
+                    contact_info = {
+                        "_id": address["_id"],
+                        self.DISCORD_ID: user[self.DISCORD_ID],
+                        self.NAME: decode_value(address[self.NAME]),
+                        self.PHONE: decode_value(address[self.PHONE]),
+                        self.ADDRESS: decode_value(address[self.ADDRESS]),
+                        self.DATE_OF_BIRTH: address[self.DATE_OF_BIRTH],
+                        self.EMAIL: decode_value(address[self.EMAIL]),
+                        self.SHARE_WITH: address[self.SHARE_WITH],
+                    }
+                    self.address_book[user[self.USERNAME]][self.CONTACTS].append(contact_info)
         self.check_birthday_notification.start()
         self.insert_or_update_contacts_in_database.start()
 
-    def _get_address_book_for_user(self, user_id):
-        cur = self.conn.cursor()
-        results = cur.execute(self.GET_ADDRESS_BOOK_FOR_USER, (user_id,))
-        results = results.fetchall()
-        self.conn.commit()
+    def _get_address_book_for_user(self, user_discord_id):
+        results = self.run_find_many_query(
+            self.contacts_table,
+            {
+                self.DISCORD_ID: user_discord_id
+            }
+        )
+        if results is None:
+            results = []
         return results
 
     def _insert_contact_into_db(
-        self, user_id, name, address, phone, email, birthday, birthday_reminder
+        self, user_discord_id, name, address, phone, email, date_of_birth, shared_with,
     ):
-        values = (
-            user_id,
-            name,
-            encode_value(address),
-            encode_value(phone),
-            encode_value(email),
-            birthday,
-            birthday_reminder,
+        contact_id = self.contacts_table.insert_one(
+            {
+                self.DISCORD_ID: user_discord_id,
+                self.NAME: encode_value(name),
+                self.ADDRESS: encode_value(address),
+                self.PHONE: encode_value(phone),
+                self.DATE_OF_BIRTH: {"$date": date_of_birth},
+                self.EMAIL: encode_value(email),
+                self.SHARE_WITH: shared_with
+            }
         )
-        contact_id = self._insert_query(self.INSERT_CONTACT, values)
-        return contact_id
+        return contact_id.inserted_id
 
-    def _update_contact_by_user_id_and_contact_id(
+    def _update_contact_by_contact_id(
         self,
-        user_id,
-        name,
-        address,
-        phone,
-        email,
-        birthday,
-        birthday_reminder,
         contact_id,
+        updated_payload: dict,
     ):
-        # this needs to go in the order of:
-        # name, address, phone, email, birthday, birthday_reminder
-        # then the where clause of name and user_id. name needs to be wrapped in %% for a like clause
-        values = (
-            name,
-            encode_value(address),
-            encode_value(phone),
-            encode_value(email),
-            birthday,
-            birthday_reminder,
-            contact_id,
-            user_id,
+        # encode it before inserting if we need to
+        for k, v in updated_payload.items():
+            if k in self.ENCODED_FIELDS:
+                updated_payload[k] = encode_value(v)
+        return self.set_field_for_object_in_table(
+            table=self.contacts_table,
+            record_id_to_update=contact_id,
+            query_to_run=updated_payload,
         )
-        self._update_query(self.UPDATE_ENTRY_FOR_USER, values)
 
     def _delete_contact_by_id(self, contact_id):
-        self._delete_query(self.DELETE_CONTACT, (contact_id,))
+        return self.contacts_table.delete_one(
+            {
+                "_id": ObjectId(contact_id),
+            }
+        )
 
     @commands.command(
         name="contactlist", aliases=["listcontacts"], help="List all of your contacts!"
@@ -133,13 +136,13 @@ class AddressBook(commands.Cog, MarvinDB):
         if user in self.address_book.keys():
             channel = await ctx.author.create_dm()
             contacts = sorted(
-                [contact for contact in self.address_book[user]["address_book"]],
+                [contact for contact in self.address_book[user][self.CONTACTS]],
                 key=lambda k: k["name"],
             )
             if len(contacts) > 0:
                 msg = ""
                 for x in contacts:
-                    msg += f'{x["name"].capitalize()}\n'
+                    msg += f'{x["name"].title()}\n'
                 await channel.send(msg)
             else:
                 # we can't find anyone
@@ -177,13 +180,13 @@ class AddressBook(commands.Cog, MarvinDB):
             except TimeoutError:
                 await ctx.send("Error: Please try again with !contactadd <name>")
                 return
-        await ctx.send(f"Looking up {contact_name.capitalize()}...")
+        await ctx.send(f"Looking up {contact_name.title()}...")
         if user in self.address_book.keys():
             channel = await ctx.author.create_dm()
             potential_hits = [
                 contact
-                for contact in self.address_book[user]["address_book"]
-                if contact_name.lower() in contact["name"].lower()
+                for contact in self.address_book[user][self.CONTACTS]
+                if contact_name.lower() in contact[self.NAME].lower()
             ]
             if len(potential_hits) > 0:
                 await ctx.send(
@@ -191,18 +194,13 @@ class AddressBook(commands.Cog, MarvinDB):
                     f"will send the relevant info to you via a direct message!"
                 )
                 for hit in potential_hits:
-                    msg = f'{hit["name"].capitalize()}\'s Information:\n'
+                    msg = f'**{hit["name"].title()}\'s Information:**\n'
                     for field, value in hit.items():
-                        if field.lower() == "birthday" and value is not None:
-                            value = turn_datetime_into_string(value)
-                        elif field.lower() == "birthday" and value is None:
+                        if field.lower() == self.DATE_OF_BIRTH and value is None:
                             value = ""
-                        elif field.lower() == "birthday_reminder":
-                            field = "Birthday Reminders"
-                            value = map_bool_to_active(int(value))
-                        msg += f"{str(field).capitalize()}: {str(value)}\n"
+                        msg += f"{str(field)}: {str(value).title()}\n"
                     # add a blank line between entries
-                    msg += "\n"
+                    msg += "\n\n"
                     await channel.send(msg)
             else:
                 # we can't find anyone
@@ -216,6 +214,88 @@ class AddressBook(commands.Cog, MarvinDB):
                 'adding a contact with "!contactadd".'
             )
 
+    @commands.command(name='subsettz', aliases=['settz', 'timezone', 'tz'],
+                      help='Set your timezone for your user profile!')
+    async def set_subscription_timezone(self, ctx, supplied_tz=None):
+        timeout = 30
+        user = str(ctx.author)
+
+        def check(m):
+            return m.author.name == ctx.author.name
+
+        user_tz = self.address_book[user][self.TIMEZONE]
+        if user in self.address_book.keys() and user_tz is not None:
+            await ctx.send(f'You have already set your timezone to: {user_tz}!\n'
+                           f'If you would like to update it, please call !subupdatetz')
+            return
+        else:
+            if supplied_tz is None:
+                await ctx.send('Please enter your preferred timezone! Here are some examples:\n'
+                               'America/Denver, US/Eastern, US/Alaska, Europe/Berlin')
+                try:
+                    user_answer = await self.bot.wait_for("message", check=check, timeout=timeout)
+                    user_answer = user_answer.content
+                    possible_tz = timezones._get_possible_timezones(user_answer)
+                    if timezones._check_if_timezone_match(possible_tz):
+                        await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
+                                       f'Your timezone has been set successfully!')
+                        # add the user to our dict and add their discord ID to the body
+                        user_sub = {
+                            self.USERNAME: user,
+                            self.DISCORD_ID: ctx.author.id,
+                            self.TIMEZONE: None,
+                            self.DATE_OF_BIRTH: None,
+                        }
+                        # insert the user
+                        user_id = self.users_table.insert_one(
+                            user_sub
+                        ).inserted_id
+                        self.address_book[user] = {"_id": user_id}
+                        # merge them
+                        self.address_book[user] = self.address_book[user] | user_sub
+                    else:
+                        if len(possible_tz) == 0:
+                            await ctx.send(f'Your provided timezone: {user_answer}, does not match any timezones!\n'
+                                           f'Please try this command again. To get a list of timezones, '
+                                           f'call !gettimezones')
+                        elif len(possible_tz) > 1:
+                            await ctx.send(f'I have found the following possible matches: {", ".join(possible_tz)}.\n'
+                                           f'Please try this again after deciding which timezone you would like '
+                                           f'to use!')
+                            # bail out since they provided an ambiguous match
+                        return
+                except TimeoutError:
+                    await ctx.send('You have taken too long to decide! Good-bye!')
+                    return
+            else:
+                possible_tz = timezones._get_possible_timezones(supplied_tz)
+                if timezones._check_if_timezone_match(possible_tz):
+                    await ctx.send(f'I have found the matching timezone: {possible_tz[0]}.\n'
+                                   f'Your timezone has been set successfully!')
+                    # add the user to our dict and add their discord ID to the body
+                    user_sub = {
+                        self.USERNAME: user,
+                        self.DISCORD_ID: ctx.author.id,
+                        self.TIMEZONE: None,
+                        self.DATE_OF_BIRTH: None,
+                    }
+                    # insert the user
+                    user_id = self.users_table.insert_one(
+                        user_sub
+                    ).inserted_id
+                    self.address_book[user] = {"_id": user_id}
+                    # merge them
+                    self.address_book[user] = self.address_book[user] | user_sub
+                else:
+                    if len(possible_tz) == 0:
+                        await ctx.send(f'Your provided timezone: {supplied_tz}, does not match any timezones!\n'
+                                       f'Please try this command again. To get a list of timezones, call !gettimezones')
+                    elif len(possible_tz) > 1:
+                        await ctx.send(f'I have found the following possible matches: {", ".join(possible_tz)}.\n'
+                                       f'Please try this again after deciding which timezone you would like to use!')
+                        # bail out since they provided an ambiguous match
+                    return
+
     def retrieve_contacts_number(self, user, contact_name):
         results = {
             "contact_found": False,
@@ -226,18 +306,18 @@ class AddressBook(commands.Cog, MarvinDB):
         if user in self.address_book.keys():
             potential_hits = [
                 contact
-                for contact in self.address_book[user]["address_book"]
-                if contact_name.lower() == contact["name"].split()[0].lower()
+                for contact in self.address_book[user][self.CONTACTS]
+                if contact_name.lower() == contact[self.NAME].split()[0].lower()
             ]
             if len(potential_hits) == 1:
                 results["contact_found"] = True
-                results["contact_number"] = potential_hits[0]["phone"]
+                results[self.PHONE] = potential_hits[0][self.PHONE]
             elif len(potential_hits) > 1:
                 new_line = "\n"
                 enumerated_contact_list = f'{new_line.join([str(result) for result in results["potential_contacts"]])}'
                 results["contact_found"] = True
                 results["potential_contacts"] = [
-                    (hit["name"], hit["phone"]) for hit in potential_hits
+                    (hit[self.NAME], hit[self.PHONE]) for hit in potential_hits
                 ]
                 results["error_msg"] = (
                     "We have found multiple contacts! Which contact would you like to use? Provide"
@@ -283,15 +363,15 @@ class AddressBook(commands.Cog, MarvinDB):
             try:
                 # it's possible a user does this right after sub set tz
                 # at which point we won't have this list available
-                if "address_book" not in self.address_book[user].keys():
+                if self.CONTACTS not in self.address_book[user].keys():
                     # create this in memory
-                    self.address_book[user]["address_book"] = []
+                    self.address_book[user][self.CONTACTS] = []
                 else:
                     # If an address book is present, see if the contact already exists
                     potential_hits = [
                         contact
-                        for contact in self.address_book[user]["address_book"]
-                        if contact_name.lower() in contact["name"].lower()
+                        for contact in self.address_book[user][self.CONTACTS]
+                        if contact_name.lower() in contact[self.NAME].lower()
                     ]
                     if len(potential_hits) > 0:
                         await ctx.send(
@@ -311,10 +391,10 @@ class AddressBook(commands.Cog, MarvinDB):
                             # bail out
                             return
                 # store the address book as a variable to make it easier to work with
-                contact_info = self.address_book[user]["address_book"]
+                contact_info = self.address_book[user][self.CONTACTS]
                 # check if the name provided is correct
                 await ctx.send(
-                    f"Ok! Let's add {contact_name.capitalize()} to your address book!"
+                    f"Ok! Let's add {contact_name.title()} to your address book!"
                     f"\nIs the name correct? Y/N"
                 )
                 confirm_name = await self.bot.wait_for(
@@ -322,9 +402,6 @@ class AddressBook(commands.Cog, MarvinDB):
                 )
                 # if the name is correct then let's create an entry
                 if confirm_name.content.lower().strip() in ["y", "yes"]:
-                    # create the dict in the address book to start
-                    # dict(id=address[0], name=address[2], address=address[3], phone=address[4],
-                    # email=address[5], birthday=address[6], bday_reminder=address[7])
                     await ctx.send(
                         "Great! I will now gather info about your contact. If you don't have "
                         "or don't wish to provide the requested info (it will be hashed when stored),"
@@ -373,53 +450,30 @@ class AddressBook(commands.Cog, MarvinDB):
                     bday_response = bday_response.content
                     if bday_response.lower().strip() == "skip":
                         bday_response = None
-                        bday_reminder_response = 0
                         await channel.send("Skipping birthday!")
                     else:
                         try:
                             bday_response = parse_string_to_datetime(bday_response)
                         except Exception:
                             bday_response = ""
-                        if isinstance(bday_response, datetime):
-                            # if they provide a birthday then we should ask if they want a reminder
-                            await channel.send(
-                                "Would you like me to remind you on their birthday? Y/N"
-                            )
-                            bday_reminder_response = await self.bot.wait_for(
-                                "message", check=check, timeout=timeout
-                            )
-                            bday_reminder_response = bday_reminder_response.content
-                            if (
-                                bday_reminder_response.lower().strip() == "skip"
-                                or bday_reminder_response.lower().strip() in ["no", "n"]
-                            ):
-                                bday_reminder_response = 0
-                                await channel.send(
-                                    "Someone's not that important are they?"
-                                )
-                            else:
-                                bday_reminder_response = 1
-                        else:
                             await channel.send(
                                 "I was unable to parse your provided birthday,"
                                 " I will continue but leave it blank."
                             )
-                            bday_response = ""
-                            bday_reminder_response = 0
                     # OK FINALLY create the entry in the book
                     contact_dict = {
-                        "name": contact_name.capitalize(),
-                        "address": addr_response,
-                        "phone": phone_response,
-                        "email": email_response,
-                        "birthday": bday_response,
-                        "birthday_reminder": bday_reminder_response,
+                        self.NAME: contact_name.title(),
+                        self.ADDRESS: addr_response,
+                        self.PHONE: phone_response,
+                        self.EMAIL: email_response,
+                        self.DATE_OF_BIRTH: bday_response,
+                        self.SHARE_WITH: [],
                     }
                     # now append it! we are done!
                     contact_info.append(contact_dict)
                     await channel.send(
                         f"I have successfully added "
-                        f"{contact_name.capitalize()} to your address book!"
+                        f"{contact_name.title()} to your address book!"
                     )
                     return
                 else:
@@ -451,23 +505,18 @@ class AddressBook(commands.Cog, MarvinDB):
                 "applicable contact."
             )
             return
-        try:
-            contact_id = int(contact_id)
-        except ValueError:
-            await ctx.send("The ID must be a whole number! Please try again.")
-            return
         if user in self.address_book.keys():
             # check if they have any contacts
-            if len(self.address_book[user]["address_book"]) == 0:
+            if len(self.address_book[user][self.CONTACTS]) == 0:
                 await ctx.send("You have no contacts! Add some with !contactadd.")
                 return
             else:
                 # if they have contacts let's get the contact - do a str compare on ID since it could be an empty string
                 contact = [
                     contact
-                    for contact in self.address_book[user]["address_book"]
-                    if int(contact["id"]) == int(contact_id)
-                    if "id" in contact.keys()
+                    for contact in self.address_book[user][self.CONTACTS]
+                    if contact["_id"] == contact_id
+                    if "_id" in contact.keys()
                 ]
                 if len(contact) == 0:
                     await ctx.send(
@@ -484,12 +533,12 @@ class AddressBook(commands.Cog, MarvinDB):
                     return
                 else:
                     contact = contact[0]
-                    await ctx.send(f'Deleting entry for {contact["name"]}!')
-                    del self.address_book[user]["address_book"][
-                        self.address_book[user]["address_book"].index(contact)
+                    await ctx.send(f'Deleting entry for {contact[self.NAME]}!')
+                    del self.address_book[user][self.CONTACTS][
+                        self.address_book[user][self.CONTACTS].index(contact)
                     ]
                     # now delete from the database as well
-                    self._delete_contact_by_id(int(contact_id))
+                    self._delete_contact_by_id(contact_id)
                     await ctx.send("Contact deleted!")
 
     @commands.command(
@@ -524,18 +573,10 @@ class AddressBook(commands.Cog, MarvinDB):
                 f"You must supply the new value that I should update {field} to!"
             )
             return
-        elif field.lower() in "bday_reminder":
-            try:
-                map_active_to_bool(value.lower())
-            except ValueError:
-                await ctx.send(
-                    f"The supplied value {value} failed validation. I can only accept the following values "
-                    f'for the birthday reminder field: {", ".join(ACTIVE_ENUM.values())}'
-                )
-        elif field.lower() == "id":
+        elif field.lower() == "_id":
             await ctx.send("You cannot update the ID of a record!")
             return
-        elif field.lower() in "birthday":
+        elif field.lower() in self.DATE_OF_BIRTH:
             try:
                 potential_bday = parse_string_to_datetime(value)
             except Exception:
@@ -546,24 +587,19 @@ class AddressBook(commands.Cog, MarvinDB):
                     f" Please supply a birthday in the format of MM/DD/YYYY."
                 )
                 return
-        try:
-            contact_id = int(contact_id)
-        except ValueError:
-            await ctx.send("The ID must be a whole number! Please try again.")
-            return
         # ok check if the user exists
         if user in self.address_book.keys():
             # check if they have any contacts
-            if len(self.address_book[user]["address_book"]) == 0:
-                await ctx.send("You have no contacts! Add some with !contactadd.")
+            if len(self.address_book[user][self.CONTACTS]) == 0:
+                await ctx.send("You have no contacts! Add some with ```!contactad <name>```.")
                 return
             else:
                 # if they have contacts let's get the contact - do a str compare on ID since it could be an empty string
                 contact = [
                     contact
-                    for contact in self.address_book[user]["address_book"]
-                    if int(contact["id"]) == int(contact_id)
-                    if "id" in contact.keys()
+                    for contact in self.address_book[user][self.CONTACTS]
+                    if contact["_id"] == contact_id
+                    if "_id" in contact.keys()
                 ]
                 if len(contact) == 0:
                     await ctx.send(
@@ -580,14 +616,10 @@ class AddressBook(commands.Cog, MarvinDB):
                     return
                 else:
                     contact = contact[0]
-                    # since ID is a primary key it will always be unique
-                    if field.lower() == "birthday":
+
+                    if field.lower() == self.DATE_OF_BIRTH:
                         str_value = value
                         value = parse_string_to_datetime(value)
-                    # this comes after and takes reminder as well as an option
-                    elif field.lower() in "birthday_reminder":
-                        str_value = value
-                        value = map_active_to_bool(value.lower())
                     else:
                         str_value = value
                     if field.lower() in contact.keys():
@@ -614,53 +646,59 @@ class AddressBook(commands.Cog, MarvinDB):
 
     @tasks.loop(minutes=3)
     async def insert_or_update_contacts_in_database(self):
-        for user, info in self.address_book.items():
-            if "user_id" not in info.keys():
+        for username, info in self.address_book.items():
+            if "_id" not in info.keys():
                 # if the user isn't in the database we need to add him first with TZ info and get his user_id for the
-                if not self._check_if_user_exists(user):
-                    # insert the user and the timezone
-                    user_id = self._insert_user(user, info["tz"], info["disc_id"])
-                    # add this key to the dict in memory now
-                    info["user_id"] = user_id
-                    # if they aren't in the dictionary in memory, and not in the database, then something else broke
-                else:
-                    user_id = self._get_user(user)[0][0]
+                # insert the user and the timezone
+                user_id = self.users_table.insert_one(
+                    {
+                        self.USERNAME: username,
+                        self.DISCORD_ID: info[self.DISCORD_ID],
+                        self.TIMEZONE: info[self.TIMEZONE],
+                        self.DATE_OF_BIRTH: info[self.DATE_OF_BIRTH],
+                    }
+                ).inserted_id
+                # add this key to the dict in memory now
+                info["_id"] = user_id
             else:
                 # their id is stored in memory so we can just grab the user id from there
-                user_id = info["user_id"]
+                user_id = info["_id"]
             # if address_book isnt in info.keys then the user has just set their tz, not created any subscriptions yet
-            if "address_book" in info.keys():
+            if self.CONTACTS in info.keys():
                 # now get every contact in the database
-                for contact in info["address_book"]:
-                    if "id" not in contact.keys():
+                for contact in info[self.CONTACTS]:
+                    if "_id" not in contact.keys():
                         # then we know we have to insert into the database
-                        # expects: user_id, name, address, phone, email, birthday, birthday_reminder
                         # encoding happens within the insert contact method, so leave them as strings here
+                        if self.SHARE_WITH not in contact.keys():
+                            contact[self.SHARE_WITH] = []
                         contact_id = self._insert_contact_into_db(
                             user_id,
-                            contact["name"],
-                            contact["address"],
-                            contact["phone"],
-                            contact["email"],
-                            contact["birthday"],
-                            int(contact["birthday_reminder"]),
+                            contact[self.NAME],
+                            contact[self.ADDRESS],
+                            contact[self.PHONE],
+                            contact[self.EMAIL],
+                            contact[self.DATE_OF_BIRTH],
+                            contact[self.SHARE_WITH],
                         )
                         # set the contact ID in the dict <- from this point on users can update/delete contacts
-                        contact["id"] = contact_id
+                        contact["_id"] = contact_id
                     elif (
                         "update_pending" in contact.keys() and contact["update_pending"]
                     ):
                         # if id is in keys then lets try to update the contact
                         # expects: user_id, name, address, phone, email, birthday, birthday_reminder
-                        self._update_contact_by_user_id_and_contact_id(
-                            user_id,
-                            contact["name"],
-                            contact["address"],
-                            contact["phone"],
-                            contact["email"],
-                            contact["birthday"],
-                            int(contact["birthday_reminder"]),
-                            contact["id"],
+                        self._update_contact_by_contact_id(
+                            contact["_id"],
+                            {
+                                self.DISCORD_ID: info[self.DISCORD_ID],
+                                self.NAME: contact[self.NAME].title(),
+                                self.ADDRESS: contact[self.ADDRESS],
+                                self.PHONE: contact[self.PHONE],
+                                self.EMAIL: contact[self.EMAIL],
+                                self.DATE_OF_BIRTH: contact[self.DATE_OF_BIRTH],
+                                self.SHARE_WITH: contact[self.SHARE_WITH],
+                            }
                         )
                         # set the update_pending flag to false
                         contact["update_pending"] = False
@@ -674,30 +712,29 @@ class AddressBook(commands.Cog, MarvinDB):
     @tasks.loop(hours=1)
     async def check_birthday_notification(self):
         for user, info in self.address_book.items():
-            user_tz = pytz.timezone(info["tz"])
+            user_tz = pytz.timezone(info[self.TIMEZONE])
             now = datetime.now(user_tz)
             # we really only want to alert people on the day of (relative to them)
             if 0 <= now.hour < 1:
-                for contact in info["address_book"]:
+                for contact in info[self.CONTACTS]:
                     # if the birthday exists, reminder is set to 1 i.e. true then lets check
                     if (
-                        int(contact["birthday_reminder"])
-                        and contact["birthday"] != ""
-                        and contact["birthday"] is not None
+                        contact[self.DATE_OF_BIRTH] != ""
+                        and contact[self.DATE_OF_BIRTH] is not None
                     ):
                         # birthday is a datetime object, so we can call day/month/hour
-                        bday = contact["birthday"]
+                        bday = contact[self.DATE_OF_BIRTH]
                         # if the day and month match, and the year is either greater or equal, it's their birthday!!
                         if (
                             now.day == bday.day
                             and now.month == bday.month
                             and now.year >= bday.year
                         ):
-                            # happy birthday sucka! let's make sure your friends remember you, you nameless hero
-                            user = self.bot.get_user(info["disc_id"])
+                            # happy birthday! let's make sure your friends remember you, you nameless hero
+                            user = self.bot.get_user(info[self.DISCORD_ID])
                             await user.create_dm()
                             await user.dm_channel.send(
-                                f'It\'s {contact["name"]}\'s birthday! '
+                                f'It\'s {contact[self.NAME].title()}\'s birthday! '
                                 f"Don't forget to wish them a happy birthay today!"
                             )
 
@@ -706,5 +743,5 @@ class AddressBook(commands.Cog, MarvinDB):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
-    bot.add_cog(AddressBook(bot))
+async def setup(bot):
+    await bot.add_cog(AddressBook(bot))

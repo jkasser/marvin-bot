@@ -1,6 +1,5 @@
 import yaml
 import asyncio
-
 from concurrent.futures.thread import ThreadPoolExecutor
 from utils.helper import validate_phone_number
 from discord.ext import commands, tasks
@@ -200,5 +199,5 @@ class MarvinPhone(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
-    bot.add_cog(MarvinPhone(bot))
+async def setup(bot):
+    await bot.add_cog(MarvinPhone(bot))
