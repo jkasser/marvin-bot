@@ -41,7 +41,6 @@ class MarvinMedia(commands.Cog):
     async def get_current_dls(self, ctx):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='get-all')
-        print(response)
         await self.disc_channel.send(
             f'Message {response["MessageId"]} sent. Response status: {response["ResponseMetadata"]["HTTPStatusCode"]}'
         )
@@ -52,7 +51,6 @@ class MarvinMedia(commands.Cog):
     async def get_remote_logs(self, ctx):
         self.disc_channel = self.bot.get_channel(int(self.plex_channel_id))
         response = self._send_command_to_sqs(command='get-logs')
-        print(response)
         await self.disc_channel.send(
             f'Message {response["MessageId"]} sent. Response status: {response["ResponseMetadata"]["HTTPStatusCode"]}'
         )

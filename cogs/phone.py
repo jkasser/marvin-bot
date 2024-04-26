@@ -93,7 +93,7 @@ class MarvinPhone(commands.Cog):
                     except KeyError:
                         await ctx.send(
                             f"Your selection of: {contact_index} - was not valid. Please try this command "
-                            f"again. Goodbye.s"
+                            f"again. Goodbye."
                         )
 
                 else:
