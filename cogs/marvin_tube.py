@@ -24,10 +24,7 @@ class MarvinTube(commands.Cog, MarvinDB):
         super(MarvinTube, self).__init__()
         self.bot = bot
         # try to create the table
-        try:
-            self.video_subs = self.select_collection(self.TABLE_NAME)
-        except Error as e:
-            print(e)
+        self.video_subs = self.select_collection(self.TABLE_NAME)
         env = os.environ.get("ENV", "NOT SET")
         with open("config.yaml", "r") as file:
             cfg = yaml.safe_load(file)
