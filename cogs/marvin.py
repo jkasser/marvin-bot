@@ -209,7 +209,7 @@ class MarvinBot(commands.Cog):
             await ctx.channel.purge(limit=int(count))
 
     @commands.command(name="ip", aliases=["getip"], help="Returns external IP")
-    @commands.has_role("Owner")
+    @commands.is_owner()
     async def get_external_ip(self, ctx):
         loop = asyncio.get_event_loop()
         r = await loop.run_in_executor(
