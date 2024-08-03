@@ -45,7 +45,7 @@ class MarvinMedia(commands.Cog):
             f'Message {response["MessageId"]} sent. Response status: {response["ResponseMetadata"]["HTTPStatusCode"]}'
         )
 
-    @commands.has_role('Family')
+    @commands.has_role('Owner')
     @commands.command('getlogs', help='Get the most recent log file!')
     async def get_remote_logs(self, ctx):
         response = self._send_command_to_sqs(command='get-logs')
@@ -101,6 +101,14 @@ class MarvinMedia(commands.Cog):
         await self.disc_channel.send(
             f'Message {response["MessageId"]} sent. Response status: {response["ResponseMetadata"]["HTTPStatusCode"]}'
         )
+
+    @commands.has_role('Owner')
+    @commands.command('plexprivate')
+    async def private_download(self, ctx, link):
+        if link is None:
+            await self.disc_channel.send('You must provide a link.')
+            return
+        self._send_command_to_sqs(command='download-private', data=str(link))
 
     @commands.has_role('Family')
     @commands.command('plexforcestart', help='Force start all active media!')
